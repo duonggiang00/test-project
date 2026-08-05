@@ -15,8 +15,11 @@
     "check": "npm run lint && npm run build",
     "test": "jest",
     "test:unit": "jest --runInBand",
+    "test:component": "jest --runInBand --testPathPatterns=tests/component",
     "test:unit:coverage": "jest --runInBand --coverage",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run test:e2e:real",
+    "test:e2e:mocked": "playwright test --config=playwright.mocked.config.ts",
+    "test:e2e:real": "playwright test --config=playwright.config.ts",
     "verify": "node ../scripts/verify.mjs frontend"
   },
   "dependencies": {

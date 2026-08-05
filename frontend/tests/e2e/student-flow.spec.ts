@@ -3,7 +3,9 @@ import { StudentExamPage } from '../pom/StudentExamPage';
 import { AdminDashboardPage } from '../pom/AdminDashboardPage';
 import { ExamBuilderPage } from '../pom/ExamBuilderPage';
 
-test('Student can take an exam and view the result', async ({ browser }) => {
+test('Student can take an exam and view the result', {
+  tag: '@owner-frontend',
+}, async ({ browser }) => {
   // 1. Create an admin context to create a fresh exam
   const adminContext = await browser.newContext({ storageState: 'playwright/.auth/admin.json' });
   const adminPage = await adminContext.newPage();
@@ -11,9 +13,12 @@ test('Student can take an exam and view the result', async ({ browser }) => {
   const examBuilder = new ExamBuilderPage(adminPage);
 
   const examTitle = `Student E2E Exam ${Date.now()}`;
-  
+  const topicTitle = `Student E2E Topic ${Date.now()}`;
+
+  await adminDashboard.gotoTopics();
+  await adminDashboard.createTopic(topicTitle, 'E2E Testing Topic');
   await adminDashboard.gotoExams();
-  await adminDashboard.createExam(examTitle, 'E2E Testing Exam', 60);
+  await adminDashboard.createExam(examTitle, 'E2E Testing Exam', 60, topicTitle);
   await adminDashboard.openExamBuilder(examTitle);
   await examBuilder.addQuestion('What is 2+2?', 'SINGLE_CHOICE', 10, [
     { content: '4', isCorrect: true },
@@ -28,6 +33,7 @@ test('Student can take an exam and view the result', async ({ browser }) => {
 
   // Initialize StudentExamPage and go to /student/home
   await studentPage.gotoHome();
+  await studentPage.selectTopicByTitle(topicTitle);
 
   // Start the newly created exam
   await studentPage.selectExamByTitle(examTitle);
@@ -66,6 +72,8 @@ test('Student can take an exam and view the result', async ({ browser }) => {
   const cleanupDashboard = new AdminDashboardPage(cleanupPage);
   await cleanupDashboard.gotoExams();
   await cleanupDashboard.deleteExam(examTitle);
+  await cleanupDashboard.gotoTopics();
+  await cleanupDashboard.deleteTopic(topicTitle);
   await adminCleanupContext.close();
   
   await studentContext.close();

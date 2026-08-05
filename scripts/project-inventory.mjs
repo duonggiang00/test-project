@@ -207,6 +207,7 @@ function sourceFiles() {
     resolve(frontendRoot, "package.json"),
     resolve(frontendRoot, "jest.config.ts"),
     resolve(frontendRoot, "playwright.config.ts"),
+    resolve(frontendRoot, "playwright.mocked.config.ts"),
     resolve(workspaceRoot, "config/coverage-baseline.json"),
     resolve(workspaceRoot, ".github/workflows/ci.yml"),
   ];

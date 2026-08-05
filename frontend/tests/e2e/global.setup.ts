@@ -7,7 +7,7 @@ if (!fs.existsSync(authDir)) {
   fs.mkdirSync(authDir, { recursive: true });
 }
 
-setup('authenticate as admin', async ({ page }) => {
+setup('authenticate as admin', { tag: '@owner-frontend' }, async ({ page }) => {
   await page.goto('/login');
   
   // Wait for network/hydration
@@ -26,7 +26,7 @@ setup('authenticate as admin', async ({ page }) => {
   await page.context().storageState({ path: path.join(authDir, 'admin.json') });
 });
 
-setup('authenticate as student', async ({ page }) => {
+setup('authenticate as student', { tag: '@owner-frontend' }, async ({ page }) => {
   await page.goto('/login');
   
   // Wait for network/hydration

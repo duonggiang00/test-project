@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "eecbbacbafb4061a5cf17e409a9331d11f369ffe",
-    "source_commit_timestamp": "2026-08-05T14:17:51+07:00",
-    "source_tree_sha256": "33e592debc486365d2b127b09e721589f7a49747eec27d9aa8521dd19f5902ff",
-    "relevant_file_count": 206,
+    "source_commit": "0011d0e3bd1467d951999d1b99e084108ac9c9eb",
+    "source_commit_timestamp": "2026-08-05T14:23:04+07:00",
+    "source_tree_sha256": "43595f55808334234d4a41d60d0be9f30ce6135a8f9db5d18daeddab58cffdb6",
+    "relevant_file_count": 211,
     "alembic_heads": [
       "e598471b8b6d"
     ]
@@ -17,8 +17,8 @@
     "next_pages": 25,
     "frontend_hooks": 14,
     "frontend_services": 1,
-    "backend_test_functions": 37,
-    "frontend_test_calls": 9
+    "backend_test_functions": 41,
+    "frontend_test_calls": 10
   },
   "backend": {
     "models": [
@@ -4391,7 +4391,12 @@
             "name": "test_get_exam_detail"
           },
           {
-            "line": 26,
+            "line": 27,
+            "markers": [],
+            "name": "test_exam_detail_query_budget_does_not_scale_with_question_count"
+          },
+          {
+            "line": 68,
             "markers": [],
             "name": "test_bulk_add_questions"
           }
@@ -4441,6 +4446,31 @@
             "line": 18,
             "markers": [],
             "name": "test_get_material_questions"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_ownership.py",
+        "tests": [
+          {
+            "line": 48,
+            "markers": [],
+            "name": "test_exam_update_authorization_matrix"
+          },
+          {
+            "line": 99,
+            "markers": [
+              "xfail"
+            ],
+            "name": "test_non_owner_teacher_cannot_bulk_assign_questions"
+          },
+          {
+            "line": 115,
+            "markers": [
+              "xfail"
+            ],
+            "name": "test_non_owner_teacher_cannot_read_material"
           }
         ],
         "tier": "integration"
@@ -4533,11 +4563,6 @@
     ],
     "frontend": [
       {
-        "path": "frontend/e2e/example.spec.ts",
-        "tier": "e2e",
-        "test_count": 1
-      },
-      {
         "path": "frontend/src/lib/backend-url.test.ts",
         "tier": "unit",
         "test_count": 3
@@ -4546,6 +4571,11 @@
         "path": "frontend/src/lib/store.test.ts",
         "tier": "unit",
         "test_count": 3
+      },
+      {
+        "path": "frontend/tests/component/button.states.test.tsx",
+        "tier": "component",
+        "test_count": 2
       },
       {
         "path": "frontend/tests/e2e/admin-flow.spec.ts",

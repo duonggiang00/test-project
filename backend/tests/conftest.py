@@ -51,21 +51,34 @@ from sqlalchemy import event
 @pytest.fixture
 def assert_num_queries():
     def _assert_num_queries(expected_count):
-        class QueryCounter:
+        class Asserter:
             count = 0
 
-        def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-            QueryCounter.count += 1
+            def before_cursor_execute(
+                self, conn, cursor, statement, parameters, context, executemany
+            ):
+                self.count += 1
 
-        event.listen(engine, "before_cursor_execute", before_cursor_execute)
-
-        class Asserter:
             def __enter__(self):
+                event.listen(
+                    engine,
+                    "before_cursor_execute",
+                    self.before_cursor_execute,
+                )
                 return self
+
             def __exit__(self, exc_type, exc_val, exc_tb):
-                event.remove(engine, "before_cursor_execute", before_cursor_execute)
+                event.remove(
+                    engine,
+                    "before_cursor_execute",
+                    self.before_cursor_execute,
+                )
                 if exc_type is None:
-                    assert QueryCounter.count <= expected_count, f"Anti-Pattern Detected: N+1 Query. Expected at most {expected_count} queries, but got {QueryCounter.count}. Please use selectinload()."
+                    assert self.count <= expected_count, (
+                        "Anti-Pattern Detected: N+1 Query. "
+                        f"Expected at most {expected_count} queries, but got {self.count}. "
+                        "Please use selectinload()."
+                    )
 
         return Asserter()
 

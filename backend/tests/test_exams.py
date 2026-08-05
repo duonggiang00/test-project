@@ -23,6 +23,48 @@ def test_get_exam_detail(client, sample_exam, assert_num_queries):
     assert len(data["questions"]) == 2
     assert "options" in data["questions"][0]
 
+
+def test_exam_detail_query_budget_does_not_scale_with_question_count(
+    client,
+    db,
+    sample_exam,
+    assert_num_queries,
+):
+    exam_id = sample_exam["exam"]["id"]
+
+    db.expire_all()
+    with assert_num_queries(4) as small_result:
+        small_response = client.get(
+            f"/exams/{exam_id}",
+            headers=sample_exam["teacher"]["headers"],
+        )
+    assert small_response.status_code == 200
+
+    for number in range(8):
+        response = client.post(
+            f"/exams/{exam_id}/questions",
+            json={
+                "content": f"Scaling question {number}",
+                "points": 1,
+                "options": [
+                    {"content": "A", "is_correct": True},
+                    {"content": "B", "is_correct": False},
+                ],
+            },
+            headers=sample_exam["teacher"]["headers"],
+        )
+        assert response.status_code == 200
+
+    db.expire_all()
+    with assert_num_queries(4) as large_result:
+        large_response = client.get(
+            f"/exams/{exam_id}",
+            headers=sample_exam["teacher"]["headers"],
+        )
+    assert large_response.status_code == 200
+    assert len(large_response.json()["questions"]) == 10
+    assert large_result.count <= small_result.count
+
 def test_bulk_add_questions(client, sample_exam):
     exam_id = sample_exam["exam"]["id"]
     # Assuming we have question IDs to bulk add. For this test, we can just re-add the same questions

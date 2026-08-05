@@ -130,11 +130,11 @@ Goal: Prevent unverified code from entering `main`.
 | CI-002 | Add pull-request fast gate | REVIEW | TOOL-006, CI-001 | Workflow implementation and 178.9s local gate pass are verified; awaiting the first GitHub pull-request run |
 | CI-003 | Add push-to-main integration gate | REVIEW | TOOL-006, TOOL-008, CI-001 | Workflow implementation, pgvector service profile, 24/24 local integration pass, and cleanup are verified; awaiting the first push-to-`main` run |
 | CI-004 | Add Alembic upgrade/downgrade/upgrade verification | BLOCKED | CI-003 | Runner and CI step are implemented, but initial upgrade fails in `27f1dff6a48f` when dropping nonexistent `ix_user_email`; migration edit requires owner approval |
-| CI-005 | Add mocked Playwright critical-flow suite to PRs | TODO | CI-002 | Critical mocked flows pass and failures upload artifacts |
-| CI-006 | Add real-backend/PostgreSQL smoke E2E suite on `main` | TODO | CI-003, CI-005 | Critical integration flows pass |
-| CI-007 | Add Chromium, Firefox, WebKit, and mobile projects | TODO | CI-005, CI-006 | Browser matrix runs within the approved budget |
-| CI-008 | Upload logs, traces, screenshots, and reports on failure | TODO | CI-005 | Artifacts are available from failed jobs |
-| CI-009 | Add flaky-test retry/ownership policy | TODO | CI-005 | One diagnostic retry does not hide flaky status |
+| CI-005 | Add mocked Playwright critical-flow suite to PRs | REVIEW | CI-002 | Backend-independent admin flow passes four local projects in 52s with failure artifacts; awaiting first GitHub pull-request run |
+| CI-006 | Add real-backend/PostgreSQL smoke E2E suite on `main` | REVIEW | CI-003, CI-005 | Guarded runner passed login, topic/exam/question creation, student submit/result, cleanup, and 3/3 owner/flake policy locally in 32s; awaiting first GitHub `main` run |
+| CI-007 | Add Chromium, Firefox, WebKit, and mobile projects | DONE | CI-005, CI-006 | Chromium, Firefox, WebKit, and Pixel 7 Chrome matrix passes locally in 52s, within the 10-minute budget |
+| CI-008 | Upload logs, traces, screenshots, and reports on failure | DONE | CI-005 | Local failures produced error context/screenshot/video; config captures first-retry trace and CI uploads the complete Playwright report tree |
+| CI-009 | Add flaky-test retry/ownership policy | DONE | CI-005 | One retry collects diagnostics; report checker fails retried/flaky/unowned tests and the synthetic violation fixture fails as expected |
 | CI-010 | Protect required checks before merge | TODO | CI-002–009 | GitHub branch policy identifies required gates |
 
 Exit criteria:
@@ -172,9 +172,9 @@ Goal: Establish fast feedback and meaningful coverage across risk boundaries.
 | TEST-001 | Measure backend and frontend coverage baselines | DONE | CI-002, CI-003 | Reproducible full-source runs record backend 72.52% (1,639/2,260) and frontend 0.75% (81/10,685) line coverage |
 | TEST-002 | Prevent coverage regression and target ~80% on new/changed code | DONE | TEST-001 | Local/CI checker forbids baseline drops and enforces an 80% executable changed-line target when a base SHA is available |
 | TEST-003 | Separate backend unit, contract, and PostgreSQL integration suites | DONE | CI-003 | Marker collection partitions 41 tests into 14 unit, 3 contract, and 24 integration cases; contract suite passes independently |
-| TEST-004 | Add ownership and tenant-isolation negative-test matrix | TODO | TEST-003, GOV-002 | Anonymous/student/owner/non-owner/admin cases are covered |
-| TEST-005 | Expand query-budget tests for important list/detail endpoints | TODO | TEST-003 | Query counts do not scale linearly with row count |
-| TEST-006 | Separate frontend unit, component, mocked E2E, and real E2E suites | TODO | CI-005, CI-006 | Each tier has an explicit purpose and command |
+| TEST-004 | Add ownership and tenant-isolation negative-test matrix | BLOCKED | TEST-003, GOV-002 | Exam update covers all five actors, but strict expected failures confirm missing non-owner enforcement for bulk assignment and material detail; fixes require approved SEC-001/002 work |
+| TEST-005 | Expand query-budget tests for important list/detail endpoints | DONE | TEST-003 | PostgreSQL regression compares exam detail with 2 vs 10 nested questions; both stay within four queries and the larger result does not add queries |
+| TEST-006 | Separate frontend unit, component, mocked E2E, and real E2E suites | DONE | CI-005, CI-006 | Unit, component, mocked four-browser, and guarded real-backend suites have explicit commands; all four tiers pass independently |
 | TEST-007 | Add hydration, cache-mutation, and BFF-only tests | TODO | TEST-006 | Approved data/state boundaries are covered |
 | TEST-008 | Add brutalist visual regression coverage | TODO | TEST-006, CI-007 | Desktop/mobile states have reviewed baselines |
 | TEST-009 | Cover loading, empty, error, disabled, and keyboard states | TODO | TEST-006 | Critical components expose all non-happy paths |
@@ -329,6 +329,11 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | INV-001–008 | Completed | Generated inventory records 13 models, 67 schemas, 62 API operations, 25 pages, frontend modules, and test metadata; counts matched OpenAPI/filesystem, context output parsed, deterministic rerun passed, and an injected source probe triggered the stale gate |
 | 2026-08-05 | TEST-001–002 | Completed | Isolated backend processes passed 14 unit + 24 integration tests at 72.52%; all-source frontend run passed 9 tests at an honest 0.75%; baseline gate passed and the elevated-regression fixture failed as expected; CI YAML parses with PR and push coverage jobs |
 | 2026-08-05 | TEST-003 | Completed | Collection proved a disjoint 14 unit + 3 contract + 24 integration partition equal to all 41 cases; OpenAPI path/ID/tag and error-envelope contracts passed 3/3 without PostgreSQL |
+| 2026-08-05 | TEST-005 | Completed | Guarded PostgreSQL query-budget regression passed for 2 vs 10 nested questions/options; both requests stayed at or below four queries and larger cardinality did not increase query count |
+| 2026-08-05 | TEST-004 | Blocked | Five-actor exam update matrix is executable; target assertions expose non-owner access to bulk question assignment and material detail, retained as strict expected failures pending approved SEC-001/002 implementation |
+| 2026-08-05 | CI-005/007–009 | Completed/Review | Mocked admin flow now authenticates and intercepts BFF-shaped contracts without backend access; Chromium/Firefox/WebKit/mobile pass 4/4 in 52s; failure artifacts were inspected; flaky/unowned fixture fails policy; PR job awaits its first GitHub run |
+| 2026-08-05 | TEST-006 | Blocked | Unit, component, mocked E2E, and real E2E have distinct commands/configs; 2 component tests and 4 mocked browser projects pass, while real-backend CI remains CI-006 |
+| 2026-08-05 | CI-006 / TEST-006 | Completed/Review | Guarded real runner used backend port 8765, seeded only test users, passed setup + student topic/exam/submit/result/cleanup 3/3 in 32.3s, passed owner/flake policy, and confirmed `_test` database cleanup; GitHub `main` execution remains pending |
 
 ## 17. Known program risks
 

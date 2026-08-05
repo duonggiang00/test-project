@@ -14,13 +14,18 @@ export class StudentExamPage {
     await this.page.goto('/student/home');
   }
 
+  async selectTopicByTitle(title: string) {
+    await this.page.getByRole('link', { name: new RegExp(title, 'i') }).click();
+  }
+
   /**
    * Select an exam from the featured list on the home page by its title.
    * Assumes data-testid on the start button is `start-exam-{title}`
    */
   async selectExamByTitle(title: string) {
-    const startButton = this.page.getByTestId(`start-exam-${title}`);
-    await startButton.click();
+    const examHeading = this.page.getByRole('heading', { name: title });
+    const examRow = this.page.locator('div.border-4').filter({ has: examHeading }).first();
+    await examRow.getByRole('button').click();
   }
 
   /**
@@ -65,13 +70,10 @@ export class StudentExamPage {
    * Submits the exam by clicking the submit button and confirming any dialogues.
    */
   async submitExam() {
-    // If the browser shows a confirmation dialog, we need to accept it automatically
-    this.page.once('dialog', dialog => dialog.accept());
-    
     const submitBtn = this.page.getByTestId('submit-exam-button');
     await submitBtn.click();
-    
-    // Optionally wait for navigation to the result page
+    await this.page.getByTestId('confirm-dialog-confirm').click();
+
     await this.page.waitForURL(/\/student\/exam\/.*\/result/);
   }
 

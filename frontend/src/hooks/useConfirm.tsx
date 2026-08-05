@@ -34,10 +34,10 @@ export function useConfirm() {
         </DialogHeader>
         <div className="py-4 font-mono font-bold text-black">{message}</div>
         <DialogFooter className="flex gap-2 justify-end sm:justify-end">
-          <Button variant="outline" onClick={handleCancel} className="border-2 border-black rounded-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] font-mono uppercase font-bold hover:bg-gray-100 text-black">
+          <Button data-testid="confirm-dialog-cancel" variant="outline" onClick={handleCancel} className="border-2 border-black rounded-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] font-mono uppercase font-bold hover:bg-gray-100 text-black">
             Hủy
           </Button>
-          <Button onClick={handleConfirm} className="border-2 border-black rounded-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] font-mono uppercase font-bold bg-black text-white hover:bg-gray-800 transition-all">
+          <Button data-testid="confirm-dialog-confirm" onClick={handleConfirm} className="border-2 border-black rounded-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] font-mono uppercase font-bold bg-black text-white hover:bg-gray-800 transition-all">
             Đồng ý
           </Button>
         </DialogFooter>

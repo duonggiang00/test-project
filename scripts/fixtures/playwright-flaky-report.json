@@ -1,0 +1,22 @@
+{
+  "suites": [
+    {
+      "specs": [
+        {
+          "title": "synthetic flaky test",
+          "tags": [],
+          "tests": [
+            {
+              "projectName": "chromium",
+              "status": "flaky",
+              "results": [
+                { "status": "failed", "retry": 0 },
+                { "status": "passed", "retry": 1 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
