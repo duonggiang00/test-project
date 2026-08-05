@@ -39,6 +39,9 @@ Rules:
 4. Record blockers in the task row and in the progress log.
 5. Do not mark a milestone complete until all non-deferred tasks are `DONE`.
 6. Changes to authentication, migrations, breaking APIs, tenant isolation, or major architecture require owner approval before implementation.
+
+The bounded approval request for the remaining high-risk work is
+[`REMAINING_HIGH_RISK_APPROVAL_PACKET.md`](REMAINING_HIGH_RISK_APPROVAL_PACKET.md).
 7. Update this tracker in the same change that completes a tracked task.
 
 ## 3. Execution order
@@ -342,6 +345,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | TEST-008–009 | Completed | Reviewed four black/white topics-page PNG baselines at desktop/mobile sizes, removed Next dev overlay noise, clean visual matrix passed 4/4 in 45.9s, and component suite covers loading/error/empty/disabled/focus while the browser flow activates via Enter |
 | 2026-08-05 | DATA-007–008 | Completed | Material uploads now use an injected local-storage boundary with atomic UUID writes and root-confined deletion; PDF/DOCX/PPTX/TXT validation enforces MIME, signature/OOXML structure, UTF-8 text, safe paths, and a 50 MB limit; 17 focused tests, 3/3 PostgreSQL material tests with cleanup, and the 83.5s fast gate pass |
 | 2026-08-05 | CI-010 | Review | Added a machine-readable `main` protection policy, workflow-drift checker, and application/negative-proof checklist; no Git remote exists, so observed contexts and merge blocking remain unverified |
+| 2026-08-05 | High-risk boundary | Approval requested | Bounded batches A–E document migration repair, ownership, auth lifecycle defaults, retention decisions, AI governance, non-goals, and required evidence; implementation remains pending explicit owner approval |
 
 ## 17. Known program risks
 
