@@ -19,6 +19,7 @@ node scripts/verify.mjs fast
 node scripts/verify.mjs backend
 node scripts/verify.mjs frontend
 node scripts/verify.mjs integration
+node scripts/verify.mjs contract
 node scripts/verify.mjs migration
 node scripts/verify.mjs inventory
 node scripts/verify.mjs coverage
@@ -35,6 +36,7 @@ node scripts/verify.mjs all
 | `backend` | Backend unit tests followed by the guarded PostgreSQL integration lifecycle |
 | `frontend` | Frontend lint, unit tests, and production build |
 | `integration` | Create a new local `_test` PostgreSQL database, run integration tests, and drop it in `finally` |
+| `contract` | Run database-independent OpenAPI/schema/error-envelope contract tests |
 | `migration` | Create an isolated database and run Alembic upgrade → downgrade → upgrade before cleanup |
 | `inventory` | Recompute live technical facts and fail if the committed generated inventory is stale |
 | `coverage` | Combine isolated backend unit/integration coverage, measure all frontend source, enforce both baselines, and apply the 80% changed-line target when `COVERAGE_BASE_SHA` is set |

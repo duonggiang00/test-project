@@ -171,7 +171,7 @@ Goal: Establish fast feedback and meaningful coverage across risk boundaries.
 |---|---|---|---|---|
 | TEST-001 | Measure backend and frontend coverage baselines | DONE | CI-002, CI-003 | Reproducible full-source runs record backend 72.52% (1,639/2,260) and frontend 0.75% (81/10,685) line coverage |
 | TEST-002 | Prevent coverage regression and target ~80% on new/changed code | DONE | TEST-001 | Local/CI checker forbids baseline drops and enforces an 80% executable changed-line target when a base SHA is available |
-| TEST-003 | Separate backend unit, contract, and PostgreSQL integration suites | TODO | CI-003 | Markers/jobs select each tier reliably |
+| TEST-003 | Separate backend unit, contract, and PostgreSQL integration suites | DONE | CI-003 | Marker collection partitions 41 tests into 14 unit, 3 contract, and 24 integration cases; contract suite passes independently |
 | TEST-004 | Add ownership and tenant-isolation negative-test matrix | TODO | TEST-003, GOV-002 | Anonymous/student/owner/non-owner/admin cases are covered |
 | TEST-005 | Expand query-budget tests for important list/detail endpoints | TODO | TEST-003 | Query counts do not scale linearly with row count |
 | TEST-006 | Separate frontend unit, component, mocked E2E, and real E2E suites | TODO | CI-005, CI-006 | Each tier has an explicit purpose and command |
@@ -328,6 +328,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | CI-004 | Blocked | Guarded migration runner cleaned up correctly but `upgrade head` failed in the initial migration at `DROP INDEX ix_user_email`; no migration assertion or history was modified |
 | 2026-08-05 | INV-001–008 | Completed | Generated inventory records 13 models, 67 schemas, 62 API operations, 25 pages, frontend modules, and test metadata; counts matched OpenAPI/filesystem, context output parsed, deterministic rerun passed, and an injected source probe triggered the stale gate |
 | 2026-08-05 | TEST-001–002 | Completed | Isolated backend processes passed 14 unit + 24 integration tests at 72.52%; all-source frontend run passed 9 tests at an honest 0.75%; baseline gate passed and the elevated-regression fixture failed as expected; CI YAML parses with PR and push coverage jobs |
+| 2026-08-05 | TEST-003 | Completed | Collection proved a disjoint 14 unit + 3 contract + 24 integration partition equal to all 41 cases; OpenAPI path/ID/tag and error-envelope contracts passed 3/3 without PostgreSQL |
 
 ## 17. Known program risks
 

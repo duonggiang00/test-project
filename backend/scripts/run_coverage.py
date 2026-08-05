@@ -17,10 +17,10 @@ def main() -> int:
             "pytest",
             "-q",
             "-m",
-            "unit",
+            "unit or contract",
             "--cov=app",
             "--cov-report=",
-            "--junitxml=reports/coverage-unit.xml",
+            "--junitxml=reports/coverage-fast.xml",
         ]
     )
     if unit_status != 0:

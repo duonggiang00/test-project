@@ -43,6 +43,7 @@ asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["."]
 markers = [
     "unit: isolated tests without a PostgreSQL behavior dependency",
+    "contract: API/schema contract tests without a PostgreSQL behavior dependency",
     "integration: tests that exercise the application with PostgreSQL",
 ]
 filterwarnings = [

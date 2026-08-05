@@ -19,6 +19,8 @@ def pytest_collection_modifyitems(items):
     for item in items:
         if "unit" in item.path.parts:
             item.add_marker(pytest.mark.unit)
+        elif "contract" in item.path.parts:
+            item.add_marker(pytest.mark.contract)
         else:
             item.add_marker(pytest.mark.integration)
 

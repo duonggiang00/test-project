@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "8c803ed2d105b3bc572e0de135db6473e12987dc",
-    "source_commit_timestamp": "2026-08-05T14:04:46+07:00",
-    "source_tree_sha256": "4ce5f54329778747b128fa55ae4e633f31c4c7f570b11fe5f839421be3d5b69d",
-    "relevant_file_count": 205,
+    "source_commit": "eecbbacbafb4061a5cf17e409a9331d11f369ffe",
+    "source_commit_timestamp": "2026-08-05T14:17:51+07:00",
+    "source_tree_sha256": "33e592debc486365d2b127b09e721589f7a49747eec27d9aa8521dd19f5902ff",
+    "relevant_file_count": 206,
     "alembic_heads": [
       "e598471b8b6d"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 14,
     "frontend_services": 1,
-    "backend_test_functions": 34,
+    "backend_test_functions": 37,
     "frontend_test_calls": 9
   },
   "backend": {
@@ -4283,6 +4283,27 @@
   },
   "tests": {
     "backend": [
+      {
+        "path": "tests/contract/test_openapi_contract.py",
+        "tests": [
+          {
+            "line": 17,
+            "markers": [],
+            "name": "test_openapi_operations_have_unique_ids_and_canonical_paths"
+          },
+          {
+            "line": 28,
+            "markers": [],
+            "name": "test_openapi_operations_are_tagged_for_domain_discovery"
+          },
+          {
+            "line": 38,
+            "markers": [],
+            "name": "test_app_exception_uses_stable_machine_readable_envelope"
+          }
+        ],
+        "tier": "integration"
+      },
       {
         "path": "tests/test_admin.py",
         "tests": [
