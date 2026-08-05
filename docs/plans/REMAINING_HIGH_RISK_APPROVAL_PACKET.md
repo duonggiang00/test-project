@@ -17,16 +17,23 @@ material scope expansion returns to the owner for approval.
 
 ## 2. Required order
 
-`A -> B -> C -> D -> E`
+`A -> D1 -> B -> C -> D2 -> E`
 
 - A restores trustworthy fresh-database migration testing.
+- D1 adds the DATA-001 audit core needed by admin override and revocation.
 - B establishes the ownership boundary used by data and AI work.
 - C replaces the temporary bearer/session behavior.
-- D provides audit and lifecycle infrastructure.
+- D2 completes instrumentation, soft delete, retention, purge, and file lifecycle.
 - E builds governed AI behavior on the security and audit foundations.
 
 Each batch receives its own commit(s), test evidence, and independent review
 where required. No batch runs a migration against shared or non-test data.
+
+Executable file/test contracts:
+
+- [`CI-004_DATA-001-006-009_CHANGE_CONTRACT.md`](CI-004_DATA-001-006-009_CHANGE_CONTRACT.md)
+- [`SEC-001-007_CHANGE_CONTRACT.md`](SEC-001-007_CHANGE_CONTRACT.md)
+- [`AI-001-009_CHANGE_CONTRACT.md`](AI-001-009_CHANGE_CONTRACT.md)
 
 ## 3. Batch A — Repair the legacy initial migration
 
@@ -68,6 +75,8 @@ Approved scope if authorized:
 - Keep admin override explicit and prepare it for audit instrumentation in D.
 - Convert the two strict ownership XFAIL cases into passing denial tests and
   expand the anonymous/student/owner/non-owner/admin IDOR matrix.
+- Keep ambiguous legacy Topic/standalone Question ownership nullable and
+  admin-only; do not guess a teacher during migration.
 
 Non-goals: teacher-to-teacher sharing, organization workspaces, ownership
 transfer, public drafts, or frontend-only authorization.
@@ -95,11 +104,17 @@ Proposed defaults requiring approval:
   revokes every active session for the user.
 - Require a CSRF token/header on cookie-authenticated mutations in addition to
   origin checks and SameSite cookies.
+- Strip browser-supplied authorization and raw cookie credentials before the
+  BFF injects its own backend credential.
 - Keep password reset as the approved mock/local flow.
 
 Implementation may add a hashed refresh-session table and additive migration.
 Raw refresh tokens are never stored. Backend remains authoritative; frontend
 redirects remain `/dashboard`, `/student/home`, and `/login`.
+
+For parallel refresh requests, the proposed rule is: reuse inside a five-second
+rotation race is rejected without revoking the family; later reuse revokes the
+family. The BFF also serializes refresh within each process.
 
 Non-goals: OAuth/social login, email delivery, bearer tokens in local storage,
 or automatic compatibility with unapproved third-party clients.
@@ -123,6 +138,9 @@ Approved baseline scope if authorized:
   classes whose permanent retention policy is approved.
 - Apply owner/admin access and the approved lifecycle to material files through
   the existing storage boundary.
+- Replace public material-file mounting/internal `file_path` exposure with an
+  authenticated owner/admin download path; keep only separately approved avatar
+  assets public. This material access-contract change is included in D approval.
 
 Proposed DATA-006 retention decision requiring approval:
 
@@ -133,10 +151,16 @@ Proposed DATA-006 retention decision requiring approval:
 - Redacted AI audit metadata, context-source identifiers/citations, reviewer,
   and outcome: retain while the parent business record exists; no automated
   purge in the MVP.
+- Extracted document chunks inherit the parent material lifecycle. Audit events
+  themselves have no approved purge policy and are not automatically purged.
 
 Purge remains disabled for any unclassified record. Every purge has a dry run,
 bounded batch, owner, audit event, and rollback/recovery evidence appropriate
 to the storage layer.
+
+Purge is allowlisted rather than generic. User, Exam, Question, and unsafe Topic
+purge remains blocked in the MVP because current cascades can destroy retained
+submissions, grades, or flashcard progress.
 
 Non-goals: legal-policy claims, production scheduling, hard deletion of active
 records, or retroactive collection of data that does not exist.
@@ -183,7 +207,9 @@ The owner may approve incrementally. A complete response can be:
 
 ```text
 Approve A, B, C with the proposed defaults, D with the proposed DATA-006
-retention policy, and E. Golden dataset content will be supplied later.
+retention policy, legacy owner-null admin quarantine, and E. Golden dataset
+content will be supplied later. The temporary teacher/admin system-management
+compatibility mapping is approved.
 ```
 
 Any exception should name the batch and replacement decision. Silence or a

@@ -346,6 +346,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | DATA-007–008 | Completed | Material uploads now use an injected local-storage boundary with atomic UUID writes and root-confined deletion; PDF/DOCX/PPTX/TXT validation enforces MIME, signature/OOXML structure, UTF-8 text, safe paths, and a 50 MB limit; 17 focused tests, 3/3 PostgreSQL material tests with cleanup, and the 83.5s fast gate pass |
 | 2026-08-05 | CI-010 | Review | Added a machine-readable `main` protection policy, workflow-drift checker, and application/negative-proof checklist; no Git remote exists, so observed contexts and merge blocking remain unverified |
 | 2026-08-05 | High-risk boundary | Approval requested | Bounded batches A–E document migration repair, ownership, auth lifecycle defaults, retention decisions, AI governance, non-goals, and required evidence; implementation remains pending explicit owner approval |
+| 2026-08-05 | High-risk contract audit | Prepared | Independent read-only security, migration/data, and AI audits produced executable file/test contracts; corrected order is A → DATA-001 audit core → ownership/auth → lifecycle → AI, with legacy owner quarantine, authenticated material downloads, cascade-safe purge allowlist, tenant-safe retrieval, and admin-owned golden answers explicit |
 
 ## 17. Known program risks
 
