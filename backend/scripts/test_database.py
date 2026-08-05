@@ -101,7 +101,9 @@ class TestDatabaseManager:
             connection.close()
 
         try:
-            target_connection = self._connect(self.target.target.database)
+            target_database = self.target.target.database
+            assert target_database is not None
+            target_connection = self._connect(target_database)
             try:
                 target_connection.autocommit = True
                 with target_connection.cursor() as cursor:

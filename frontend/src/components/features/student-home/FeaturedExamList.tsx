@@ -12,7 +12,7 @@ export default function FeaturedExamList() {
 
   if (isLoading) {
     return (
-      <section className="flex flex-col items-center justify-center p-12 border-4 border-black bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] min-h-[300px]">
+      <section data-testid="featured-exams-loading" className="flex flex-col items-center justify-center p-12 border-4 border-black bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] min-h-[300px]">
         <Loader2 className="w-12 h-12 animate-spin text-black mb-4" />
         <span className="font-mono text-lg font-bold text-black uppercase">Đang tải danh sách bài thi...</span>
       </section>
@@ -21,7 +21,7 @@ export default function FeaturedExamList() {
 
   if (isError) {
     return (
-      <section className="flex flex-col items-center justify-center p-12 border-4 border-black bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] min-h-[300px]">
+      <section data-testid="featured-exams-error" className="flex flex-col items-center justify-center p-12 border-4 border-black bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] min-h-[300px]">
         <span className="material-symbols-outlined text-6xl text-black mb-4">error</span>
         <p className="font-mono font-bold text-black text-xl uppercase">Không thể tải danh sách bài thi</p>
         <p className="font-mono text-sm text-gray-500 uppercase mt-2">Vui lòng thử lại sau.</p>
@@ -39,7 +39,7 @@ export default function FeaturedExamList() {
       </div>
 
       {exams.length === 0 ? (
-        <div className="bg-white border-4 border-dashed border-black p-12 text-center flex flex-col items-center justify-center min-h-[250px]">
+        <div data-testid="featured-exams-empty" className="bg-white border-4 border-dashed border-black p-12 text-center flex flex-col items-center justify-center min-h-[250px]">
           <span className="material-symbols-outlined text-6xl text-black mb-4">task_alt</span>
           <p className="text-xl font-bold text-black uppercase">Bạn chưa có bài thi nào.</p>
           <p className="text-sm text-gray-500 uppercase mt-2">Hãy quay lại sau nhé!</p>
@@ -89,4 +89,3 @@ export default function FeaturedExamList() {
     </section>
   );
 }
-

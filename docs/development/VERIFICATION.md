@@ -22,6 +22,7 @@ node scripts/verify.mjs integration
 node scripts/verify.mjs contract
 node scripts/verify.mjs migration
 node scripts/verify.mjs inventory
+node scripts/verify.mjs architecture
 node scripts/verify.mjs coverage
 node scripts/verify.mjs e2e
 node scripts/verify.mjs all
@@ -39,6 +40,7 @@ node scripts/verify.mjs all
 | `contract` | Run database-independent OpenAPI/schema/error-envelope contract tests |
 | `migration` | Create an isolated database and run Alembic upgrade → downgrade → upgrade before cleanup |
 | `inventory` | Recompute live technical facts and fail if the committed generated inventory is stale |
+| `architecture` | Reject new backend/frontend/contract/design anti-pattern fingerprints relative to the reviewed baseline |
 | `coverage` | Combine isolated backend unit/integration coverage, measure all frontend source, enforce both baselines, and apply the 80% changed-line target when `COVERAGE_BASE_SHA` is set |
 | `e2e` | Existing Playwright flow against the configured application |
 | `all` | Backend, frontend, and E2E checks in sequence |

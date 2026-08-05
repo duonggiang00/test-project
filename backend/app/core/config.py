@@ -91,4 +91,5 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()
+# Pydantic BaseSettings supplies required values from the validated environment.
+settings = Settings()  # type: ignore[call-arg]

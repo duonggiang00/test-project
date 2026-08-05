@@ -209,6 +209,8 @@ function sourceFiles() {
     resolve(frontendRoot, "playwright.config.ts"),
     resolve(frontendRoot, "playwright.mocked.config.ts"),
     resolve(workspaceRoot, "config/coverage-baseline.json"),
+    resolve(workspaceRoot, "config/architecture-guard-baseline.json"),
+    resolve(workspaceRoot, "config/database-model-signature.json"),
     resolve(workspaceRoot, ".github/workflows/ci.yml"),
   ];
   return [...new Set(paths.filter((path) => existsSync(path) && statSync(path).isFile()))].sort();

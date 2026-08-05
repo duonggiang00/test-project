@@ -15,8 +15,19 @@ export class AdminDashboardPage {
     await this.page.goto('/exams');
   }
 
-  async createTopic(name: string, description: string) {
-    await this.page.getByTestId('add-topic-button').click();
+  async createTopic(
+    name: string,
+    description: string,
+    activation: 'pointer' | 'keyboard' = 'pointer',
+  ) {
+    const addButton = this.page.getByTestId('add-topic-button');
+    if (activation === 'keyboard') {
+      await addButton.focus();
+      await expect(addButton).toBeFocused();
+      await this.page.keyboard.press('Enter');
+    } else {
+      await addButton.click();
+    }
     await this.page.getByTestId('topic-name-input').fill(name);
     await this.page.getByTestId('topic-description-input').fill(description);
     await this.page.getByTestId('save-topic-button').click();

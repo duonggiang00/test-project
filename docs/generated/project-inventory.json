@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "0011d0e3bd1467d951999d1b99e084108ac9c9eb",
-    "source_commit_timestamp": "2026-08-05T14:23:04+07:00",
-    "source_tree_sha256": "43595f55808334234d4a41d60d0be9f30ce6135a8f9db5d18daeddab58cffdb6",
-    "relevant_file_count": 211,
+    "source_commit": "b72d185197ae3286c123d3918173ae19497ababc",
+    "source_commit_timestamp": "2026-08-05T15:10:59+07:00",
+    "source_tree_sha256": "501370c35868965e2a3e7fd282a5a2c41accc32bc4670b6e82e4847de7d59806",
+    "relevant_file_count": 229,
     "alembic_heads": [
       "e598471b8b6d"
     ]
@@ -15,10 +15,10 @@
     "pydantic_schemas": 67,
     "fastapi_routes": 62,
     "next_pages": 25,
-    "frontend_hooks": 14,
+    "frontend_hooks": 15,
     "frontend_services": 1,
     "backend_test_functions": 41,
-    "frontend_test_calls": 10
+    "frontend_test_calls": 17
   },
   "backend": {
     "models": [
@@ -4130,6 +4130,10 @@
         ]
       },
       {
+        "file": "frontend/src/hooks/useExams.cache.test.tsx",
+        "exports": []
+      },
+      {
         "file": "frontend/src/hooks/useExams.ts",
         "exports": [
           "createExam",
@@ -4563,9 +4567,24 @@
     ],
     "frontend": [
       {
+        "path": "frontend/src/app/api/proxy/[...path]/route.test.ts",
+        "tier": "unit",
+        "test_count": 2
+      },
+      {
+        "path": "frontend/src/hooks/useExams.cache.test.tsx",
+        "tier": "unit",
+        "test_count": 1
+      },
+      {
         "path": "frontend/src/lib/backend-url.test.ts",
         "tier": "unit",
         "test_count": 3
+      },
+      {
+        "path": "frontend/src/lib/store.hydration.test.ts",
+        "tier": "unit",
+        "test_count": 1
       },
       {
         "path": "frontend/src/lib/store.test.ts",
@@ -4576,6 +4595,11 @@
         "path": "frontend/tests/component/button.states.test.tsx",
         "tier": "component",
         "test_count": 2
+      },
+      {
+        "path": "frontend/tests/component/featured-exam-list.states.test.tsx",
+        "tier": "component",
+        "test_count": 3
       },
       {
         "path": "frontend/tests/e2e/admin-flow.spec.ts",

@@ -175,9 +175,9 @@ Goal: Establish fast feedback and meaningful coverage across risk boundaries.
 | TEST-004 | Add ownership and tenant-isolation negative-test matrix | BLOCKED | TEST-003, GOV-002 | Exam update covers all five actors, but strict expected failures confirm missing non-owner enforcement for bulk assignment and material detail; fixes require approved SEC-001/002 work |
 | TEST-005 | Expand query-budget tests for important list/detail endpoints | DONE | TEST-003 | PostgreSQL regression compares exam detail with 2 vs 10 nested questions; both stay within four queries and the larger result does not add queries |
 | TEST-006 | Separate frontend unit, component, mocked E2E, and real E2E suites | DONE | CI-005, CI-006 | Unit, component, mocked four-browser, and guarded real-backend suites have explicit commands; all four tiers pass independently |
-| TEST-007 | Add hydration, cache-mutation, and BFF-only tests | TODO | TEST-006 | Approved data/state boundaries are covered |
-| TEST-008 | Add brutalist visual regression coverage | TODO | TEST-006, CI-007 | Desktop/mobile states have reviewed baselines |
-| TEST-009 | Cover loading, empty, error, disabled, and keyboard states | TODO | TEST-006 | Critical components expose all non-happy paths |
+| TEST-007 | Add hydration, cache-mutation, and BFF-only tests | DONE | TEST-006 | Five frontend unit suites pass 13 tests including Zustand no-token hydration, SWR non-revalidating cache mutation, and BFF cookie/path/host/redirect contracts |
+| TEST-008 | Add brutalist visual regression coverage | DONE | TEST-006, CI-007 | Reviewed black/white desktop/mobile baselines exist for all four browser projects; tooling overlay removed and clean matrix passes 4/4 |
+| TEST-009 | Cover loading, empty, error, disabled, and keyboard states | DONE | TEST-006 | Five component tests cover loading/error/empty/disabled/focus semantics and mocked flow proves keyboard activation across four browser projects |
 
 Exit criteria:
 
@@ -191,16 +191,16 @@ Goal: Convert critical architecture rules into failing checks.
 
 | ID | Task | Status | Depends on | Acceptance evidence |
 |---|---|---|---|---|
-| GUARD-001 | Add Python lint/type baseline | TODO | TOOL-006 | Typed Python and lint checks run locally and in CI |
-| GUARD-002 | Reject new `Session.query()`, `datetime.utcnow()`, bare exceptions, and raw error messages | TODO | GUARD-001 | Violation fixtures fail; compliant fixtures pass |
-| GUARD-003 | Detect queries in loops and request sessions passed to background tasks | TODO | GUARD-001 | Static checks cover known backend anti-patterns |
-| GUARD-004 | Enforce router/use-case/repository dependency direction | TODO | GOV-005, GUARD-001 | Invalid imports fail architecture tests |
-| GUARD-005 | Reject browser calls that bypass the BFF | TODO | GOV-006, CI-002 | Direct backend-origin fixtures fail |
-| GUARD-006 | Reject component data fetching, token local storage, server state in Zustand, and reload-based mutations | TODO | GOV-006, CI-002 | Frontend violation fixtures fail |
-| GUARD-007 | Enforce trailing-slash and route conventions | TODO | GOV-005, GOV-006 | Backend decorators and frontend calls are checked |
-| GUARD-008 | Enforce local font and black/white design-token policy | TODO | GOV-006 | Disallowed colors/remote fonts fail static checks |
-| GUARD-009 | Generate and diff OpenAPI contracts | TODO | CI-002, INV-002 | Breaking changes require explicit approval |
-| GUARD-010 | Detect model changes without migrations | TODO | CI-004, INV-001 | Schema drift fails CI |
+| GUARD-001 | Add Python lint/type baseline | DONE | TOOL-006 | Ruff syntax/name checks pass across app/scripts/tests; mypy passes the five explicitly typed config/security/runner modules; both run in fast verification |
+| GUARD-002 | Reject new `Session.query()`, `datetime.utcnow()`, bare exceptions, and raw error messages | DONE | GUARD-001 | Good/bad fixtures pass their meta-test and a temporary live `Session.query()` probe fails the baseline check |
+| GUARD-003 | Detect queries in loops and request sessions passed to background tasks | DONE | GUARD-001 | Dedicated fixture rules detect loop queries and session arguments inside balanced `add_task(...)` calls without cross-function false positives |
+| GUARD-004 | Enforce router/use-case/repository dependency direction | DONE | GOV-005, GUARD-001 | Layer-import fingerprints are baselined and invalid-import fixture is rejected |
+| GUARD-005 | Reject browser calls that bypass the BFF | DONE | GOV-006, CI-002 | Direct backend-origin browser fixture is rejected; BFF handler files are the explicit exception |
+| GUARD-006 | Reject component data fetching, token local storage, server state in Zustand, and reload-based mutations | DONE | GOV-006, CI-002 | All four frontend anti-pattern families have failing fixtures and new fingerprints fail fast verification |
+| GUARD-007 | Enforce trailing-slash and route conventions | DONE | GOV-005, GOV-006 | Backend decorators and frontend service/hook paths are scanned; both violation fixtures are detected |
+| GUARD-008 | Enforce local font and black/white design-token policy | DONE | GOV-006 | Remote-font, named-color, and non-monochrome literal fixtures are detected; 122 current color-debt fingerprints cannot increase |
+| GUARD-009 | Generate and diff OpenAPI contracts | DONE | CI-002, INV-002 | Deterministic runtime OpenAPI snapshot covers all registered paths and fails fast verification on any unreviewed diff; breaking-change approval remains explicit |
+| GUARD-010 | Detect model changes without migrations | DONE | CI-004, INV-001 | Runtime SQLAlchemy hash is bound to Alembic heads; model-only changes fail and the generator refuses to bless them without a new head |
 
 Exit criteria:
 
@@ -334,6 +334,12 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | CI-005/007–009 | Completed/Review | Mocked admin flow now authenticates and intercepts BFF-shaped contracts without backend access; Chromium/Firefox/WebKit/mobile pass 4/4 in 52s; failure artifacts were inspected; flaky/unowned fixture fails policy; PR job awaits its first GitHub run |
 | 2026-08-05 | TEST-006 | Blocked | Unit, component, mocked E2E, and real E2E have distinct commands/configs; 2 component tests and 4 mocked browser projects pass, while real-backend CI remains CI-006 |
 | 2026-08-05 | CI-006 / TEST-006 | Completed/Review | Guarded real runner used backend port 8765, seeded only test users, passed setup + student topic/exam/submit/result/cleanup 3/3 in 32.3s, passed owner/flake policy, and confirmed `_test` database cleanup; GitHub `main` execution remains pending |
+| 2026-08-05 | GUARD-002–008 | Completed | Static gate baselined 247 legacy fingerprints, compliant fixtures produced 0, bad fixtures exercised 17 rule families, a temporary live `Session.query()` probe failed as expected, and false-positive background-task matching was removed with balanced-call parsing |
+| 2026-08-05 | GUARD-001 | Completed | Added locked Ruff 0.16.1 and mypy 1.20.2; Ruff passed app/scripts/tests and mypy passed five explicit typed boundary modules after three evidence-based type fixes |
+| 2026-08-05 | GUARD-009 | Completed | Deterministic runtime OpenAPI snapshot/check added to fast verification; any path/method/schema/security diff now fails before regeneration and retains breaking-change approval rules |
+| 2026-08-05 | GUARD-010 | Completed | Runtime signature binds 13 SQLAlchemy models to current Alembic heads; model-only drift fails and cannot be regenerated without a head change; migration history remains untouched |
+| 2026-08-05 | TEST-007 | Completed | Frontend unit suite expanded from 9 to 13 passing tests; new cases verify user hydration without token storage, SWR cache mutation without a second transport call, and BFF authorization/path/host/redirect behavior |
+| 2026-08-05 | TEST-008–009 | Completed | Reviewed four black/white topics-page PNG baselines at desktop/mobile sizes, removed Next dev overlay noise, clean visual matrix passed 4/4 in 45.9s, and component suite covers loading/error/empty/disabled/focus while the browser flow activates via Enter |
 
 ## 17. Known program risks
 

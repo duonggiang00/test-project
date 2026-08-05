@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { AdminDashboardPage } from '../pom/AdminDashboardPage';
 import { ExamBuilderPage } from '../pom/ExamBuilderPage';
 
@@ -154,9 +154,16 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
 
   // Initialize AdminDashboardPage and go to /topics
   await adminPage.gotoTopics();
-  
+  await expect(page.getByTestId('add-topic-button')).toBeVisible();
+  await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+  await expect(page).toHaveScreenshot('topics-page.png', {
+    animations: 'disabled',
+    caret: 'hide',
+    fullPage: true,
+  });
+
   // Create a topic 'E2E Topic'
-  await adminPage.createTopic('E2E Topic', 'E2E Topic Description');
+  await adminPage.createTopic('E2E Topic', 'E2E Topic Description', 'keyboard');
 
   // Go to /exams and create an exam 'E2E Exam'
   await adminPage.gotoExams();
