@@ -135,7 +135,7 @@ Goal: Prevent unverified code from entering `main`.
 | CI-007 | Add Chromium, Firefox, WebKit, and mobile projects | DONE | CI-005, CI-006 | Chromium, Firefox, WebKit, and Pixel 7 Chrome matrix passes locally in 52s, within the 10-minute budget |
 | CI-008 | Upload logs, traces, screenshots, and reports on failure | DONE | CI-005 | Local failures produced error context/screenshot/video; config captures first-retry trace and CI uploads the complete Playwright report tree |
 | CI-009 | Add flaky-test retry/ownership policy | DONE | CI-005 | One retry collects diagnostics; report checker fails retried/flaky/unowned tests and the synthetic violation fixture fails as expected |
-| CI-010 | Protect required checks before merge | TODO | CI-002–009 | GitHub branch policy identifies required gates |
+| CI-010 | Protect required checks before merge | REVIEW | CI-002–009 | Machine-readable policy and drift gate identify three PR requirements; remote application and merge-block evidence await the first GitHub PR |
 
 Exit criteria:
 
@@ -341,6 +341,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | TEST-007 | Completed | Frontend unit suite expanded from 9 to 13 passing tests; new cases verify user hydration without token storage, SWR cache mutation without a second transport call, and BFF authorization/path/host/redirect behavior |
 | 2026-08-05 | TEST-008–009 | Completed | Reviewed four black/white topics-page PNG baselines at desktop/mobile sizes, removed Next dev overlay noise, clean visual matrix passed 4/4 in 45.9s, and component suite covers loading/error/empty/disabled/focus while the browser flow activates via Enter |
 | 2026-08-05 | DATA-007–008 | Completed | Material uploads now use an injected local-storage boundary with atomic UUID writes and root-confined deletion; PDF/DOCX/PPTX/TXT validation enforces MIME, signature/OOXML structure, UTF-8 text, safe paths, and a 50 MB limit; 17 focused tests, 3/3 PostgreSQL material tests with cleanup, and the 83.5s fast gate pass |
+| 2026-08-05 | CI-010 | Review | Added a machine-readable `main` protection policy, workflow-drift checker, and application/negative-proof checklist; no Git remote exists, so observed contexts and merge blocking remain unverified |
 
 ## 17. Known program risks
 

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "default_branch": "main",
+  "workflow": {
+    "path": ".github/workflows/ci.yml",
+    "name": "Verification"
+  },
+  "required_pull_request_checks": [
+    {
+      "job_id": "fast",
+      "job_name": "Fast verification"
+    },
+    {
+      "job_id": "coverage-pr",
+      "job_name": "Coverage regression"
+    },
+    {
+      "job_id": "mocked-e2e",
+      "job_name": "Mocked browser matrix"
+    }
+  ],
+  "post_merge_checks": [
+    {
+      "job_id": "integration",
+      "job_name": "PostgreSQL integration"
+    },
+    {
+      "job_id": "real-e2e",
+      "job_name": "Real backend smoke E2E"
+    }
+  ],
+  "merge_policy": {
+    "require_branch_up_to_date": true,
+    "block_force_pushes": true,
+    "block_branch_deletion": true
+  }
+}

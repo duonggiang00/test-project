@@ -58,6 +58,12 @@ const steps = {
     [resolve(workspaceRoot, "scripts/database-model-drift.mjs"), "check"],
     workspaceRoot,
   ),
+  githubBranchPolicy: command(
+    "GitHub branch protection policy",
+    nodeExecutable,
+    [resolve(workspaceRoot, "scripts/check-github-branch-policy.mjs")],
+    workspaceRoot,
+  ),
   backendUnit: command(
     "backend unit tests",
     "uv",
@@ -231,6 +237,7 @@ const modes = {
   env: [steps.env],
   fast: [
     steps.env,
+    steps.githubBranchPolicy,
     steps.databaseDrift,
     steps.inventory,
     steps.architecture,
@@ -270,6 +277,7 @@ const modes = {
   "e2e-real": [steps.e2eReal, steps.e2eRealPolicy],
   all: [
     steps.env,
+    steps.githubBranchPolicy,
     steps.databaseDrift,
     steps.inventory,
     steps.architecture,
