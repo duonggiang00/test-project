@@ -20,6 +20,8 @@ node scripts/verify.mjs backend
 node scripts/verify.mjs frontend
 node scripts/verify.mjs integration
 node scripts/verify.mjs migration
+node scripts/verify.mjs inventory
+node scripts/verify.mjs coverage
 node scripts/verify.mjs e2e
 node scripts/verify.mjs all
 ```
@@ -29,11 +31,13 @@ node scripts/verify.mjs all
 | Mode | Contract |
 |---|---|
 | `env` | Validate canonical, non-secret `.env.example` keys |
-| `fast` | Env contract, backend unit tests, frontend lint/unit/build |
+| `fast` | Env contract, generated-inventory freshness, backend unit tests, frontend lint/unit/build |
 | `backend` | Backend unit tests followed by the guarded PostgreSQL integration lifecycle |
 | `frontend` | Frontend lint, unit tests, and production build |
 | `integration` | Create a new local `_test` PostgreSQL database, run integration tests, and drop it in `finally` |
 | `migration` | Create an isolated database and run Alembic upgrade → downgrade → upgrade before cleanup |
+| `inventory` | Recompute live technical facts and fail if the committed generated inventory is stale |
+| `coverage` | Combine isolated backend unit/integration coverage, measure all frontend source, enforce both baselines, and apply the 80% changed-line target when `COVERAGE_BASE_SHA` is set |
 | `e2e` | Existing Playwright flow against the configured application |
 | `all` | Backend, frontend, and E2E checks in sequence |
 
@@ -58,6 +62,12 @@ The explicit `drop` command still enforces the local-host and `_test` name guard
 The migration mode uses the same lifecycle and stops at the first failed stage. A failure is never bypassed by stamping the database or editing a migration during verification.
 
 The current E2E suite is not fully mocked because global authentication and the student flow require a live backend. Keep mocked PR E2E and real-backend E2E separate when implementing `TEST-006` and `CI-005`.
+
+## Coverage policy
+
+The reviewed baseline is `config/coverage-baseline.json`: backend 72.52% (1,639/2,260 lines) and frontend 0.75% (81/10,685 lines) as measured on 2026-08-05. The low frontend value is retained honestly because the coverage run instruments all of `frontend/src`; it is not inflated by reporting only imported files.
+
+Coverage may increase without changing the baseline. A decrease fails. Lowering a recorded baseline requires evidence that the measurement scope or specification was wrong and explicit review of the baseline diff. In CI, executable changed lines with coverage metadata target at least 80%; repository-wide coverage is not forced to 80% immediately.
 
 The verification process stops on the first failure and preserves the underlying command's exit code. A failed command is evidence of a gate failure, not an orchestration failure.
 

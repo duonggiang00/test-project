@@ -169,8 +169,8 @@ Goal: Establish fast feedback and meaningful coverage across risk boundaries.
 
 | ID | Task | Status | Depends on | Acceptance evidence |
 |---|---|---|---|---|
-| TEST-001 | Measure backend and frontend coverage baselines | TODO | CI-002, CI-003 | Baselines are recorded from reproducible runs |
-| TEST-002 | Prevent coverage regression and target ~80% on new/changed code | TODO | TEST-001 | CI policy is active without requiring immediate repository-wide 80% |
+| TEST-001 | Measure backend and frontend coverage baselines | DONE | CI-002, CI-003 | Reproducible full-source runs record backend 72.52% (1,639/2,260) and frontend 0.75% (81/10,685) line coverage |
+| TEST-002 | Prevent coverage regression and target ~80% on new/changed code | DONE | TEST-001 | Local/CI checker forbids baseline drops and enforces an 80% executable changed-line target when a base SHA is available |
 | TEST-003 | Separate backend unit, contract, and PostgreSQL integration suites | TODO | CI-003 | Markers/jobs select each tier reliably |
 | TEST-004 | Add ownership and tenant-isolation negative-test matrix | TODO | TEST-003, GOV-002 | Anonymous/student/owner/non-owner/admin cases are covered |
 | TEST-005 | Expand query-budget tests for important list/detail endpoints | TODO | TEST-003 | Query counts do not scale linearly with row count |
@@ -327,6 +327,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | CI-002–003 | Review | Replaced legacy CI with read-only fast and PostgreSQL integration jobs; workflow YAML parses, local gates pass, and failure reports are produced; GitHub run is unavailable because the root repository has no remote |
 | 2026-08-05 | CI-004 | Blocked | Guarded migration runner cleaned up correctly but `upgrade head` failed in the initial migration at `DROP INDEX ix_user_email`; no migration assertion or history was modified |
 | 2026-08-05 | INV-001–008 | Completed | Generated inventory records 13 models, 67 schemas, 62 API operations, 25 pages, frontend modules, and test metadata; counts matched OpenAPI/filesystem, context output parsed, deterministic rerun passed, and an injected source probe triggered the stale gate |
+| 2026-08-05 | TEST-001–002 | Completed | Isolated backend processes passed 14 unit + 24 integration tests at 72.52%; all-source frontend run passed 9 tests at an honest 0.75%; baseline gate passed and the elevated-regression fixture failed as expected; CI YAML parses with PR and push coverage jobs |
 
 ## 17. Known program risks
 
@@ -339,5 +340,6 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Backend tests share a global SlowAPI limiter and exceed auth limits during a full run | Mitigated with per-test limiter reset; current full baseline is 29 passed in 23.78s |
 | CI workflow has not executed on GitHub | CI-002/003 implementation is in REVIEW; create the initial commit and configure a remote before relying on required-check status |
 | Alembic cannot build a fresh database | CI-004 blocks at initial migration `27f1dff6a48f`; obtain owner approval before correcting migration history, then rerun upgrade/downgrade/upgrade |
+| Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
 | Current code may not yet satisfy target ownership separation | Preserve current behavior through policies, then harden under Milestone 7 |
 | Submission/grade purge policy is not approved | Block permanent purge for these records until DATA-006 |

@@ -198,15 +198,17 @@ function sourceFiles() {
     ...walkFiles(resolve(backendRoot, "app")),
     ...walkFiles(resolve(backendRoot, "tests")),
     ...walkFiles(resolve(backendRoot, "alembic")),
+    ...walkFiles(resolve(backendRoot, "scripts")),
     ...walkFiles(resolve(frontendRoot, "src")),
     ...walkFiles(resolve(frontendRoot, "tests")),
     ...walkFiles(resolve(frontendRoot, "e2e")),
+    ...walkFiles(resolve(workspaceRoot, "scripts")),
     resolve(backendRoot, "pyproject.toml"),
     resolve(frontendRoot, "package.json"),
     resolve(frontendRoot, "jest.config.ts"),
     resolve(frontendRoot, "playwright.config.ts"),
-    resolve(workspaceRoot, "backend/scripts/emit_inventory.py"),
-    resolve(workspaceRoot, "scripts/project-inventory.mjs"),
+    resolve(workspaceRoot, "config/coverage-baseline.json"),
+    resolve(workspaceRoot, ".github/workflows/ci.yml"),
   ];
   return [...new Set(paths.filter((path) => existsSync(path) && statSync(path).isFile()))].sort();
 }
@@ -233,6 +235,9 @@ function buildInventory() {
   const relevantFiles = sourceFiles();
   const backendTestCount = backend.tests.reduce((sum, entry) => sum + entry.tests.length, 0);
   const frontendTestCount = frontendTestEntries.reduce((sum, entry) => sum + entry.test_count, 0);
+  const coverageBaseline = JSON.parse(
+    readFileSync(resolve(workspaceRoot, "config/coverage-baseline.json"), "utf8"),
+  );
 
   return {
     schema_version: 1,
@@ -267,16 +272,17 @@ function buildInventory() {
     coverage: {
       backend: {
         provider: "pytest-cov",
-        command: "uv run --frozen pytest --cov=app",
-        baseline_percent: null,
-        baseline_status: "not_measured",
+        command: "uv run --frozen python -m scripts.run_coverage",
+        baseline_percent: coverageBaseline.backend.lines_percent,
+        baseline_status: "measured",
       },
       frontend: {
         provider: "Jest v8 coverage",
         command: "npm run test:unit:coverage",
-        baseline_percent: null,
-        baseline_status: "not_measured",
+        baseline_percent: coverageBaseline.frontend.lines_percent,
+        baseline_status: "measured",
       },
+      changed_code_lines_target_percent: coverageBaseline.changed_code.lines_percent,
     },
   };
 }

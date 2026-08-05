@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -95,12 +97,17 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          package-manager-cache: false
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
 
       - name: Set up uv and Python
         uses: astral-sh/setup-uv@v8
@@ -114,8 +121,10 @@ jobs:
         working-directory: backend
         run: uv sync --frozen
 
-      - name: Run isolated PostgreSQL integration gate
-        run: node scripts/verify.mjs integration
+      - name: Run coverage and PostgreSQL integration gate
+        env:
+          COVERAGE_BASE_SHA: ${{ github.event.before }}
+        run: node scripts/verify.mjs coverage
 
       - name: Run Alembic round trip
         run: node scripts/verify.mjs migration
@@ -127,4 +136,73 @@ jobs:
           name: integration-diagnostics-${{ github.run_id }}
           if-no-files-found: ignore
           retention-days: 7
-          path: backend/reports/
+          path: |
+            backend/reports/
+            frontend/reports/
+
+  coverage-pr:
+    name: Coverage regression
+    if: github.event_name == 'pull_request'
+    needs: fast
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.2-pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_exam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v8
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run coverage regression gate
+        env:
+          COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/verify.mjs coverage
+
+      - name: Upload coverage diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-diagnostics-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            backend/reports/
+            frontend/reports/

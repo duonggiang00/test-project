@@ -9,19 +9,21 @@ from scripts.test_database import build_manager  # noqa: E402
 
 
 def main() -> int:
+    extra_pytest_args = sys.argv[1:]
+    if extra_pytest_args[:1] == ["--"]:
+        extra_pytest_args = extra_pytest_args[1:]
+    pytest_args = extra_pytest_args or [
+        "-q",
+        "-m",
+        "integration",
+        "--junitxml=reports/integration.xml",
+    ]
+
     manager = build_manager()
     manager.create()
     try:
         completed = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                "-q",
-                "-m",
-                "integration",
-                "--junitxml=reports/integration.xml",
-            ],
+            [sys.executable, "-m", "pytest", *pytest_args],
             check=False,
         )
         return completed.returncode

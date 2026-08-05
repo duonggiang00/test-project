@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "a3e1acd4e93664e7600b0c6105e3c2459f565ad2",
-    "source_commit_timestamp": "2026-08-05T13:50:36+07:00",
-    "source_tree_sha256": "4d56d04250bd365edfbadea8064a378b540a63c18304b82ef731d87445c9de93",
-    "relevant_file_count": 191,
+    "source_commit": "8c803ed2d105b3bc572e0de135db6473e12987dc",
+    "source_commit_timestamp": "2026-08-05T14:04:46+07:00",
+    "source_tree_sha256": "4ce5f54329778747b128fa55ae4e633f31c4c7f570b11fe5f839421be3d5b69d",
+    "relevant_file_count": 205,
     "alembic_heads": [
       "e598471b8b6d"
     ]
@@ -4541,15 +4541,16 @@
   "coverage": {
     "backend": {
       "provider": "pytest-cov",
-      "command": "uv run --frozen pytest --cov=app",
-      "baseline_percent": null,
-      "baseline_status": "not_measured"
+      "command": "uv run --frozen python -m scripts.run_coverage",
+      "baseline_percent": 72.52,
+      "baseline_status": "measured"
     },
     "frontend": {
       "provider": "Jest v8 coverage",
       "command": "npm run test:unit:coverage",
-      "baseline_percent": null,
-      "baseline_status": "not_measured"
-    }
+      "baseline_percent": 0.75,
+      "baseline_status": "measured"
+    },
+    "changed_code_lines_target_percent": 80
   }
 }

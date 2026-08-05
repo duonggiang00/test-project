@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "measured_at": "2026-08-05",
+  "backend": {
+    "lines_percent": 72.52,
+    "covered_lines": 1639,
+    "total_lines": 2260
+  },
+  "frontend": {
+    "lines_percent": 0.75,
+    "covered_lines": 81,
+    "total_lines": 10685
+  },
+  "changed_code": {
+    "lines_percent": 80
+  }
+}

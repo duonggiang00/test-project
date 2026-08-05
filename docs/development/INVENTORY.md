@@ -22,6 +22,6 @@ Provenance includes:
 
 The source-tree hash is the freshness authority because a generated file cannot contain the hash of the commit that contains itself. Documentation-only commits do not invalidate technical inventory. Any relevant backend/frontend/test/generator change does.
 
-Coverage providers and commands are recorded, but percentage fields remain `null` until `TEST-001` measures reproducible baselines. Agents must not interpret `null` as zero coverage or as a passing baseline.
+Coverage providers, reproducible commands, measured line baselines, and the changed-code target are read from `config/coverage-baseline.json`. Baseline reductions require evidence and review; they are not an automatic response to a failing gate.
 
 The `context` command verifies freshness before returning matches. Use a domain term such as `exam`, `material`, `student`, or `auth`; do not copy route/model lists into manual project-state documents.

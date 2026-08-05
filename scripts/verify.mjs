@@ -62,6 +62,19 @@ const steps = {
     backendRoot,
     uvEnvironment,
   ),
+  backendCoverage: command(
+    "backend full-suite coverage",
+    "uv",
+    [
+      "run",
+      "--frozen",
+      "python",
+      "-m",
+      "scripts.run_coverage",
+    ],
+    backendRoot,
+    uvEnvironment,
+  ),
   migration: command(
     "Alembic upgrade/downgrade/upgrade round trip",
     "uv",
@@ -85,6 +98,18 @@ const steps = {
       "--outputFile=reports/jest.json",
     ],
     frontendRoot,
+  ),
+  frontendCoverage: command(
+    "frontend full-source coverage",
+    nodeExecutable,
+    [frontendBins.jest, "--runInBand", "--coverage"],
+    frontendRoot,
+  ),
+  coveragePolicy: command(
+    "coverage baseline and changed-code policy",
+    nodeExecutable,
+    [resolve(workspaceRoot, "scripts/check-coverage.mjs"), "check"],
+    workspaceRoot,
   ),
   frontendBuild: command(
     "frontend production build",
@@ -115,6 +140,7 @@ const modes = {
   integration: [steps.backendIntegration],
   migration: [steps.migration],
   inventory: [steps.inventory],
+  coverage: [steps.backendCoverage, steps.frontendCoverage, steps.coveragePolicy],
   e2e: [steps.e2e],
   all: [
     steps.env,

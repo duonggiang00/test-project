@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "backend": {
+    "lines_percent": 100
+  },
+  "frontend": {
+    "lines_percent": 100
+  },
+  "changed_code": {
+    "lines_percent": 100
+  }
+}
