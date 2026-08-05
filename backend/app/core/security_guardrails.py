@@ -2,7 +2,10 @@
 Security Guardrail Module for AI Chatbot.
 Handles: Prompt Injection detection, Message validation, Error sanitization.
 """
+import io
 import re
+import zipfile
+from pathlib import Path
 from typing import List, Dict, Any
 
 # ── Prompt Injection Detection ────────────────────────────────────────────────
@@ -88,15 +91,22 @@ def validate_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 # ── File Upload Security ──────────────────────────────────────────────────────
 
-ALLOWED_EXTENSIONS = {"pdf", "txt", "md", "docx"}
-ALLOWED_MAGIC_BYTES = {
-    "pdf": b"%PDF",
-    "docx": b"PK\x03\x04",  # ZIP-based format
+ALLOWED_CONTENT_TYPES = {
+    "pdf": {"application/pdf"},
+    "docx": {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    },
+    "pptx": {
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    },
+    "txt": {"text/plain"},
 }
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50MB
 
 
-def validate_file_upload(filename: str, content: bytes) -> tuple[bool, str]:
+def validate_file_upload(
+    filename: str, content_type: str | None, content: bytes
+) -> tuple[bool, str]:
     """
     Validate uploaded file:
     1. Check extension whitelist
@@ -104,25 +114,45 @@ def validate_file_upload(filename: str, content: bytes) -> tuple[bool, str]:
     3. Check file size
     Returns (is_valid, error_message)
     """
-    # 1. Check for path traversal
-    import os
-    safe_name = os.path.basename(filename)
-    if safe_name != filename or ".." in filename or "/" in filename or "\\" in filename:
+    # 1. Check for path traversal and ambiguous dot segments.
+    safe_name = Path(filename).name
+    if not filename or safe_name != filename or ".." in filename or "/" in filename or "\\" in filename:
         return False, "INVALID_FILENAME"
     
     # 2. Check extension
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-    if ext not in ALLOWED_EXTENSIONS:
+    if ext not in ALLOWED_CONTENT_TYPES:
         return False, "UNSUPPORTED_FILE_TYPE"
-    
-    # 3. Check magic bytes for known types
-    if ext == "pdf" and not content[:4].startswith(b"%PDF"):
-        return False, "INVALID_FILE_CONTENT"
-    
-    # 4. Check size
+
+    # 3. Reject oversized content before parsing it.
     if len(content) > MAX_FILE_SIZE_BYTES:
         return False, "FILE_TOO_LARGE"
-    
+
+    # 4. MIME must agree with the approved extension.
+    normalized_content_type = (content_type or "").split(";", 1)[0].strip().lower()
+    if normalized_content_type not in ALLOWED_CONTENT_TYPES[ext]:
+        return False, "INVALID_FILE_CONTENT_TYPE"
+
+    # 5. Verify signatures and distinguish Office Open XML containers by entry.
+    if ext == "pdf" and not content.startswith(b"%PDF-"):
+        return False, "INVALID_FILE_CONTENT"
+    if ext in {"docx", "pptx"}:
+        required_entry = "word/document.xml" if ext == "docx" else "ppt/presentation.xml"
+        try:
+            with zipfile.ZipFile(io.BytesIO(content)) as archive:
+                names = set(archive.namelist())
+        except (OSError, zipfile.BadZipFile):
+            return False, "INVALID_FILE_CONTENT"
+        if "[Content_Types].xml" not in names or required_entry not in names:
+            return False, "INVALID_FILE_CONTENT"
+    if ext == "txt":
+        try:
+            content.decode("utf-8")
+        except UnicodeDecodeError:
+            return False, "INVALID_FILE_CONTENT"
+        if b"\x00" in content:
+            return False, "INVALID_FILE_CONTENT"
+
     return True, ""
 
 

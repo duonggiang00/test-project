@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "b72d185197ae3286c123d3918173ae19497ababc",
-    "source_commit_timestamp": "2026-08-05T15:10:59+07:00",
-    "source_tree_sha256": "501370c35868965e2a3e7fd282a5a2c41accc32bc4670b6e82e4847de7d59806",
-    "relevant_file_count": 229,
+    "source_commit": "030fb46f77154f08b7c154e6fd7fddc0f15c3aa2",
+    "source_commit_timestamp": "2026-08-05T15:43:35+07:00",
+    "source_tree_sha256": "692ee941d2c3515601f00ff8b3c054310dbf245ab758fd70b754a82f29525e56",
+    "relevant_file_count": 232,
     "alembic_heads": [
       "e598471b8b6d"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 1,
-    "backend_test_functions": 41,
+    "backend_test_functions": 48,
     "frontend_test_calls": 17
   },
   "backend": {
@@ -4437,17 +4437,17 @@
         "path": "tests/test_materials.py",
         "tests": [
           {
-            "line": 1,
+            "line": 4,
             "markers": [],
             "name": "test_upload_material"
           },
           {
-            "line": 10,
+            "line": 22,
             "markers": [],
             "name": "test_get_materials"
           },
           {
-            "line": 18,
+            "line": 30,
             "markers": [],
             "name": "test_get_material_questions"
           }
@@ -4537,6 +4537,57 @@
             "line": 73,
             "markers": [],
             "name": "test_explicit_test_database_url_overrides_the_derived_target"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_file_upload.py",
+        "tests": [
+          {
+            "line": 36,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_approved_upload_types_require_matching_mime_and_signature"
+          },
+          {
+            "line": 65,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_upload_validation_rejects_path_type_mime_and_signature_mismatches"
+          },
+          {
+            "line": 71,
+            "markers": [],
+            "name": "test_upload_validation_rejects_content_over_50_mb"
+          },
+          {
+            "line": 80,
+            "markers": [],
+            "name": "test_local_storage_uses_unique_names_and_preserves_extension"
+          },
+          {
+            "line": 97,
+            "markers": [],
+            "name": "test_local_storage_refuses_paths_outside_its_root"
+          },
+          {
+            "line": 107,
+            "markers": [],
+            "name": "test_local_storage_removes_temporary_file_when_atomic_replace_fails"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_material_storage_service.py",
+        "tests": [
+          {
+            "line": 37,
+            "markers": [],
+            "name": "test_failed_material_commit_rolls_back_and_removes_stored_file"
           }
         ],
         "tier": "unit"

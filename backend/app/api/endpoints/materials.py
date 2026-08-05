@@ -18,6 +18,7 @@ from app.schemas.material import (
 from app.schemas.question import QuestionResponse
 from app.api.deps import get_current_active_teacher
 from app.services.material_service import MaterialService
+from app.core.security_guardrails import MAX_FILE_SIZE_BYTES
 
 router = APIRouter()
 
@@ -36,11 +37,12 @@ def upload_material(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    content = file.file.read()
+    content = file.file.read(MAX_FILE_SIZE_BYTES + 1)
     return MaterialService.upload_material(
         db=db,
         current_user_id=current_user.id,
         filename=file.filename or "",
+        content_type=file.content_type,
         content=content,
         background_tasks=background_tasks,
         topic_id=topic_id

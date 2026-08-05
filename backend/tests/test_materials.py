@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 def test_upload_material(client, test_teacher):
     files = {"file": ("test.txt", b"Mock Document Content", "text/plain")}
     res = client.post("/materials/upload", files=files, headers=test_teacher["headers"])
@@ -6,6 +9,15 @@ def test_upload_material(client, test_teacher):
     assert "id" in data
     assert data["title"] == "test.txt"
     assert data["ai_status"] == "pending"
+    stored_path = Path(data["file_path"])
+    assert stored_path.is_file()
+
+    delete_res = client.delete(
+        f"/materials/{data['id']}?cascade=true",
+        headers=test_teacher["headers"],
+    )
+    assert delete_res.status_code == 200
+    assert not stored_path.exists()
 
 def test_get_materials(client, test_teacher):
     res = client.get("/materials/", headers=test_teacher["headers"])

@@ -32,8 +32,8 @@ app.include_router(history.router, prefix="/history", tags=["history"])
 app.include_router(flashcards.router, prefix="/flashcards", tags=["flashcards"])
 app.include_router(ai_studio.router, prefix="/ai", tags=["ai"])
 
-import os
-os.makedirs("uploads", exist_ok=True)
+from app.core.file_storage import material_file_storage
+material_file_storage.ensure_root()
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 from fastapi.responses import JSONResponse

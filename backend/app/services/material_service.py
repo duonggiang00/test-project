@@ -1,4 +1,3 @@
-import os
 import json
 import re
 from uuid import UUID
@@ -22,10 +21,8 @@ from app.schemas.material import (
 
 from app.core.exceptions import AppException
 from app.core.config import settings
+from app.core.file_storage import FileStorage, material_file_storage
 from app.core.security_guardrails import validate_file_upload
-
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 ai_client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -38,28 +35,39 @@ class MaterialService:
         return db.query(StudyMaterial)
 
     @staticmethod
-    def upload_material(db: Session, current_user_id: UUID, filename: str, content: bytes, background_tasks: BackgroundTasks, topic_id: Optional[UUID] = None):
-        is_valid, error_code = validate_file_upload(filename, content)
+    def upload_material(
+        db: Session,
+        current_user_id: UUID,
+        filename: str,
+        content_type: str | None,
+        content: bytes,
+        background_tasks: BackgroundTasks,
+        topic_id: Optional[UUID] = None,
+        storage: FileStorage = material_file_storage,
+    ):
+        is_valid, error_code = validate_file_upload(filename, content_type, content)
         if not is_valid:
             raise AppException(status_code=422, error_code=error_code)
 
-        safe_filename = os.path.basename(filename)
-        file_path = os.path.join(UPLOAD_DIR, safe_filename)
+        safe_filename = filename
+        file_path = storage.save(safe_filename, content)
 
-        with open(file_path, "wb") as buffer:
-            buffer.write(content)
-
-        material = StudyMaterial(
-            uploader_id=current_user_id,
-            topic_id=topic_id,
-            title=safe_filename,
-            file_type=safe_filename.rsplit(".", 1)[-1].lower() if "." in safe_filename else "unknown",
-            file_path=file_path,
-            ai_status="pending"
-        )
-        db.add(material)
-        db.commit()
-        db.refresh(material)
+        try:
+            material = StudyMaterial(
+                uploader_id=current_user_id,
+                topic_id=topic_id,
+                title=safe_filename,
+                file_type=safe_filename.rsplit(".", 1)[-1].lower(),
+                file_path=file_path,
+                ai_status="pending"
+            )
+            db.add(material)
+            db.commit()
+            db.refresh(material)
+        except Exception:
+            db.rollback()
+            storage.delete(file_path)
+            raise
 
         from app.services.ai_service import mock_process_document_and_generate_questions
         background_tasks.add_task(mock_process_document_and_generate_questions, material.id)
@@ -89,7 +97,13 @@ class MaterialService:
         )
 
     @staticmethod
-    def delete_material(db: Session, material_id: UUID, cascade: bool = False, keep_assets: bool = False):
+    def delete_material(
+        db: Session,
+        material_id: UUID,
+        cascade: bool = False,
+        keep_assets: bool = False,
+        storage: FileStorage = material_file_storage,
+    ):
         material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()
         if not material:
             raise AppException(status_code=404, error_code="MATERIAL_NOT_FOUND", message="Material not found")
@@ -119,11 +133,8 @@ class MaterialService:
         db.delete(material)
         db.commit()
 
-        if file_path and os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except OSError as e:
-                print(f"Error removing file {file_path}: {e}")
+        if file_path:
+            storage.delete(file_path)
 
         return {"message": "Material and associated assets deleted successfully" if cascade else "Material deleted successfully"}
 

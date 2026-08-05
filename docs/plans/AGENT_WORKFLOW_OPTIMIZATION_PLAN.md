@@ -242,8 +242,8 @@ Migration tasks require owner approval and downgrade evidence.
 | DATA-004 | Implement admin/owner restoration policy | TODO | DATA-003, SEC-002 | Authorization and 30-day eligibility tests pass |
 | DATA-005 | Implement 30-day purge service with dry run and audit | TODO | DATA-002–004 | Boundary-time, dry-run, purge, and rollback tests pass |
 | DATA-006 | Confirm separate retention for submissions, grades, and sensitive AI logs | TODO | DATA-001 | Owner-approved policy is recorded before permanent purge |
-| DATA-007 | Introduce local storage interface for uploaded files | TODO | GOV-001 | Current local behavior works behind a replaceable interface |
-| DATA-008 | Enforce PDF/DOCX/PPTX/TXT and 50 MB validation | TODO | DATA-007 | Extension, MIME, signature, size, and path tests pass |
+| DATA-007 | Introduce local storage interface for uploaded files | DONE | GOV-001 | Injected `FileStorage` protocol preserves local behavior with atomic, UUID-named writes and root-confined deletion; fast and PostgreSQL gates pass |
+| DATA-008 | Enforce PDF/DOCX/PPTX/TXT and 50 MB validation | DONE | DATA-007 | 17 focused cases cover extension, MIME, PDF/OOXML signature, UTF-8 text, size, collision, atomic-failure cleanup, DB rollback, and path boundaries; endpoint reads at most 50 MB + 1 byte |
 | DATA-009 | Apply owner/admin authorization and 30-day lifecycle to files | TODO | DATA-003–005, DATA-007 | Cross-owner access and restore/purge tests pass |
 
 Exit criteria:
@@ -340,6 +340,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | GUARD-010 | Completed | Runtime signature binds 13 SQLAlchemy models to current Alembic heads; model-only drift fails and cannot be regenerated without a head change; migration history remains untouched |
 | 2026-08-05 | TEST-007 | Completed | Frontend unit suite expanded from 9 to 13 passing tests; new cases verify user hydration without token storage, SWR cache mutation without a second transport call, and BFF authorization/path/host/redirect behavior |
 | 2026-08-05 | TEST-008–009 | Completed | Reviewed four black/white topics-page PNG baselines at desktop/mobile sizes, removed Next dev overlay noise, clean visual matrix passed 4/4 in 45.9s, and component suite covers loading/error/empty/disabled/focus while the browser flow activates via Enter |
+| 2026-08-05 | DATA-007–008 | Completed | Material uploads now use an injected local-storage boundary with atomic UUID writes and root-confined deletion; PDF/DOCX/PPTX/TXT validation enforces MIME, signature/OOXML structure, UTF-8 text, safe paths, and a 50 MB limit; 17 focused tests, 3/3 PostgreSQL material tests with cleanup, and the 83.5s fast gate pass |
 
 ## 17. Known program risks
 
