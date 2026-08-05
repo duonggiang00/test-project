@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Architecture"
+  short_description: "Build Next.js data flows and components"
+  default_prompt: "Use $frontend-architecture to implement a Next.js feature with correct state boundaries."

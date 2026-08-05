@@ -1,0 +1,130 @@
+name: Verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  UV_VERSION: "0.11.16"
+  DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ai_exam
+  SECRET_KEY: ci-only-placeholder-not-for-production
+  BACKEND_CORS_ORIGINS: http://localhost:3000
+  BACKEND_API_URL: http://127.0.0.1:8000
+  HUSKY: "0"
+
+jobs:
+  fast:
+    name: Fast verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v8
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run fast gate
+        run: node scripts/verify.mjs fast
+
+      - name: Upload fast-gate diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fast-gate-diagnostics-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            backend/reports/
+            frontend/reports/
+            frontend/.next/diagnostics/
+
+  integration:
+    name: PostgreSQL integration
+    if: github.event_name == 'push'
+    needs: fast
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.2-pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_exam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v8
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Run isolated PostgreSQL integration gate
+        run: node scripts/verify.mjs integration
+
+      - name: Run Alembic round trip
+        run: node scripts/verify.mjs migration
+
+      - name: Upload integration diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-diagnostics-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 7
+          path: backend/reports/

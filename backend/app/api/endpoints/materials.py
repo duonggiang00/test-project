@@ -1,0 +1,134 @@
+from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks, Form
+from sqlalchemy.orm import Session
+from fastapi.responses import JSONResponse
+from typing import List, Optional
+from uuid import UUID
+
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
+
+from app.db.session import get_db
+from app.models.user import User
+from app.schemas.material import (
+    MaterialResponse, MaterialDetailResponse,
+    GenerateQuestionsRequest, SaveQuestionsRequest,
+    GenerateFlashcardsRequest, SaveFlashcardsRequest,
+    SaveTopicBriefRequest
+)
+from app.schemas.question import QuestionResponse
+from app.api.deps import get_current_active_teacher
+from app.services.material_service import MaterialService
+
+router = APIRouter()
+
+@router.get("", response_model=Page[MaterialResponse])
+def get_all_materials(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return paginate(db, MaterialService.get_all_materials(db))
+
+@router.post("/upload", response_model=MaterialResponse)
+def upload_material(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    topic_id: Optional[UUID] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    content = file.file.read()
+    return MaterialService.upload_material(
+        db=db,
+        current_user_id=current_user.id,
+        filename=file.filename or "",
+        content=content,
+        background_tasks=background_tasks,
+        topic_id=topic_id
+    )
+
+@router.get("/{material_id}/questions", response_model=List[QuestionResponse])
+def get_ai_questions(
+    material_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return MaterialService.get_ai_questions(db=db, material_id=material_id)
+
+@router.get("/{material_id}", response_model=MaterialDetailResponse)
+def get_material_detail(
+    material_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return MaterialService.get_material_detail(db=db, material_id=material_id)
+
+@router.delete("/{material_id}")
+def delete_material(
+    material_id: UUID,
+    cascade: bool = False,
+    keep_assets: bool = False,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    result = MaterialService.delete_material(
+        db=db,
+        material_id=material_id,
+        cascade=cascade,
+        keep_assets=keep_assets
+    )
+    if result.get("require_cascade"):
+        return JSONResponse(status_code=409, content=result)
+    return result
+
+@router.post("/{material_id}/generate-questions")
+def generate_questions(
+    material_id: UUID,
+    request: GenerateQuestionsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return MaterialService.generate_questions(db=db, material_id=material_id, request=request)
+
+@router.post("/{material_id}/save-questions")
+def save_questions(
+    material_id: UUID,
+    request: SaveQuestionsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return MaterialService.save_questions(db=db, material_id=material_id, request=request)
+
+@router.post("/{material_id}/generate-flashcards")
+def generate_flashcards(
+    material_id: UUID,
+    request: GenerateFlashcardsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return MaterialService.generate_flashcards(db=db, material_id=material_id, request=request)
+
+@router.post("/{material_id}/save-flashcards")
+def save_flashcards_endpoint(
+    material_id: UUID,
+    request: SaveFlashcardsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return MaterialService.save_flashcards(db=db, material_id=material_id, request=request)
+
+@router.post("/{material_id}/generate-topic-brief")
+def generate_topic_brief(
+    material_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return MaterialService.generate_topic_brief(db=db, material_id=material_id)
+
+@router.post("/{material_id}/save-topic-brief")
+def save_topic_brief_endpoint(
+    material_id: UUID,
+    request: SaveTopicBriefRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    return MaterialService.save_topic_brief(db=db, material_id=material_id, request=request)

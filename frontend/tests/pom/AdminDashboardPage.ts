@@ -1,0 +1,66 @@
+import { Page, expect } from '@playwright/test';
+
+export class AdminDashboardPage {
+  readonly page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  async gotoTopics() {
+    await this.page.goto('/topics');
+  }
+
+  async gotoExams() {
+    await this.page.goto('/exams');
+  }
+
+  async createTopic(name: string, description: string) {
+    await this.page.getByTestId('add-topic-button').click();
+    await this.page.getByTestId('topic-name-input').fill(name);
+    await this.page.getByTestId('topic-description-input').fill(description);
+    await this.page.getByTestId('save-topic-button').click();
+    await expect(this.page.getByTestId('save-topic-button')).toBeHidden();
+  }
+
+  async deleteTopic(topicName: string) {
+    await this.page.getByTestId('search-topic-input').fill(topicName);
+    const row = this.page.locator('tr').filter({ hasText: topicName }).first();
+    this.page.once('dialog', dialog => dialog.accept());
+    await row.getByTestId('delete-topic-button').click();
+  }
+
+  async createExam(title: string, description: string, duration: number, topicName?: string, isPublished: boolean = true) {
+    await this.page.getByTestId('add-exam-button').click();
+    await this.page.getByTestId('exam-title-input').fill(title);
+    await this.page.getByTestId('exam-description-input').fill(description);
+    if (topicName) {
+      await this.page.getByTestId('exam-topic-select').selectOption({ label: topicName });
+    }
+    await this.page.getByTestId('exam-duration-input').fill(duration.toString());
+    
+    const publishCheckbox = this.page.getByTestId('exam-published-checkbox');
+    if (isPublished) {
+      await publishCheckbox.check();
+    } else {
+      await publishCheckbox.uncheck();
+    }
+    
+    await this.page.getByTestId('save-exam-button').click();
+    await expect(this.page.getByTestId('save-exam-button')).toBeHidden();
+  }
+
+  async deleteExam(examTitle: string) {
+    await this.page.getByTestId('search-exam-input').fill(examTitle);
+    const row = this.page.getByTestId(`exam-row-${examTitle}`).first();
+    await row.getByTestId('delete-exam-button').click();
+    await this.page.getByTestId('confirm-delete-exam-button').click();
+    await expect(this.page.getByTestId('confirm-delete-exam-button')).toBeHidden();
+  }
+
+  async openExamBuilder(examTitle: string) {
+    await this.page.getByTestId('search-exam-input').fill(examTitle);
+    const row = this.page.getByTestId(`exam-row-${examTitle}`).first();
+    await row.getByTestId('exam-builder-link').click();
+  }
+}

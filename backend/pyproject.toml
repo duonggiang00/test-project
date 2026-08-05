@@ -1,0 +1,56 @@
+[project]
+name = "ai-exam-backend"
+version = "0.1.0"
+description = "FastAPI backend for the AI-assisted examination MVP"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "alembic>=1.16,<2",
+    "bcrypt>=4,<5",
+    "email-validator>=2,<3",
+    "fastapi==0.139.0",
+    # 0.15.16 misdetects the FastAPI body-field API with FastAPI 0.139.0.
+    "fastapi-pagination==0.15.15",
+    "openai>=1,<3",
+    "pdfplumber>=0.11,<1",
+    "pgvector>=0.4,<1",
+    "psycopg2-binary==2.9.9",
+    "pydantic==2.13.4",
+    "pydantic-settings>=2,<3",
+    "pymupdf>=1.24,<2",
+    "python-jose[cryptography]>=3.4,<4",
+    "python-multipart>=0.0.20,<1",
+    "python-pptx>=1,<2",
+    "slowapi>=0.1.9,<1",
+    "sqlalchemy>=2.0,<2.1",
+    "uvicorn>=0.35,<1",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28,<1",
+    "pytest>=8,<9",
+    "pytest-asyncio>=1,<2",
+    "pytest-cov>=6,<8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+markers = [
+    "unit: isolated tests without a PostgreSQL behavior dependency",
+    "integration: tests that exercise the application with PostgreSQL",
+]
+filterwarnings = [
+    "error",
+    "ignore:.*urllib3.*:UserWarning",
+    "ignore:.*chardet.*:UserWarning",
+    "ignore:.*FastAPI v0.128.0.*:UserWarning",
+    "ignore::fastapi_pagination.utils.FastAPIPaginationWarning",
+    "ignore:.*httpx.*:Warning",
+    "ignore:.*httpx.*:DeprecationWarning",
+]

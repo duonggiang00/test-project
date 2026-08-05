@@ -1,0 +1,76 @@
+"use client";
+
+import WelcomeBanner from "@/components/features/student-home/WelcomeBanner";
+import { useProfile } from "@/hooks/useProfile";
+import { useUserStore } from "@/lib/store";
+import { useTopics } from "@/hooks/useTopics";
+import Link from "next/link";
+import { Loader2 } from "lucide-react";
+
+export default function StudentHomePage() {
+  const { user: storeUser } = useUserStore();
+  const { profile } = useProfile();
+  const currentUser = profile || storeUser;
+  const studentName = currentUser?.full_name?.split(" ")[0] || currentUser?.full_name || "bạn";
+
+  const { topics, isLoading, isError } = useTopics();
+
+  return (
+    <div className="bg-white min-h-screen text-black p-4 md:p-8 max-w-[1200px] mx-auto flex flex-col gap-8 w-full">
+      <WelcomeBanner studentName={studentName} />
+      
+      <div className="flex justify-between items-end border-b-4 border-black pb-4 mt-8">
+        <div>
+          <h1 className="font-mono text-3xl md:text-5xl font-black uppercase tracking-tight">Thư viện chủ đề</h1>
+          <p className="font-mono mt-2 font-bold uppercase text-gray-500">
+            Khám phá các bộ môn, ôn tập Flashcard và làm bài thi
+          </p>
+        </div>
+      </div>
+
+      {isLoading && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-10 w-10 animate-spin text-black" />
+        </div>
+      )}
+
+      {isError && (
+        <div className="p-4 border-4 border-black bg-red-100 text-black font-mono font-bold uppercase text-center shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+          Đã có lỗi xảy ra khi tải dữ liệu!
+        </div>
+      )}
+
+      {!isLoading && !isError && topics && topics.length === 0 && (
+        <div className="p-10 border-4 border-black bg-gray-50 text-black font-mono font-bold uppercase text-center shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+          Chưa có chủ đề nào được tạo.
+        </div>
+      )}
+
+      {!isLoading && !isError && topics && topics.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {topics.map((topic) => (
+            <Link 
+              key={topic.id} 
+              href={`/student/topics/${topic.id}`}
+              className="group flex flex-col bg-white border-4 border-black p-6 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-all"
+            >
+              <div className="w-12 h-12 bg-black text-white flex items-center justify-center mb-4 border-2 border-black group-hover:bg-white group-hover:text-black transition-colors">
+                <span className="material-symbols-outlined">auto_stories</span>
+              </div>
+              <h2 className="font-mono text-xl font-black uppercase mb-2 line-clamp-2">
+                {topic.name}
+              </h2>
+              <p className="font-mono text-sm font-medium text-gray-600 line-clamp-3 mb-4 flex-1">
+                {topic.description || "Chưa có mô tả"}
+              </p>
+              <div className="flex items-center text-sm font-mono font-bold uppercase text-black mt-auto">
+                Vào học ngay <span className="material-symbols-outlined ml-1">arrow_forward</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+

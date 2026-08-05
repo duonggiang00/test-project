@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backend Architecture"
+  short_description: "Build secure FastAPI and SQLAlchemy features"
+  default_prompt: "Use $backend-architecture to implement a backend feature with verified contracts and tests."

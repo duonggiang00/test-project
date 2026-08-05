@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+ai_instruction/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.uv-cache/
+.uv-python/
+
+# Environment variables
+.env
+.env.local
+.env.test
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (never commit large data)
+data/
+backend/uploads/
+backend/*_out.txt
+*.db
+*.sqlite3
+
+# Local evaluation state
+.deepeval/
+
+# Logs
+logs/
+*.log
+
+# Test coverage
+htmlcov/
+.coverage
+coverage.xml
+.pytest_cache/
+
+# Docker
+docker-compose.override.yml
+
+# Node (frontend)
+node_modules/
+.pnpm-store/
+.next/
+out/
+.nuxt/
+playwright-report/
+test-results/
+playwright/.auth/
+**/playwright/.auth/
+/backend/reports/
+/frontend/reports/
+
+# Build
+*.pyc
+*.pyo
+
+# AI logs — tracked structure, ignored content
+.ai-log/*.jsonl
+.ai-log/archive/
+.legacy-archive/
+
+mock_frontend/
+
+# DB Tests
+tests/test_api/test_db_auth.py
+
+# UI Designs
+docs/Learning_Assistant_Character_UI
+
+# Unrelated folders
+/test/
+/tests/
+eval/
+errors/
+presentation/

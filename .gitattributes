@@ -1,0 +1,39 @@
+* text=auto
+
+# Cross-platform source and configuration files
+*.py text eol=lf
+*.pyi text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.mako text eol=lf
+*.lock text eol=lf
+*.example text eol=lf
+*.npmrc text eol=lf
+*.nvmrc text eol=lf
+.githooks/* text eol=lf
+
+# Native Windows launchers
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.docx binary
+*.pptx binary
+*.woff binary
+*.woff2 binary
+*.ttf binary

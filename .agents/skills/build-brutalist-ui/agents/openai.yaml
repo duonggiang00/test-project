@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Brutalist UI"
+  short_description: "Create strict black-and-white product UI"
+  default_prompt: "Use $build-brutalist-ui to create a strict black-and-white interface for this project."
