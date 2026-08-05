@@ -28,7 +28,7 @@ Before editing:
 - Establish the relevant baseline check when the environment supports it.
 - Identify pre-existing failures separately from failures caused by the task.
 
-Never guess a field, endpoint, route, permission, or test command. Verify it from live source or executable introspection. Generated inventory is trusted only when its commit metadata matches the current checkout.
+Never guess a field, endpoint, route, permission, or test command. Verify it from live source or executable introspection. Generated inventory is trusted only when its generator version and relevant source-tree hash match the current checkout; its source commit records the generation base and may precede documentation-only commits.
 
 ## 3. Task risk and approval
 

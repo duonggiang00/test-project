@@ -149,14 +149,14 @@ Goal: Replace manually maintained technical snapshots with code-derived facts.
 
 | ID | Task | Status | Depends on | Acceptance evidence |
 |---|---|---|---|---|
-| INV-001 | Generate SQLAlchemy model and relationship inventory | TODO | TOOL-006 | Deterministic JSON/Markdown output is generated from code |
-| INV-002 | Generate Pydantic schema and FastAPI route/dependency inventory | TODO | INV-001 | Registered contracts are captured without manual lists |
-| INV-003 | Generate Next.js route, hook, service, and protected-layout inventory | TODO | TOOL-006 | Frontend inventory matches live source tree |
-| INV-004 | Generate test inventory and coverage metadata | TODO | INV-001–003 | Test locations and tiers are machine-readable |
-| INV-005 | Attach commit SHA, Alembic head, timestamp, and generator version | TODO | INV-001–004 | Staleness can be detected mechanically |
-| INV-006 | Create a Windows-friendly feature context command | TODO | INV-005 | Agent can request scoped live evidence by area/feature |
-| INV-007 | Reduce `PROJECT_STATE.md` to capabilities, blockers, active transitions, and canonical links | TODO | INV-005 | No hand-maintained route/model/hook snapshots remain |
-| INV-008 | Add CI check that generated inventory is current when relevant source changes | TODO | CI-002, INV-005 | Stale generated artifacts fail the relevant gate |
+| INV-001 | Generate SQLAlchemy model and relationship inventory | DONE | TOOL-006 | Runtime introspection emits 13 mapped models with columns and relationships deterministically |
+| INV-002 | Generate Pydantic schema and FastAPI route/dependency inventory | DONE | INV-001 | Runtime inventory captures 67 schemas and all 62 OpenAPI operations, including lazy included routers |
+| INV-003 | Generate Next.js route, hook, service, and protected-layout inventory | DONE | TOOL-006 | Filesystem inventory matches all 25 live `page.tsx` routes and records layouts, hooks, services, and BFF routes |
+| INV-004 | Generate test inventory and coverage metadata | DONE | INV-001–003 | Backend/frontend test locations, tiers, counts, providers, and baseline state are machine-readable |
+| INV-005 | Attach commit SHA, Alembic head, timestamp, and generator version | DONE | INV-001–004 | Provenance includes generation commit/time, Alembic head, generator version, and a verified relevant-source hash |
+| INV-006 | Create a Windows-friendly feature context command | DONE | INV-005 | `node scripts/project-inventory.mjs context <term>` validates freshness and returns scoped JSON |
+| INV-007 | Reduce `PROJECT_STATE.md` to capabilities, blockers, active transitions, and canonical links | DONE | INV-005 | No active `PROJECT_STATE.md` or hand-maintained route/model/hook snapshot remains; canonical links are in scoped instructions |
+| INV-008 | Add CI check that generated inventory is current when relevant source changes | DONE | CI-002, INV-005 | Inventory check is part of the shared fast gate; an injected source probe produced the expected stale failure |
 
 Exit criteria:
 
@@ -326,6 +326,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | TOOL-009 | Completed | Optional service, image, configuration, startup, health, storage, test-profile, and adoption contracts documented without requiring Docker |
 | 2026-08-05 | CI-002–003 | Review | Replaced legacy CI with read-only fast and PostgreSQL integration jobs; workflow YAML parses, local gates pass, and failure reports are produced; GitHub run is unavailable because the root repository has no remote |
 | 2026-08-05 | CI-004 | Blocked | Guarded migration runner cleaned up correctly but `upgrade head` failed in the initial migration at `DROP INDEX ix_user_email`; no migration assertion or history was modified |
+| 2026-08-05 | INV-001–008 | Completed | Generated inventory records 13 models, 67 schemas, 62 API operations, 25 pages, frontend modules, and test metadata; counts matched OpenAPI/filesystem, context output parsed, deterministic rerun passed, and an injected source probe triggered the stale gate |
 
 ## 17. Known program risks
 

@@ -1,0 +1,4555 @@
+{
+  "schema_version": 1,
+  "generator_version": "1.0.0",
+  "provenance": {
+    "source_commit": "a3e1acd4e93664e7600b0c6105e3c2459f565ad2",
+    "source_commit_timestamp": "2026-08-05T13:50:36+07:00",
+    "source_tree_sha256": "4d56d04250bd365edfbadea8064a378b540a63c18304b82ef731d87445c9de93",
+    "relevant_file_count": 191,
+    "alembic_heads": [
+      "e598471b8b6d"
+    ]
+  },
+  "summary": {
+    "sqlalchemy_models": 13,
+    "pydantic_schemas": 67,
+    "fastapi_routes": 62,
+    "next_pages": 25,
+    "frontend_hooks": 14,
+    "frontend_services": 1,
+    "backend_test_functions": 34,
+    "frontend_test_calls": 9
+  },
+  "backend": {
+    "models": [
+      {
+        "class": "DocumentChunk",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "study_materials.id"
+            ],
+            "name": "material_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "content",
+            "nullable": false,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "embedding",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VECTOR(1536)",
+            "unique": false
+          }
+        ],
+        "module": "app.models.document_chunk",
+        "relationships": [],
+        "table": "document_chunks"
+      },
+      {
+        "class": "Exam",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "creator_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "topics.id"
+            ],
+            "name": "topic_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "title",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(255)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "description",
+            "nullable": true,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "duration_minutes",
+            "nullable": false,
+            "primary_key": false,
+            "type": "INTEGER",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "is_published",
+            "nullable": true,
+            "primary_key": false,
+            "type": "BOOLEAN",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.exam",
+        "relationships": [
+          {
+            "direction": "MANYTOONE",
+            "name": "creator",
+            "secondary": null,
+            "target": "User",
+            "uselist": false
+          },
+          {
+            "direction": "ONETOMANY",
+            "name": "questions",
+            "secondary": null,
+            "target": "Question",
+            "uselist": true
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "topic",
+            "secondary": null,
+            "target": "Topic",
+            "uselist": false
+          }
+        ],
+        "table": "exams"
+      },
+      {
+        "class": "Flashcard",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "flashcard_decks.id"
+            ],
+            "name": "deck_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "front_content",
+            "nullable": false,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "back_content",
+            "nullable": false,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "order_index",
+            "nullable": true,
+            "primary_key": false,
+            "type": "INTEGER",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.flashcard",
+        "relationships": [
+          {
+            "direction": "MANYTOONE",
+            "name": "deck",
+            "secondary": null,
+            "target": "FlashcardDeck",
+            "uselist": false
+          },
+          {
+            "direction": "ONETOMANY",
+            "name": "progress",
+            "secondary": null,
+            "target": "FlashcardProgress",
+            "uselist": true
+          }
+        ],
+        "table": "flashcards"
+      },
+      {
+        "class": "FlashcardDeck",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "topics.id"
+            ],
+            "name": "topic_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "study_materials.id"
+            ],
+            "name": "material_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "title",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(255)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "description",
+            "nullable": true,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.flashcard",
+        "relationships": [
+          {
+            "direction": "ONETOMANY",
+            "name": "flashcards",
+            "secondary": null,
+            "target": "Flashcard",
+            "uselist": true
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "material",
+            "secondary": null,
+            "target": "StudyMaterial",
+            "uselist": false
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "topic",
+            "secondary": null,
+            "target": "Topic",
+            "uselist": false
+          }
+        ],
+        "table": "flashcard_decks"
+      },
+      {
+        "class": "FlashcardProgress",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "student_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "flashcards.id"
+            ],
+            "name": "flashcard_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "box_level",
+            "nullable": true,
+            "primary_key": false,
+            "type": "INTEGER",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "next_review_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "last_reviewed_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.flashcard",
+        "relationships": [
+          {
+            "direction": "MANYTOONE",
+            "name": "flashcard",
+            "secondary": null,
+            "target": "Flashcard",
+            "uselist": false
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "student",
+            "secondary": null,
+            "target": "User",
+            "uselist": false
+          }
+        ],
+        "table": "flashcard_progress"
+      },
+      {
+        "class": "Option",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "questions.id"
+            ],
+            "name": "question_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "content",
+            "nullable": false,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "is_correct",
+            "nullable": false,
+            "primary_key": false,
+            "type": "BOOLEAN",
+            "unique": false
+          }
+        ],
+        "module": "app.models.exam",
+        "relationships": [
+          {
+            "direction": "MANYTOONE",
+            "name": "question",
+            "secondary": null,
+            "target": "Question",
+            "uselist": false
+          }
+        ],
+        "table": "options"
+      },
+      {
+        "class": "Question",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "exams.id"
+            ],
+            "name": "exam_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "topics.id"
+            ],
+            "name": "topic_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "study_materials.id"
+            ],
+            "name": "material_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "question_type",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(15)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "difficulty",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(6)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "content",
+            "nullable": false,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "metadata_json",
+            "nullable": true,
+            "primary_key": false,
+            "type": "JSONB",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "is_ai_generated",
+            "nullable": true,
+            "primary_key": false,
+            "type": "BOOLEAN",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "points",
+            "nullable": true,
+            "primary_key": false,
+            "type": "INTEGER",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.exam",
+        "relationships": [
+          {
+            "direction": "MANYTOONE",
+            "name": "exam",
+            "secondary": null,
+            "target": "Exam",
+            "uselist": false
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "material",
+            "secondary": null,
+            "target": "StudyMaterial",
+            "uselist": false
+          },
+          {
+            "direction": "ONETOMANY",
+            "name": "options",
+            "secondary": null,
+            "target": "Option",
+            "uselist": true
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "topic",
+            "secondary": null,
+            "target": "Topic",
+            "uselist": false
+          }
+        ],
+        "table": "questions"
+      },
+      {
+        "class": "StudyMaterial",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "uploader_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "title",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(255)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "file_type",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(10)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "file_path",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(500)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "parsed_text",
+            "nullable": true,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "ai_status",
+            "nullable": true,
+            "primary_key": false,
+            "type": "VARCHAR(20)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "topics.id"
+            ],
+            "name": "topic_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.material",
+        "relationships": [
+          {
+            "direction": "MANYTOONE",
+            "name": "topic",
+            "secondary": null,
+            "target": "Topic",
+            "uselist": false
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "uploader",
+            "secondary": null,
+            "target": "User",
+            "uselist": false
+          }
+        ],
+        "table": "study_materials"
+      },
+      {
+        "class": "Submission",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "exams.id"
+            ],
+            "name": "exam_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "student_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "start_time",
+            "nullable": false,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "end_time",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "total_score",
+            "nullable": true,
+            "primary_key": false,
+            "type": "FLOAT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "status",
+            "nullable": true,
+            "primary_key": false,
+            "type": "VARCHAR(20)",
+            "unique": false
+          }
+        ],
+        "module": "app.models.submission",
+        "relationships": [
+          {
+            "direction": "ONETOMANY",
+            "name": "answers",
+            "secondary": null,
+            "target": "SubmissionAnswer",
+            "uselist": true
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "exam",
+            "secondary": null,
+            "target": "Exam",
+            "uselist": false
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "student",
+            "secondary": null,
+            "target": "User",
+            "uselist": false
+          }
+        ],
+        "table": "submissions"
+      },
+      {
+        "class": "SubmissionAnswer",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "submissions.id"
+            ],
+            "name": "submission_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "questions.id"
+            ],
+            "name": "question_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "answer_data",
+            "nullable": true,
+            "primary_key": false,
+            "type": "JSONB",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "is_correct",
+            "nullable": true,
+            "primary_key": false,
+            "type": "BOOLEAN",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "points_awarded",
+            "nullable": true,
+            "primary_key": false,
+            "type": "FLOAT",
+            "unique": false
+          }
+        ],
+        "module": "app.models.submission",
+        "relationships": [
+          {
+            "direction": "MANYTOONE",
+            "name": "submission",
+            "secondary": null,
+            "target": "Submission",
+            "uselist": false
+          }
+        ],
+        "table": "submission_answers"
+      },
+      {
+        "class": "Topic",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "name",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(255)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "description",
+            "nullable": true,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "brief_content",
+            "nullable": true,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "brief_ai_generated",
+            "nullable": true,
+            "primary_key": false,
+            "type": "BOOLEAN",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "topics.id"
+            ],
+            "name": "parent_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.topic",
+        "relationships": [
+          {
+            "direction": "ONETOMANY",
+            "name": "briefs",
+            "secondary": null,
+            "target": "TopicBrief",
+            "uselist": true
+          },
+          {
+            "direction": "ONETOMANY",
+            "name": "exams",
+            "secondary": null,
+            "target": "Exam",
+            "uselist": true
+          },
+          {
+            "direction": "ONETOMANY",
+            "name": "flashcard_decks",
+            "secondary": null,
+            "target": "FlashcardDeck",
+            "uselist": true
+          },
+          {
+            "direction": "ONETOMANY",
+            "name": "materials",
+            "secondary": null,
+            "target": "StudyMaterial",
+            "uselist": true
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "parent",
+            "secondary": null,
+            "target": "Topic",
+            "uselist": false
+          },
+          {
+            "direction": "ONETOMANY",
+            "name": "questions",
+            "secondary": null,
+            "target": "Question",
+            "uselist": true
+          },
+          {
+            "direction": "ONETOMANY",
+            "name": "subtopics",
+            "secondary": null,
+            "target": "Topic",
+            "uselist": true
+          }
+        ],
+        "table": "topics"
+      },
+      {
+        "class": "TopicBrief",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "topics.id"
+            ],
+            "name": "topic_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "study_materials.id"
+            ],
+            "name": "material_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "title",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(255)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "content",
+            "nullable": false,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "is_ai_generated",
+            "nullable": true,
+            "primary_key": false,
+            "type": "BOOLEAN",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.topic_brief",
+        "relationships": [
+          {
+            "direction": "MANYTOONE",
+            "name": "material",
+            "secondary": null,
+            "target": "StudyMaterial",
+            "uselist": false
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "topic",
+            "secondary": null,
+            "target": "Topic",
+            "uselist": false
+          }
+        ],
+        "table": "topic_briefs"
+      },
+      {
+        "class": "User",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "email",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(255)",
+            "unique": true
+          },
+          {
+            "foreign_keys": [],
+            "name": "password_hash",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(255)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "full_name",
+            "nullable": true,
+            "primary_key": false,
+            "type": "VARCHAR(100)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "role",
+            "nullable": true,
+            "primary_key": false,
+            "type": "VARCHAR(20)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "avatar_url",
+            "nullable": true,
+            "primary_key": false,
+            "type": "VARCHAR(255)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "phone_number",
+            "nullable": true,
+            "primary_key": false,
+            "type": "VARCHAR(20)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "date_of_birth",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATE",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "bio",
+            "nullable": true,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.user",
+        "relationships": [],
+        "table": "users"
+      }
+    ],
+    "schemas": [
+      {
+        "class": "ProcessDocumentRequest",
+        "fields": [
+          {
+            "name": "material_id",
+            "required": true,
+            "type": "UUID"
+          }
+        ],
+        "module": "app.schemas.ai"
+      },
+      {
+        "class": "ProcessDocumentResponse",
+        "fields": [
+          {
+            "name": "message",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "chunks_created",
+            "required": true,
+            "type": "int"
+          }
+        ],
+        "module": "app.schemas.ai"
+      },
+      {
+        "class": "AnalyticsOverviewResponse",
+        "fields": [
+          {
+            "name": "total_students",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "total_exams",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "total_questions",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "total_submissions",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "overall_avg_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "completion_rate",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "total_topics",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "pass_rate",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.analytics"
+      },
+      {
+        "class": "CompletionStatusResponse",
+        "fields": [
+          {
+            "name": "completed",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "in_progress",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "completed_count",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "in_progress_count",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "not_started_count",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "total_assigned",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.analytics"
+      },
+      {
+        "class": "ScoreDistributionBucket",
+        "fields": [
+          {
+            "name": "range_label",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "count",
+            "required": true,
+            "type": "int"
+          }
+        ],
+        "module": "app.schemas.analytics"
+      },
+      {
+        "class": "ScoreStatsResponse",
+        "fields": [
+          {
+            "name": "highest_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "lowest_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "average_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "median_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "distribution",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.analytics"
+      },
+      {
+        "class": "TopicPerformanceResponse",
+        "fields": [
+          {
+            "name": "topic_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "topic_name",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "avg_score_percentage",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "total_attempts",
+            "required": true,
+            "type": "int"
+          }
+        ],
+        "module": "app.schemas.analytics"
+      },
+      {
+        "class": "ExamBase",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "duration_minutes",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "is_published",
+            "required": false,
+            "type": "bool"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.exam"
+      },
+      {
+        "class": "ExamCreate",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "duration_minutes",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "is_published",
+            "required": false,
+            "type": "bool"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.exam"
+      },
+      {
+        "class": "ExamDetailResponse",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "duration_minutes",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "is_published",
+            "required": false,
+            "type": "bool"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "creator_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "name": "questions",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.exam"
+      },
+      {
+        "class": "ExamResponse",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "duration_minutes",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "is_published",
+            "required": false,
+            "type": "bool"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "creator_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          }
+        ],
+        "module": "app.schemas.exam"
+      },
+      {
+        "class": "ExamUpdate",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "duration_minutes",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "is_published",
+            "required": false,
+            "type": "bool"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.exam"
+      },
+      {
+        "class": "FlashcardBase",
+        "fields": [
+          {
+            "name": "front_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "back_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "order_index",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "deck_id",
+            "required": true,
+            "type": "UUID"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardCreate",
+        "fields": [
+          {
+            "name": "front_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "back_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "order_index",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "deck_id",
+            "required": true,
+            "type": "UUID"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardDeckBase",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "topic_id",
+            "required": true,
+            "type": "UUID"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardDeckCreate",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "topic_id",
+            "required": true,
+            "type": "UUID"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardDeckResponse",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "topic_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardDeckUpdate",
+        "fields": [
+          {
+            "name": "title",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardDeckWithCardsResponse",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "topic_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "name": "flashcards",
+            "required": false,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardProgressResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "student_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "flashcard_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "box_level",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "next_review_at",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "name": "last_reviewed_at",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardResponse",
+        "fields": [
+          {
+            "name": "front_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "back_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "order_index",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "deck_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardReviewSubmit",
+        "fields": [
+          {
+            "name": "rating",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "FlashcardUpdate",
+        "fields": [
+          {
+            "name": "front_content",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "back_content",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "order_index",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "TopicBriefUpdate",
+        "fields": [
+          {
+            "name": "brief_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "brief_ai_generated",
+            "required": false,
+            "type": "bool"
+          }
+        ],
+        "module": "app.schemas.flashcard"
+      },
+      {
+        "class": "SubmissionAnswerDetail",
+        "fields": [
+          {
+            "name": "question_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "question_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "answer_data",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "is_correct",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "points_awarded",
+            "required": true,
+            "type": "float"
+          }
+        ],
+        "module": "app.schemas.history"
+      },
+      {
+        "class": "SubmissionDetailResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "exam_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "exam_title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "student_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "student_name",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "student_email",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "start_time",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "name": "end_time",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "total_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "status",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "answers",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.history"
+      },
+      {
+        "class": "SubmissionHistoryItem",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "exam_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "exam_title",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "student_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "student_name",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "student_email",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "start_time",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "name": "end_time",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "total_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "status",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.history"
+      },
+      {
+        "class": "DocumentChunkResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "FlashcardSchema",
+        "fields": [
+          {
+            "name": "term",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "definition",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "source_reference",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "explanation",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "GenerateFlashcardsRequest",
+        "fields": [
+          {
+            "name": "count",
+            "required": false,
+            "type": "int"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "GenerateQuestionsRequest",
+        "fields": [
+          {
+            "name": "question_types",
+            "required": true,
+            "type": "List"
+          },
+          {
+            "name": "count",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "MaterialDetailResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "file_type",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "ai_status",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "file_path",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "name": "chunks",
+            "required": false,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "MaterialResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "file_type",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "ai_status",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "file_path",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "OptionSchema",
+        "fields": [
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "is_correct",
+            "required": true,
+            "type": "bool"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "QuestionSchema",
+        "fields": [
+          {
+            "name": "type",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "points",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "type": "str"
+          },
+          {
+            "name": "source_reference",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "explanation",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "options",
+            "required": false,
+            "type": "List"
+          },
+          {
+            "name": "metadata_json",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "SaveFlashcardsRequest",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "flashcards",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "SaveQuestionsRequest",
+        "fields": [
+          {
+            "name": "questions",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "SaveTopicBriefRequest",
+        "fields": [
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.material"
+      },
+      {
+        "class": "OptionBase",
+        "fields": [
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "is_correct",
+            "required": true,
+            "type": "bool"
+          }
+        ],
+        "module": "app.schemas.question"
+      },
+      {
+        "class": "OptionResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "is_correct",
+            "required": true,
+            "type": "bool"
+          }
+        ],
+        "module": "app.schemas.question"
+      },
+      {
+        "class": "QuestionBase",
+        "fields": [
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "points",
+            "required": false,
+            "type": "float"
+          },
+          {
+            "name": "question_type",
+            "required": false,
+            "type": "QuestionType"
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "type": "DifficultyLevel"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "metadata_json",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "options",
+            "required": false,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.question"
+      },
+      {
+        "class": "QuestionBulkCreate",
+        "fields": [
+          {
+            "name": "question_ids",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.question"
+      },
+      {
+        "class": "QuestionResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "is_ai_generated",
+            "required": true,
+            "type": "bool"
+          },
+          {
+            "name": "points",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "question_type",
+            "required": true,
+            "type": "QuestionType"
+          },
+          {
+            "name": "difficulty",
+            "required": true,
+            "type": "DifficultyLevel"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "metadata_json",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "options",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.question"
+      },
+      {
+        "class": "QuestionUpdate",
+        "fields": [
+          {
+            "name": "content",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "points",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "question_type",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "metadata_json",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "options",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.question"
+      },
+      {
+        "class": "AnswerInput",
+        "fields": [
+          {
+            "name": "question_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "answer_data",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "selected_option_id",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "StudentExamListResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "duration_minutes",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "submission_status",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "total_score",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "StudentExamResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "duration_minutes",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "questions",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "StudentExamResultAnswer",
+        "fields": [
+          {
+            "name": "question_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "question_type",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "metadata_json",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "options",
+            "required": true,
+            "type": "List"
+          },
+          {
+            "name": "answer_data",
+            "required": true,
+            "type": "Optional"
+          },
+          {
+            "name": "is_correct",
+            "required": true,
+            "type": "bool"
+          },
+          {
+            "name": "points_awarded",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "points",
+            "required": true,
+            "type": "float"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "StudentExamResultResponse",
+        "fields": [
+          {
+            "name": "exam_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "title",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "total_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "max_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "correct_count",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "incorrect_count",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "time_taken_seconds",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "answers",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "StudentOptionResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "StudentQuestionResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "points",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "question_type",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "metadata_json",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "options",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "SubmitExamRequest",
+        "fields": [
+          {
+            "name": "answers",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "SubmitExamResponse",
+        "fields": [
+          {
+            "name": "submission_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "total_score",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "max_score",
+            "required": true,
+            "type": "float"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "Token",
+        "fields": [
+          {
+            "name": "access_token",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "token_type",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "user",
+            "required": true,
+            "type": "UserResponse"
+          }
+        ],
+        "module": "app.schemas.token"
+      },
+      {
+        "class": "TokenData",
+        "fields": [
+          {
+            "name": "user_id",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.token"
+      },
+      {
+        "class": "TopicBase",
+        "fields": [
+          {
+            "name": "name",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "parent_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "brief_content",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "brief_ai_generated",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.topic"
+      },
+      {
+        "class": "TopicBriefUpdate",
+        "fields": [
+          {
+            "name": "brief_content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "brief_ai_generated",
+            "required": false,
+            "type": "bool"
+          }
+        ],
+        "module": "app.schemas.topic"
+      },
+      {
+        "class": "TopicCreate",
+        "fields": [
+          {
+            "name": "name",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "parent_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "brief_content",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "brief_ai_generated",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.topic"
+      },
+      {
+        "class": "TopicResponse",
+        "fields": [
+          {
+            "name": "name",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "parent_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "brief_content",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "brief_ai_generated",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          }
+        ],
+        "module": "app.schemas.topic"
+      },
+      {
+        "class": "TopicUpdate",
+        "fields": [
+          {
+            "name": "name",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "description",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "parent_id",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.topic"
+      },
+      {
+        "class": "ForgotPasswordRequest",
+        "fields": [
+          {
+            "name": "email",
+            "required": true,
+            "type": "EmailStr"
+          }
+        ],
+        "module": "app.schemas.user"
+      },
+      {
+        "class": "PasswordUpdate",
+        "fields": [
+          {
+            "name": "old_password",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "new_password",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.user"
+      },
+      {
+        "class": "ResetPasswordRequest",
+        "fields": [
+          {
+            "name": "token",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "new_password",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.user"
+      },
+      {
+        "class": "UserBase",
+        "fields": [
+          {
+            "name": "email",
+            "required": true,
+            "type": "EmailStr"
+          },
+          {
+            "name": "full_name",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "role",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "avatar_url",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "phone_number",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "date_of_birth",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "bio",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.user"
+      },
+      {
+        "class": "UserCreate",
+        "fields": [
+          {
+            "name": "email",
+            "required": true,
+            "type": "EmailStr"
+          },
+          {
+            "name": "full_name",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "role",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "avatar_url",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "phone_number",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "date_of_birth",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "bio",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "password",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.user"
+      },
+      {
+        "class": "UserResponse",
+        "fields": [
+          {
+            "name": "email",
+            "required": true,
+            "type": "EmailStr"
+          },
+          {
+            "name": "full_name",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "role",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "avatar_url",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "phone_number",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "date_of_birth",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "bio",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          }
+        ],
+        "module": "app.schemas.user"
+      },
+      {
+        "class": "UserUpdate",
+        "fields": [
+          {
+            "name": "full_name",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "phone_number",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "date_of_birth",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "bio",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.user"
+      }
+    ],
+    "routes": [
+      {
+        "dependencies": [],
+        "endpoint": "app.main.read_root",
+        "methods": [
+          "GET"
+        ],
+        "name": "read_root",
+        "path": "/",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_admin",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer",
+          "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
+          "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
+        ],
+        "endpoint": "app.api.endpoints.admin.get_all_users",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_all_users",
+        "path": "/admin/users",
+        "response_model": "Page[UserResponse]"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_admin",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.admin.delete_user",
+        "methods": [
+          "DELETE"
+        ],
+        "name": "delete_user",
+        "path": "/admin/users/{user_id}",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_admin",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.admin.get_user",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_user",
+        "path": "/admin/users/{user_id}",
+        "response_model": "UserResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_admin",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.admin.update_user_role",
+        "methods": [
+          "PUT"
+        ],
+        "name": "update_user_role",
+        "path": "/admin/users/{user_id}/role",
+        "response_model": "UserResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.ai_studio.chat",
+        "methods": [
+          "POST"
+        ],
+        "name": "chat",
+        "path": "/ai/chat",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.ai_studio.process_document",
+        "methods": [
+          "POST"
+        ],
+        "name": "process_document",
+        "path": "/ai/process-document",
+        "response_model": "ProcessDocumentResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.analytics.get_completion_status",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_completion_status",
+        "path": "/analytics/completion-status",
+        "response_model": "CompletionStatusResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.analytics.get_analytics_overview",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_analytics_overview",
+        "path": "/analytics/overview",
+        "response_model": "AnalyticsOverviewResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.analytics.get_score_stats",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_score_stats",
+        "path": "/analytics/score-stats",
+        "response_model": "ScoreStatsResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.analytics.get_topic_performance",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_topic_performance",
+        "path": "/analytics/topic-performance",
+        "response_model": "List"
+      },
+      {
+        "dependencies": [
+          "app.db.session.get_db"
+        ],
+        "endpoint": "app.api.endpoints.auth.forgot_password",
+        "methods": [
+          "POST"
+        ],
+        "name": "forgot_password",
+        "path": "/auth/forgot-password",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordRequestForm"
+        ],
+        "endpoint": "app.api.endpoints.auth.login",
+        "methods": [
+          "POST"
+        ],
+        "name": "login",
+        "path": "/auth/login",
+        "response_model": "Token"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.auth.get_me",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_me",
+        "path": "/auth/me",
+        "response_model": "UserResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.auth.update_me",
+        "methods": [
+          "PUT"
+        ],
+        "name": "update_me",
+        "path": "/auth/me",
+        "response_model": "UserResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.auth.upload_avatar",
+        "methods": [
+          "POST"
+        ],
+        "name": "upload_avatar",
+        "path": "/auth/me/avatar",
+        "response_model": "UserResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.auth.update_password",
+        "methods": [
+          "PUT"
+        ],
+        "name": "update_password",
+        "path": "/auth/me/password",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.db.session.get_db"
+        ],
+        "endpoint": "app.api.endpoints.auth.register",
+        "methods": [
+          "POST"
+        ],
+        "name": "register",
+        "path": "/auth/register",
+        "response_model": "UserResponse"
+      },
+      {
+        "dependencies": [
+          "app.db.session.get_db"
+        ],
+        "endpoint": "app.api.endpoints.auth.reset_password",
+        "methods": [
+          "POST"
+        ],
+        "name": "reset_password",
+        "path": "/auth/reset-password",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.db.session.get_db",
+          "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
+          "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
+        ],
+        "endpoint": "app.api.endpoints.exams.read_exams",
+        "methods": [
+          "GET"
+        ],
+        "name": "read_exams",
+        "path": "/exams",
+        "response_model": "Page[ExamResponse]"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.exams.create_exam",
+        "methods": [
+          "POST"
+        ],
+        "name": "create_exam",
+        "path": "/exams",
+        "response_model": "ExamResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.exams.delete_exam",
+        "methods": [
+          "DELETE"
+        ],
+        "name": "delete_exam",
+        "path": "/exams/{exam_id}",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.exams.get_exam",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_exam",
+        "path": "/exams/{exam_id}",
+        "response_model": "ExamDetailResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.exams.update_exam",
+        "methods": [
+          "PUT"
+        ],
+        "name": "update_exam",
+        "path": "/exams/{exam_id}",
+        "response_model": "ExamResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.exams.create_question_in_exam",
+        "methods": [
+          "POST"
+        ],
+        "name": "create_question_in_exam",
+        "path": "/exams/{exam_id}/questions",
+        "response_model": "QuestionResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.exams.add_questions_to_exam",
+        "methods": [
+          "POST"
+        ],
+        "name": "add_questions_to_exam",
+        "path": "/exams/{exam_id}/questions/bulk",
+        "response_model": "dict"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.flashcards.generate_topic_kit_ai",
+        "methods": [
+          "POST"
+        ],
+        "name": "generate_topic_kit_ai",
+        "path": "/flashcards/ai/generate-topic-kit",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.flashcards.create_deck",
+        "methods": [
+          "POST"
+        ],
+        "name": "create_deck",
+        "path": "/flashcards/decks",
+        "response_model": "FlashcardDeckResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.flashcards.get_deck",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_deck",
+        "path": "/flashcards/decks/{deck_id}",
+        "response_model": "FlashcardDeckWithCardsResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.flashcards.create_card",
+        "methods": [
+          "POST"
+        ],
+        "name": "create_card",
+        "path": "/flashcards/decks/{deck_id}/cards",
+        "response_model": "FlashcardResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.flashcards.review_card",
+        "methods": [
+          "POST"
+        ],
+        "name": "review_card",
+        "path": "/flashcards/student/cards/{card_id}/review",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.flashcards.get_study_cards",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_study_cards",
+        "path": "/flashcards/student/decks/{deck_id}/study",
+        "response_model": "List"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.flashcards.update_topic_brief",
+        "methods": [
+          "PUT"
+        ],
+        "name": "update_topic_brief",
+        "path": "/flashcards/topics/{topic_id}/brief",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.flashcards.get_topic_decks",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_topic_decks",
+        "path": "/flashcards/topics/{topic_id}/decks",
+        "response_model": "List"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer",
+          "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
+          "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
+        ],
+        "endpoint": "app.api.endpoints.history.get_submission_history",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_submission_history",
+        "path": "/history/submissions",
+        "response_model": "Page[SubmissionHistoryItem]"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.history.get_submission_detail",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_submission_detail",
+        "path": "/history/submissions/{submission_id}",
+        "response_model": "SubmissionDetailResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer",
+          "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
+          "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
+        ],
+        "endpoint": "app.api.endpoints.materials.get_all_materials",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_all_materials",
+        "path": "/materials",
+        "response_model": "Page[MaterialResponse]"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.upload_material",
+        "methods": [
+          "POST"
+        ],
+        "name": "upload_material",
+        "path": "/materials/upload",
+        "response_model": "MaterialResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.delete_material",
+        "methods": [
+          "DELETE"
+        ],
+        "name": "delete_material",
+        "path": "/materials/{material_id}",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.get_material_detail",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_material_detail",
+        "path": "/materials/{material_id}",
+        "response_model": "MaterialDetailResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.generate_flashcards",
+        "methods": [
+          "POST"
+        ],
+        "name": "generate_flashcards",
+        "path": "/materials/{material_id}/generate-flashcards",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.generate_questions",
+        "methods": [
+          "POST"
+        ],
+        "name": "generate_questions",
+        "path": "/materials/{material_id}/generate-questions",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.generate_topic_brief",
+        "methods": [
+          "POST"
+        ],
+        "name": "generate_topic_brief",
+        "path": "/materials/{material_id}/generate-topic-brief",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.get_ai_questions",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_ai_questions",
+        "path": "/materials/{material_id}/questions",
+        "response_model": "List"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.save_flashcards_endpoint",
+        "methods": [
+          "POST"
+        ],
+        "name": "save_flashcards_endpoint",
+        "path": "/materials/{material_id}/save-flashcards",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.save_questions",
+        "methods": [
+          "POST"
+        ],
+        "name": "save_questions",
+        "path": "/materials/{material_id}/save-questions",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.save_topic_brief_endpoint",
+        "methods": [
+          "POST"
+        ],
+        "name": "save_topic_brief_endpoint",
+        "path": "/materials/{material_id}/save-topic-brief",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer",
+          "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
+          "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
+        ],
+        "endpoint": "app.api.endpoints.questions.read_questions",
+        "methods": [
+          "GET"
+        ],
+        "name": "read_questions",
+        "path": "/questions",
+        "response_model": "Page[QuestionResponse]"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.questions.create_question",
+        "methods": [
+          "POST"
+        ],
+        "name": "create_question",
+        "path": "/questions",
+        "response_model": "QuestionResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.questions.delete_question",
+        "methods": [
+          "DELETE"
+        ],
+        "name": "delete_question",
+        "path": "/questions/{question_id}",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.questions.get_question",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_question",
+        "path": "/questions/{question_id}",
+        "response_model": "QuestionResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.questions.update_question",
+        "methods": [
+          "PUT"
+        ],
+        "name": "update_question",
+        "path": "/questions/{question_id}",
+        "response_model": "QuestionResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer",
+          "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
+          "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
+        ],
+        "endpoint": "app.api.endpoints.student.get_available_exams",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_available_exams",
+        "path": "/student/exams",
+        "response_model": "Page[StudentExamListResponse]"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.student.get_exam_result",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_exam_result",
+        "path": "/student/exams/{exam_id}/result",
+        "response_model": "StudentExamResultResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.student.start_exam",
+        "methods": [
+          "GET"
+        ],
+        "name": "start_exam",
+        "path": "/student/exams/{exam_id}/start",
+        "response_model": "StudentExamResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.student.submit_exam",
+        "methods": [
+          "POST"
+        ],
+        "name": "submit_exam",
+        "path": "/student/exams/{exam_id}/submit",
+        "response_model": "SubmitExamResponse"
+      },
+      {
+        "dependencies": [
+          "app.db.session.get_db",
+          "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
+          "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
+        ],
+        "endpoint": "app.api.endpoints.topics.get_topics",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_topics",
+        "path": "/topics",
+        "response_model": "Page[TopicResponse]"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.topics.create_topic",
+        "methods": [
+          "POST"
+        ],
+        "name": "create_topic",
+        "path": "/topics",
+        "response_model": "TopicResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.topics.delete_topic",
+        "methods": [
+          "DELETE"
+        ],
+        "name": "delete_topic",
+        "path": "/topics/{topic_id}",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.db.session.get_db"
+        ],
+        "endpoint": "app.api.endpoints.topics.get_topic",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_topic",
+        "path": "/topics/{topic_id}",
+        "response_model": "TopicResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.topics.update_topic",
+        "methods": [
+          "PUT"
+        ],
+        "name": "update_topic",
+        "path": "/topics/{topic_id}",
+        "response_model": "TopicResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.topics.get_topic_progress",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_topic_progress",
+        "path": "/topics/{topic_id}/progress",
+        "response_model": "None"
+      }
+    ]
+  },
+  "frontend": {
+    "pages": [
+      {
+        "route": "/",
+        "file": "frontend/src/app/page.tsx",
+        "scope": "public_or_runtime_guarded"
+      },
+      {
+        "route": "/ai-workspace",
+        "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/dashboard",
+        "file": "frontend/src/app/(admin)/dashboard/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/exams",
+        "file": "frontend/src/app/(admin)/exams/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/exams/[id]",
+        "file": "frontend/src/app/(admin)/exams/[id]/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/forgot-password",
+        "file": "frontend/src/app/(auth)/forgot-password/page.tsx",
+        "scope": "unauthenticated"
+      },
+      {
+        "route": "/history",
+        "file": "frontend/src/app/(admin)/history/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/history/[id]",
+        "file": "frontend/src/app/(admin)/history/[id]/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/login",
+        "file": "frontend/src/app/(auth)/login/page.tsx",
+        "scope": "unauthenticated"
+      },
+      {
+        "route": "/questions",
+        "file": "frontend/src/app/(admin)/questions/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/register",
+        "file": "frontend/src/app/(auth)/register/page.tsx",
+        "scope": "unauthenticated"
+      },
+      {
+        "route": "/reports",
+        "file": "frontend/src/app/(admin)/reports/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/reset-password",
+        "file": "frontend/src/app/(auth)/reset-password/page.tsx",
+        "scope": "unauthenticated"
+      },
+      {
+        "route": "/student/exam/[id]",
+        "file": "frontend/src/app/student/exam/[id]/page.tsx",
+        "scope": "student"
+      },
+      {
+        "route": "/student/exam/[id]/result",
+        "file": "frontend/src/app/student/exam/[id]/result/page.tsx",
+        "scope": "student"
+      },
+      {
+        "route": "/student/exams/[id]",
+        "file": "frontend/src/app/student/exams/[id]/page.tsx",
+        "scope": "student"
+      },
+      {
+        "route": "/student/exams/[id]/result",
+        "file": "frontend/src/app/student/exams/[id]/result/page.tsx",
+        "scope": "student"
+      },
+      {
+        "route": "/student/home",
+        "file": "frontend/src/app/student/home/page.tsx",
+        "scope": "student"
+      },
+      {
+        "route": "/student/profile",
+        "file": "frontend/src/app/student/profile/page.tsx",
+        "scope": "student"
+      },
+      {
+        "route": "/student/topics/[id]",
+        "file": "frontend/src/app/student/topics/[id]/page.tsx",
+        "scope": "student"
+      },
+      {
+        "route": "/student/topics/[id]/decks/[deck_id]/study",
+        "file": "frontend/src/app/student/topics/[id]/decks/[deck_id]/study/page.tsx",
+        "scope": "student"
+      },
+      {
+        "route": "/students",
+        "file": "frontend/src/app/(admin)/students/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/students/[id]",
+        "file": "frontend/src/app/(admin)/students/[id]/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/topics",
+        "file": "frontend/src/app/(admin)/topics/page.tsx",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "route": "/topics/[id]",
+        "file": "frontend/src/app/(admin)/topics/[id]/page.tsx",
+        "scope": "admin_or_teacher"
+      }
+    ],
+    "layouts": [
+      {
+        "file": "frontend/src/app/(admin)/layout.tsx",
+        "route_prefix": "/",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "file": "frontend/src/app/(admin)/topics/[id]/layout.tsx",
+        "route_prefix": "/topics/[id]",
+        "scope": "admin_or_teacher"
+      },
+      {
+        "file": "frontend/src/app/(auth)/layout.tsx",
+        "route_prefix": "/",
+        "scope": "unauthenticated"
+      },
+      {
+        "file": "frontend/src/app/layout.tsx",
+        "route_prefix": "/",
+        "scope": "public_or_runtime_guarded"
+      },
+      {
+        "file": "frontend/src/app/student/layout.tsx",
+        "route_prefix": "/student",
+        "scope": "student"
+      }
+    ],
+    "hooks": [
+      {
+        "file": "frontend/src/hooks/useAnalytics.ts",
+        "exports": [
+          "useAnalytics",
+          "useAnalyticsOverview",
+          "useCompletionStatus",
+          "useScoreStats",
+          "useTopicPerformance"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useConfirm.tsx",
+        "exports": [
+          "useConfirm"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useExamHistory.ts",
+        "exports": [
+          "useExamHistory",
+          "useSubmissionDetail",
+          "useSubmissions"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useExams.ts",
+        "exports": [
+          "createExam",
+          "createExamQuestion",
+          "deleteExam",
+          "updateExam",
+          "useExamDetail",
+          "useExams"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useFetch.ts",
+        "exports": [
+          "fetcher"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useFlashcards.ts",
+        "exports": [
+          "createCard",
+          "createDeck",
+          "generateTopicKitAi",
+          "submitCardReview",
+          "updateTopicBrief",
+          "useDeckDetail",
+          "useStudyCards",
+          "useTopicDecks"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useMaterialWorkspace.ts",
+        "exports": [
+          "generateFlashcards",
+          "generateQuestions",
+          "saveFlashcards",
+          "saveQuestions",
+          "useMaterialDetail",
+          "useMaterialQuestions"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useMaterials.ts",
+        "exports": [
+          "useMaterials"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useProfile.ts",
+        "exports": [
+          "updatePassword",
+          "updateProfile",
+          "uploadAvatar",
+          "useProfile"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useQuestions.ts",
+        "exports": [
+          "createQuestion",
+          "deleteQuestion",
+          "updateQuestion",
+          "useQuestionDetail",
+          "useQuestions"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useStudentExams.ts",
+        "exports": [
+          "submitExam",
+          "useStudentExamResult",
+          "useStudentExams",
+          "useTakeExam"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useStudents.ts",
+        "exports": [
+          "useStudentDetail",
+          "useStudents"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useTopics.ts",
+        "exports": [
+          "createTopic",
+          "deleteTopic",
+          "updateTopic",
+          "useTopicDetail",
+          "useTopicProgress",
+          "useTopics"
+        ]
+      },
+      {
+        "file": "frontend/src/hooks/useUsers.ts",
+        "exports": [
+          "deleteUser",
+          "updateUserRole",
+          "useUserDetail",
+          "useUsers"
+        ]
+      }
+    ],
+    "services": [
+      {
+        "file": "frontend/src/services/apiService.ts",
+        "exports": [
+          "addQuestionToExam",
+          "bulkAddQuestionsToExam",
+          "createExam",
+          "createQuestion",
+          "createTopic",
+          "deleteExam",
+          "deleteMaterial",
+          "deleteQuestion",
+          "deleteStudent",
+          "deleteTopic",
+          "forgotPassword",
+          "login",
+          "logoutUser",
+          "registerUser",
+          "resetPassword",
+          "submitExam",
+          "updateExam",
+          "updateQuestion",
+          "updateStudentRole",
+          "updateTopic",
+          "uploadMaterial"
+        ]
+      }
+    ],
+    "bff_routes": [
+      {
+        "file": "frontend/src/app/api/auth/login/route.ts",
+        "methods": []
+      },
+      {
+        "file": "frontend/src/app/api/auth/logout/route.ts",
+        "methods": []
+      },
+      {
+        "file": "frontend/src/app/api/proxy/[...path]/route.ts",
+        "methods": [
+          "DELETE",
+          "GET",
+          "PATCH",
+          "POST",
+          "PUT"
+        ]
+      }
+    ]
+  },
+  "tests": {
+    "backend": [
+      {
+        "path": "tests/test_admin.py",
+        "tests": [
+          {
+            "line": 1,
+            "markers": [],
+            "name": "test_get_users"
+          },
+          {
+            "line": 9,
+            "markers": [],
+            "name": "test_update_user_role"
+          },
+          {
+            "line": 14,
+            "markers": [],
+            "name": "test_delete_user"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_ai_studio.py",
+        "tests": [
+          {
+            "line": 7,
+            "markers": [],
+            "name": "test_process_document"
+          },
+          {
+            "line": 33,
+            "markers": [],
+            "name": "test_chat_prompt_injection"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_auth.py",
+        "tests": [
+          {
+            "line": 3,
+            "markers": [],
+            "name": "test_register_user"
+          },
+          {
+            "line": 19,
+            "markers": [],
+            "name": "test_login_user"
+          },
+          {
+            "line": 45,
+            "markers": [],
+            "name": "test_register_weak_password"
+          },
+          {
+            "line": 58,
+            "markers": [],
+            "name": "test_get_me"
+          },
+          {
+            "line": 68,
+            "markers": [],
+            "name": "test_get_me_unauthorized"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_exams.py",
+        "tests": [
+          {
+            "line": 1,
+            "markers": [],
+            "name": "test_get_exams"
+          },
+          {
+            "line": 6,
+            "markers": [],
+            "name": "test_update_exam"
+          },
+          {
+            "line": 17,
+            "markers": [],
+            "name": "test_get_exam_detail"
+          },
+          {
+            "line": 26,
+            "markers": [],
+            "name": "test_bulk_add_questions"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_m1_endpoints.py",
+        "tests": [
+          {
+            "line": 4,
+            "markers": [],
+            "name": "test_topics_crud"
+          },
+          {
+            "line": 37,
+            "markers": [],
+            "name": "test_questions_crud"
+          },
+          {
+            "line": 82,
+            "markers": [],
+            "name": "test_analytics_endpoints"
+          },
+          {
+            "line": 110,
+            "markers": [],
+            "name": "test_history_endpoints"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_materials.py",
+        "tests": [
+          {
+            "line": 1,
+            "markers": [],
+            "name": "test_upload_material"
+          },
+          {
+            "line": 10,
+            "markers": [],
+            "name": "test_get_materials"
+          },
+          {
+            "line": 18,
+            "markers": [],
+            "name": "test_get_material_questions"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_student.py",
+        "tests": [
+          {
+            "line": 1,
+            "markers": [],
+            "name": "test_start_exam"
+          },
+          {
+            "line": 14,
+            "markers": [],
+            "name": "test_submit_exam"
+          },
+          {
+            "line": 39,
+            "markers": [],
+            "name": "test_submit_without_start"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/unit/test_config.py",
+        "tests": [
+          {
+            "line": 9,
+            "markers": [],
+            "name": "test_root_env_file_is_independent_of_working_directory"
+          },
+          {
+            "line": 14,
+            "markers": [],
+            "name": "test_database_url_is_the_canonical_database_setting"
+          },
+          {
+            "line": 26,
+            "markers": [],
+            "name": "test_legacy_postgresql_components_remain_supported"
+          },
+          {
+            "line": 42,
+            "markers": [],
+            "name": "test_database_configuration_is_required"
+          },
+          {
+            "line": 47,
+            "markers": [],
+            "name": "test_cors_origins_are_normalized"
+          },
+          {
+            "line": 61,
+            "markers": [],
+            "name": "test_test_environment_derives_an_isolated_database_name"
+          },
+          {
+            "line": 73,
+            "markers": [],
+            "name": "test_explicit_test_database_url_overrides_the_derived_target"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_test_database.py",
+        "tests": [
+          {
+            "line": 9,
+            "markers": [],
+            "name": "test_accepts_a_separate_local_test_database"
+          },
+          {
+            "line": 19,
+            "markers": [],
+            "name": "test_accepts_equivalent_localhost_aliases"
+          },
+          {
+            "line": 38,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_unsafe_database_targets"
+          }
+        ],
+        "tier": "unit"
+      }
+    ],
+    "frontend": [
+      {
+        "path": "frontend/e2e/example.spec.ts",
+        "tier": "e2e",
+        "test_count": 1
+      },
+      {
+        "path": "frontend/src/lib/backend-url.test.ts",
+        "tier": "unit",
+        "test_count": 3
+      },
+      {
+        "path": "frontend/src/lib/store.test.ts",
+        "tier": "unit",
+        "test_count": 3
+      },
+      {
+        "path": "frontend/tests/e2e/admin-flow.spec.ts",
+        "tier": "e2e",
+        "test_count": 1
+      },
+      {
+        "path": "frontend/tests/e2e/student-flow.spec.ts",
+        "tier": "e2e",
+        "test_count": 1
+      }
+    ]
+  },
+  "coverage": {
+    "backend": {
+      "provider": "pytest-cov",
+      "command": "uv run --frozen pytest --cov=app",
+      "baseline_percent": null,
+      "baseline_status": "not_measured"
+    },
+    "frontend": {
+      "provider": "Jest v8 coverage",
+      "command": "npm run test:unit:coverage",
+      "baseline_percent": null,
+      "baseline_status": "not_measured"
+    }
+  }
+}

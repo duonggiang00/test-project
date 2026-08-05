@@ -34,6 +34,12 @@ const steps = {
     [resolve(workspaceRoot, "scripts/validate-env-example.mjs")],
     workspaceRoot,
   ),
+  inventory: command(
+    "generated project inventory",
+    nodeExecutable,
+    [resolve(workspaceRoot, "scripts/project-inventory.mjs"), "check"],
+    workspaceRoot,
+  ),
   backendUnit: command(
     "backend unit tests",
     "uv",
@@ -98,6 +104,7 @@ const modes = {
   env: [steps.env],
   fast: [
     steps.env,
+    steps.inventory,
     steps.backendUnit,
     steps.frontendLint,
     steps.frontendUnit,
@@ -107,9 +114,11 @@ const modes = {
   frontend: [steps.frontendLint, steps.frontendUnit, steps.frontendBuild],
   integration: [steps.backendIntegration],
   migration: [steps.migration],
+  inventory: [steps.inventory],
   e2e: [steps.e2e],
   all: [
     steps.env,
+    steps.inventory,
     steps.backendUnit,
     steps.backendIntegration,
     steps.migration,
