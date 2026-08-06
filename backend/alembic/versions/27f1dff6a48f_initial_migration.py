@@ -106,9 +106,12 @@ def upgrade() -> None:
     sa.UniqueConstraint('submission_id', 'question_id', name='uq_submission_question')
     )
     op.create_index(op.f('ix_submission_answers_id'), 'submission_answers', ['id'], unique=False)
-    op.drop_index(op.f('ix_user_email'), table_name='user')
-    op.drop_index(op.f('ix_user_id'), table_name='user')
-    op.drop_table('user')
+    bind = op.get_bind()
+    if sa.inspect(bind).has_table('user'):
+        # PostgreSQL removes the legacy table indexes with the table. Separate
+        # unconditional index drops make a fresh-database upgrade fail.
+        op.drop_table('user')
+    postgresql.ENUM(name='role', create_type=False).drop(bind, checkfirst=True)
     # ### end Alembic commands ###
 
 

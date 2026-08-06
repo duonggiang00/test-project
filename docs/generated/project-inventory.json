@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "1016d7907f3551db364b725cd0740b196156e9a5",
-    "source_commit_timestamp": "2026-08-05T16:13:29+07:00",
-    "source_tree_sha256": "08e0728dbe08fb8a61da60d279746aa9297c5fcaa34bdfdcf4cb4af67fd5b75e",
-    "relevant_file_count": 233,
+    "source_commit": "da021c211c1f8991638f16755bdda5ac3522df9e",
+    "source_commit_timestamp": "2026-08-05T17:22:15+07:00",
+    "source_tree_sha256": "e0179692e4b26d06c312dee0415148111dbb7d402d0026c61fa9eb5ed2605a8e",
+    "relevant_file_count": 234,
     "alembic_heads": [
       "e598471b8b6d"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 1,
-    "backend_test_functions": 48,
+    "backend_test_functions": 54,
     "frontend_test_calls": 17
   },
   "backend": {
@@ -4588,6 +4588,44 @@
             "line": 37,
             "markers": [],
             "name": "test_failed_material_commit_rolls_back_and_removes_stored_file"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_migration_roundtrip.py",
+        "tests": [
+          {
+            "line": 13,
+            "markers": [],
+            "name": "test_import_does_not_mutate_existing_environment_mode"
+          },
+          {
+            "line": 35,
+            "markers": [],
+            "name": "test_accepts_exact_head_and_base_schema_states"
+          },
+          {
+            "line": 52,
+            "markers": [],
+            "name": "test_rejects_mismatched_head_revision"
+          },
+          {
+            "line": 72,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_missing_or_stray_base_schema_objects"
+          },
+          {
+            "line": 83,
+            "markers": [],
+            "name": "test_rejects_multiple_or_signature_mismatched_heads"
+          },
+          {
+            "line": 94,
+            "markers": [],
+            "name": "test_cleanup_runs_when_schema_assertion_fails"
           }
         ],
         "tier": "unit"

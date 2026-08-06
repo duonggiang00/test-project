@@ -1,8 +1,14 @@
 # Remaining High-Risk Implementation Approval Packet
 
-Status: Pending project-owner approval  
+Status: Batches A–E/defaults and Batch A FK-name amendment approved
 Prepared: 2026-08-05  
 Parent tracker: `AGENT_WORKFLOW_OPTIMIZATION_PLAN.md`
+
+Approval recorded: 2026-08-05. The project owner approved A–E with every
+default in this packet and will supply golden-dataset content later. The narrow
+amendment to name four foreign keys in revisions `73f523515ba5` and
+`e598471b8b6d`, discovered only by the required PostgreSQL round trip, was
+explicitly approved by the project owner on 2026-08-06.
 
 ## 1. Why approval is required now
 

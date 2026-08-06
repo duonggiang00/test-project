@@ -38,12 +38,26 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_topics_id'), 'topics', ['id'], unique=False)
     op.add_column('exams', sa.Column('topic_id', sa.UUID(), nullable=True))
-    op.create_foreign_key(None, 'exams', 'topics', ['topic_id'], ['id'], ondelete='SET NULL')
+    op.create_foreign_key(
+        'exams_topic_id_fkey',
+        'exams',
+        'topics',
+        ['topic_id'],
+        ['id'],
+        ondelete='SET NULL',
+    )
     op.add_column('questions', sa.Column('topic_id', sa.UUID(), nullable=True))
     op.add_column('questions', sa.Column('question_type', sa.Enum('MULTIPLE_CHOICE', 'MATCHING', 'FILL_IN_BLANK', name='questiontype'), server_default='MULTIPLE_CHOICE', nullable=False))
     op.add_column('questions', sa.Column('difficulty', sa.Enum('EASY', 'MEDIUM', 'HARD', name='difficultylevel'), server_default='MEDIUM', nullable=False))
     op.add_column('questions', sa.Column('metadata_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True))
-    op.create_foreign_key(None, 'questions', 'topics', ['topic_id'], ['id'], ondelete='SET NULL')
+    op.create_foreign_key(
+        'questions_topic_id_fkey',
+        'questions',
+        'topics',
+        ['topic_id'],
+        ['id'],
+        ondelete='SET NULL',
+    )
     op.add_column('submission_answers', sa.Column('answer_data', postgresql.JSONB(astext_type=sa.Text()), nullable=True))
     op.add_column('submission_answers', sa.Column('points_awarded', sa.Float(), nullable=True))
     op.drop_constraint(op.f('submission_answers_selected_option_id_fkey'), 'submission_answers', type_='foreignkey')
@@ -66,12 +80,12 @@ def downgrade() -> None:
     op.create_foreign_key(op.f('submission_answers_selected_option_id_fkey'), 'submission_answers', 'options', ['selected_option_id'], ['id'], ondelete='CASCADE')
     op.drop_column('submission_answers', 'points_awarded')
     op.drop_column('submission_answers', 'answer_data')
-    op.drop_constraint(None, 'questions', type_='foreignkey')
+    op.drop_constraint('questions_topic_id_fkey', 'questions', type_='foreignkey')
     op.drop_column('questions', 'metadata_json')
     op.drop_column('questions', 'difficulty')
     op.drop_column('questions', 'question_type')
     op.drop_column('questions', 'topic_id')
-    op.drop_constraint(None, 'exams', type_='foreignkey')
+    op.drop_constraint('exams_topic_id_fkey', 'exams', type_='foreignkey')
     op.drop_column('exams', 'topic_id')
     op.drop_index(op.f('ix_topics_id'), table_name='topics')
     op.drop_table('topics')

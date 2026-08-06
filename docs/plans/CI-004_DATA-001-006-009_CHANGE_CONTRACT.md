@@ -4,7 +4,10 @@ Risk level: L3 migration, audit, soft delete, retention, and purge
 Owner: Primary implementation agent after approval  
 Independent review: Migration/data and security reviewers required  
 Approval required: Yes  
-Approval evidence: Pending in `REMAINING_HIGH_RISK_APPROVAL_PACKET.md`
+Approval evidence: Base A–E/default approval recorded in
+`REMAINING_HIGH_RISK_APPROVAL_PACKET.md`; the project owner explicitly approved
+the narrow Batch A amendment for revisions `73f523515ba5` and `e598471b8b6d` on
+2026-08-06
 
 ## Scope
 
@@ -51,6 +54,29 @@ Out of scope:
 - Keep downgrade schema behavior sufficient for a fresh
   upgrade/downgrade/upgrade round trip. Schema downgrade does not promise row
   restoration.
+
+#### Observed later-revision downgrade defects — scope amendment approved
+
+The approved initial-revision repair exposed two additional failures during the
+required PostgreSQL downgrade. This was not hypothetical: the guarded runner
+first failed in `e598471b8b6d` and, after the minimal repair was prototyped,
+failed in `73f523515ba5`. Both revisions create foreign keys without an explicit
+name and later call `drop_constraint(None, ...)`, which PostgreSQL cannot
+compile.
+
+The approved amendment is limited to assigning and reusing PostgreSQL's existing
+default names for these four operations:
+
+- `flashcard_decks_material_id_fkey`
+- `study_materials_topic_id_fkey`
+- `questions_topic_id_fkey`
+- `exams_topic_id_fkey`
+
+No table, column, relationship, cascade rule, application model, or current head
+changes. The prototype plus strengthened exact-schema runner passes the complete
+round trip. Because Batch A listed rewriting later revisions as a non-goal, the
+project owner separately and explicitly approved this narrow amendment on
+2026-08-06.
 
 ### Audit core
 

@@ -4,7 +4,8 @@ Risk level: L4 authentication replacement; L3 authorization and tenant isolation
 Owner: Primary implementation agent after approval  
 Independent review: Security reviewer required  
 Approval required: Yes  
-Approval evidence: Pending in `REMAINING_HIGH_RISK_APPROVAL_PACKET.md`
+Approval evidence: Approved by the project owner in
+`REMAINING_HIGH_RISK_APPROVAL_PACKET.md` on 2026-08-05
 
 ## Scope
 
@@ -153,4 +154,3 @@ Migration impact:
 - Do not downgrade a live database merely to roll back application code.
 - Ownership enforcement rollback must not expose quarantined legacy rows to
   non-admin actors.
-

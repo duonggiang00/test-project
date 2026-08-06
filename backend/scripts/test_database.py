@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import psycopg2
 from psycopg2 import sql
+from psycopg2.extensions import connection as PsycopgConnection
 from sqlalchemy.engine import URL, make_url
 
 from app.core.config import settings
@@ -52,10 +53,10 @@ class TestDatabaseManager:
         self.target = target
         self.created_by_manager = False
 
-    def _connect_admin(self):
+    def _connect_admin(self) -> PsycopgConnection:
         return self._connect(self.target.admin_database)
 
-    def _connect(self, database: str):
+    def _connect(self, database: str) -> PsycopgConnection:
         return psycopg2.connect(
             dbname=database,
             user=self.target.target.username,
@@ -76,6 +77,11 @@ class TestDatabaseManager:
                 return cursor.fetchone() is not None
         finally:
             connection.close()
+
+    def connect_target(self) -> PsycopgConnection:
+        target_database = self.target.target.database
+        assert target_database is not None
+        return self._connect(target_database)
 
     def create(self) -> None:
         connection = self._connect_admin()

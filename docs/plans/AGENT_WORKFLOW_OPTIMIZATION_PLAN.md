@@ -4,7 +4,7 @@ Status: Active
 Plan owner: Project owner  
 Execution owner: Primary coding agent  
 Created: 2026-08-05  
-Last updated: 2026-08-05  
+Last updated: 2026-08-06
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
 
 ## 1. Objective
@@ -132,7 +132,7 @@ Goal: Prevent unverified code from entering `main`.
 | CI-001 | Fix `.gitignore` so backend and frontend test suites are tracked | DONE | PLAN-003 | `git check-ignore` confirms test files are not ignored |
 | CI-002 | Add pull-request fast gate | REVIEW | TOOL-006, CI-001 | Workflow implementation and 178.9s local gate pass are verified; awaiting the first GitHub pull-request run |
 | CI-003 | Add push-to-main integration gate | REVIEW | TOOL-006, TOOL-008, CI-001 | Workflow implementation, pgvector service profile, 24/24 local integration pass, and cleanup are verified; awaiting the first push-to-`main` run |
-| CI-004 | Add Alembic upgrade/downgrade/upgrade verification | BLOCKED | CI-003 | Runner and CI step are implemented, but initial upgrade fails in `27f1dff6a48f` when dropping nonexistent `ix_user_email`; migration edit requires owner approval |
+| CI-004 | Add Alembic upgrade/downgrade/upgrade verification | DONE | CI-003 | Guarded PostgreSQL passes `upgrade head -> downgrade base -> upgrade head`; exact table/enum/revision assertions, single-head signature validation, nine runner unit tests, and `_test` cleanup pass after separately approved FK-name repairs |
 | CI-005 | Add mocked Playwright critical-flow suite to PRs | REVIEW | CI-002 | Backend-independent admin flow passes four local projects in 52s with failure artifacts; awaiting first GitHub pull-request run |
 | CI-006 | Add real-backend/PostgreSQL smoke E2E suite on `main` | REVIEW | CI-003, CI-005 | Guarded runner passed login, topic/exam/question creation, student submit/result, cleanup, and 3/3 owner/flake policy locally in 32s; awaiting first GitHub `main` run |
 | CI-007 | Add Chromium, Firefox, WebKit, and mobile projects | DONE | CI-005, CI-006 | Chromium, Firefox, WebKit, and Pixel 7 Chrome matrix passes locally in 52s, within the 10-minute budget |
@@ -347,6 +347,10 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | CI-010 | Review | Added a machine-readable `main` protection policy, workflow-drift checker, and application/negative-proof checklist; no Git remote exists, so observed contexts and merge blocking remain unverified |
 | 2026-08-05 | High-risk boundary | Approval requested | Bounded batches A–E document migration repair, ownership, auth lifecycle defaults, retention decisions, AI governance, non-goals, and required evidence; implementation remains pending explicit owner approval |
 | 2026-08-05 | High-risk contract audit | Prepared | Independent read-only security, migration/data, and AI audits produced executable file/test contracts; corrected order is A → DATA-001 audit core → ownership/auth → lifecycle → AI, with legacy owner quarantine, authenticated material downloads, cascade-safe purge allowlist, tenant-safe retrieval, and admin-owned golden answers explicit |
+| 2026-08-05 | High-risk boundary | Approved | Owner approved Batches A–E with every default in `REMAINING_HIGH_RISK_APPROVAL_PACKET.md`; golden-dataset content remains an explicit later owner/admin input |
+| 2026-08-05 | CI-004 | Verification | Initial repair plus four explicit FK names passed both head upgrades, full downgrade to base, exact revision/table/enum assertions, eight initial runner unit tests, and guarded `_test` cleanup; later-revision edits awaited the documented narrow scope amendment approval |
+| 2026-08-06 | Repository remote | Prepared | Configured `origin` as `https://github.com/duonggiang00/test-project.git`; read-only `ls-remote --heads` returned no heads, so the repository is reachable but still awaits its initial push |
+| 2026-08-06 | CI-004 | Completed | Owner approved the narrow later-revision FK-name amendment; full PostgreSQL round trip, exact head/base schema assertions, import-environment regression coverage, single-head signature check, 40-unit fast suite, model/inventory gates, and final `_test` absence all pass |
 
 ## 17. Known program risks
 
@@ -357,8 +361,8 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Broad ignore rules could silently exclude test suites | Mitigated by CI-001; retain `git check-ignore` validation in future CI work |
 | Backend integration tests could mutate a developer database | Mitigated: direct integration fixtures require `ENV=test`; the runner manages only a new local `_test` database and refuses unsafe or pre-existing targets |
 | Backend tests share a global SlowAPI limiter and exceed auth limits during a full run | Mitigated with per-test limiter reset; current full baseline is 29 passed in 23.78s |
-| CI workflow has not executed on GitHub | CI-002/003 implementation is in REVIEW; create the initial commit and configure a remote before relying on required-check status |
-| Alembic cannot build a fresh database | CI-004 blocks at initial migration `27f1dff6a48f`; obtain owner approval before correcting migration history, then rerun upgrade/downgrade/upgrade |
+| CI workflow has not executed on GitHub | `origin` is configured but currently has no heads; CI-002/003 remain in REVIEW until the initial push/PR runs, and remote protection work still needs authenticated GitHub CLI access |
+| Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
 | Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
 | Current code may not yet satisfy target ownership separation | Preserve current behavior through policies, then harden under Milestone 7 |
 | Submission/grade purge policy is not approved | Block permanent purge for these records until DATA-006 |
