@@ -4,7 +4,7 @@ Status: Active
 Plan owner: Project owner  
 Execution owner: Primary coding agent  
 Created: 2026-08-05  
-Last updated: 2026-08-06
+Last updated: 2026-08-09
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
 
 ## 1. Objective
@@ -239,12 +239,12 @@ Migration tasks require owner approval and downgrade evidence.
 
 | ID | Task | Status | Depends on | Acceptance evidence |
 |---|---|---|---|---|
-| DATA-001 | Implement canonical audit-event model/service | TODO | GOV-003, CI-004 | Migration round trip and audit schema tests pass |
+| DATA-001 | Implement canonical audit-event model/service | DONE | GOV-003, CI-004 | Migration round trip and audit schema tests pass |
 | DATA-002 | Instrument admin/teacher, exam, grading, AI, restore, purge, and auth events | TODO | DATA-001 | Required actions produce redacted audit events |
 | DATA-003 | Implement reusable soft-delete fields and query policy | TODO | GOV-002, CI-004 | Default reads exclude deleted rows |
 | DATA-004 | Implement admin/owner restoration policy | TODO | DATA-003, SEC-002 | Authorization and 30-day eligibility tests pass |
 | DATA-005 | Implement 30-day purge service with dry run and audit | TODO | DATA-002–004 | Boundary-time, dry-run, purge, and rollback tests pass |
-| DATA-006 | Confirm separate retention for submissions, grades, and sensitive AI logs | TODO | DATA-001 | Owner-approved policy is recorded before permanent purge |
+| DATA-006 | Confirm separate retention for submissions, grades, and sensitive AI logs | DONE | DATA-001 | Owner-approved policy is recorded before permanent purge |
 | DATA-007 | Introduce local storage interface for uploaded files | DONE | GOV-001 | Injected `FileStorage` protocol preserves local behavior with atomic, UUID-named writes and root-confined deletion; fast and PostgreSQL gates pass |
 | DATA-008 | Enforce PDF/DOCX/PPTX/TXT and 50 MB validation | DONE | DATA-007 | 17 focused cases cover extension, MIME, PDF/OOXML signature, UTF-8 text, size, collision, atomic-failure cleanup, DB rollback, and path boundaries; endpoint reads at most 50 MB + 1 byte |
 | DATA-009 | Apply owner/admin authorization and 30-day lifecycle to files | TODO | DATA-003–005, DATA-007 | Cross-owner access and restore/purge tests pass |
@@ -351,6 +351,8 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-05 | CI-004 | Verification | Initial repair plus four explicit FK names passed both head upgrades, full downgrade to base, exact revision/table/enum assertions, eight initial runner unit tests, and guarded `_test` cleanup; later-revision edits awaited the documented narrow scope amendment approval |
 | 2026-08-06 | Repository remote | Prepared | Configured `origin` as `https://github.com/duonggiang00/test-project.git`; read-only `ls-remote --heads` returned no heads, so the repository is reachable but still awaits its initial push |
 | 2026-08-06 | CI-004 | Completed | Owner approved the narrow later-revision FK-name amendment; full PostgreSQL round trip, exact head/base schema assertions, import-environment regression coverage, single-head signature check, 40-unit fast suite, model/inventory gates, and final `_test` absence all pass |
+| 2026-08-09 | DATA-001 | Completed | Added canonical correlated errors and BFF localization, privacy-allowlisted append-only audit core, exact audit schema/trigger verification, and hardened AI/UI error paths. Final fast passed in 94.6s; backend coverage is 77.50%, frontend 28.59%, changed executable coverage 83.84%; PostgreSQL integration passed 32 with two approved ownership XFAIL; migration round trip and real E2E 3/3 passed; migration, security, frontend, and completion reviews found no P1/P2. See `../handoffs/DATA-001.md`. |
+| 2026-08-09 | DATA-006 | Completed | Recorded the owner-approved MVP retention policy in the canonical specification: no submission/grade purge, 30-day restricted raw AI payload retention, parent-lifetime redacted AI metadata, inherited chunk lifecycle, and no automatic audit-event purge. |
 
 ## 17. Known program risks
 
@@ -365,4 +367,4 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
 | Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
 | Current code may not yet satisfy target ownership separation | Preserve current behavior through policies, then harden under Milestone 7 |
-| Submission/grade purge policy is not approved | Block permanent purge for these records until DATA-006 |
+| Post-MVP submission/grade retention remains undecided | The approved MVP policy forbids permanent purge; require a later educational-record ADR and explicit owner approval before changing it |

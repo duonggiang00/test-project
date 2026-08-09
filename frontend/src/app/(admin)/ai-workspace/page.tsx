@@ -7,9 +7,16 @@ import GenerativePreview from "./GenerativePreview";
 import { useMaterials } from "@/hooks/useMaterials";
 import { useTopics } from "@/hooks/useTopics";
 import type { Topic } from "@/types";
-import { uploadMaterial, deleteMaterial } from "@/services/apiService";
+import {
+  deleteMaterial,
+  generateMaterialFlashcards,
+  generateMaterialQuestions,
+  generateMaterialTopicBrief,
+  openAiChatStream,
+  uploadMaterial,
+} from "@/services/apiService";
 import { toast } from "@/components/ui/toast";
-import { getErrorMessage } from "@/lib/errors";
+import { getBackendErrorMessage, getErrorMessage } from "@/lib/errors";
 import {
   Dialog,
   DialogContent,
@@ -78,16 +85,12 @@ export default function AIWorkspacePage() {
       e.target.value = '';
       mutate();
     } catch (error) {
-      let errorCode = "UPLOAD_FAILED";
-      if (error && typeof error === "object" && "response" in error) {
-        const typedError = error as { response?: { data?: { error_code?: string } } };
-        if (typedError.response?.data?.error_code) {
-          errorCode = typedError.response.data.error_code;
-        }
-      }
       toast.add({
-        title: "Lỗi tải lên",
-        description: getErrorMessage(errorCode),
+        title: "Upload failed",
+        description: getBackendErrorMessage(
+          error,
+          "The material could not be uploaded.",
+        ),
         type: "error"
       });
     } finally {
@@ -110,10 +113,13 @@ export default function AIWorkspacePage() {
       }
       setMaterialToDelete(null);
       mutate();
-    } catch {
+    } catch (error) {
       toast.add({
-        title: "Lỗi",
-        description: "Không thể xóa tài liệu.",
+        title: "Delete failed",
+        description: getBackendErrorMessage(
+          error,
+          "The material could not be deleted.",
+        ),
         type: "error"
       });
     } finally {
@@ -128,24 +134,21 @@ export default function AIWorkspacePage() {
     setMessages(prev => [...prev, { role: "assistant", content: "[...] Đang sinh câu hỏi từ tài liệu..." }]);
     
     try {
-      const res = await fetch(`/api/proxy/materials/${activeMaterial}/generate-questions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: questionCount, question_types: ["SINGLE_CHOICE", "MULTIPLE_CHOICE", "MATCHING", "FILL_IN_BLANK"], difficulty: "MEDIUM" })
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        if (errData.error_code === "NO_CHUNKS_FOUND") {
-          throw new Error("Tài liệu chưa được trích xuất nội dung hoặc trống. Vui lòng chờ thêm giây lát hoặc kiểm tra lại file.");
-        }
-        throw new Error(errData.message || "Không thể sinh câu hỏi");
-      }
-      const data = await res.json();
+      const data = await generateMaterialQuestions(
+        activeMaterial,
+        questionCount,
+      );
       setActiveToolCall({ name: "draft_exam", args: data });
       setMessages(prev => [...prev, { role: "assistant", content: "[OK] Đã sinh xong câu hỏi. Xem kết quả ở khu vực hiển thị bên dưới." }]);
-    } catch (err) {
-      const error = err as Error;
-      toast.add({ title: "Lỗi", description: error.message || "Không thể sinh câu hỏi", type: "error" });
+    } catch (error) {
+      toast.add({
+        title: "Question generation failed",
+        description: getBackendErrorMessage(
+          error,
+          "Questions could not be generated.",
+        ),
+        type: "error",
+      });
       setActiveToolCall(null);
     } finally {
       setIsStreaming(false);
@@ -159,24 +162,21 @@ export default function AIWorkspacePage() {
     setMessages(prev => [...prev, { role: "assistant", content: "[...] Đang tạo flashcards từ tài liệu..." }]);
     
     try {
-      const res = await fetch(`/api/proxy/materials/${activeMaterial}/generate-flashcards`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: questionCount })
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        if (errData.error_code === "NO_CHUNKS_FOUND") {
-          throw new Error("Tài liệu chưa được trích xuất nội dung hoặc trống. Vui lòng chờ thêm giây lát hoặc kiểm tra lại file.");
-        }
-        throw new Error(errData.message || "Không thể tạo flashcards");
-      }
-      const data = await res.json();
+      const data = await generateMaterialFlashcards(
+        activeMaterial,
+        questionCount,
+      );
       setActiveToolCall({ name: "draft_flashcards", args: data });
       setMessages(prev => [...prev, { role: "assistant", content: "[OK] Đã sinh xong flashcards. Xem kết quả ở khu vực hiển thị bên dưới." }]);
-    } catch (err) {
-      const error = err as Error;
-      toast.add({ title: "Lỗi", description: error.message || "Không thể tạo flashcards", type: "error" });
+    } catch (error) {
+      toast.add({
+        title: "Flashcard generation failed",
+        description: getBackendErrorMessage(
+          error,
+          "Flashcards could not be generated.",
+        ),
+        type: "error",
+      });
       setActiveToolCall(null);
     } finally {
       setIsStreaming(false);
@@ -190,22 +190,18 @@ export default function AIWorkspacePage() {
     setMessages(prev => [...prev, { role: "assistant", content: "[...] Đang tóm tắt dàn ý tài liệu..." }]);
     
     try {
-      const res = await fetch(`/api/proxy/materials/${activeMaterial}/generate-topic-brief`, {
-        method: "POST"
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        if (errData.error_code === "NO_CHUNKS_FOUND") {
-          throw new Error("Tài liệu chưa được trích xuất nội dung hoặc trống. Vui lòng chờ thêm giây lát hoặc kiểm tra lại file.");
-        }
-        throw new Error(errData.message || "Không thể tạo topic brief");
-      }
-      const data = await res.json();
+      const data = await generateMaterialTopicBrief(activeMaterial);
       setActiveToolCall({ name: "draft_topic_brief", args: data });
       setMessages(prev => [...prev, { role: "assistant", content: "[OK] Đã tạo xong dàn ý. Xem kết quả ở khu vực hiển thị bên dưới." }]);
-    } catch (err) {
-      const error = err as Error;
-      toast.add({ title: "Lỗi", description: error.message || "Không thể tạo topic brief", type: "error" });
+    } catch (error) {
+      toast.add({
+        title: "Topic brief generation failed",
+        description: getBackendErrorMessage(
+          error,
+          "The topic brief could not be generated.",
+        ),
+        type: "error",
+      });
       setActiveToolCall(null);
     } finally {
       setIsStreaming(false);
@@ -223,13 +219,20 @@ export default function AIWorkspacePage() {
 
     try {
       const history = [...messages.filter(m => m.role !== "system" && m !== messages[0]), userMessage];
-      const res = await fetch("/api/proxy/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history, material_id: activeMaterial }),
-      });
+      const res = await openAiChatStream(history, activeMaterial);
 
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        const safeMessage = getBackendErrorMessage(
+          errorBody,
+          "The AI chat request could not be completed.",
+        );
+        setMessages(prev => [
+          ...prev,
+          { role: "assistant", content: `\n\n[ERROR] ${safeMessage}` },
+        ]);
+        return;
+      }
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder("utf-8");
@@ -238,6 +241,7 @@ export default function AIWorkspacePage() {
         setMessages(prev => [...prev, { role: "assistant", content: "" }]);
         setActiveToolCall(null);
         let buffer = "";
+        let streamFailed = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -252,6 +256,22 @@ export default function AIWorkspacePage() {
               if (dataStr === "[DONE]") continue;
               try {
                 const data = JSON.parse(dataStr);
+                if (streamFailed) continue;
+                if (typeof data.error === "string") {
+                  const safeMessage = getErrorMessage(data.error);
+                  setMessages(prev => {
+                    const newMessages = [...prev];
+                    const lastIndex = newMessages.length - 1;
+                    newMessages[lastIndex] = {
+                      ...newMessages[lastIndex],
+                      content: `\n\n[ERROR] ${safeMessage}`,
+                    };
+                    return newMessages;
+                  });
+                  setActiveToolCall(null);
+                  streamFailed = true;
+                  continue;
+                }
                 if (data.text) {
                   setMessages(prev => {
                     const newMessages = [...prev];
@@ -283,7 +303,13 @@ export default function AIWorkspacePage() {
         }
       }
     } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "\n\n**Lỗi:** Không thể kết nối với AI Studio." }]);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "\n\n[ERROR] The AI chat request could not be completed.",
+        },
+      ]);
     } finally {
       setIsStreaming(false);
     }

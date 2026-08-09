@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
+import { getBackendErrorMessage, logBackendError } from "@/lib/errors";
+import {
+  saveGeneratedFlashcards,
+  saveGeneratedQuestions,
+  saveGeneratedTopicBrief,
+} from "@/services/apiService";
 
 interface GenerativePreviewProps {
   toolName: string | null;
@@ -42,33 +48,28 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming, mat
     setIsSaving(true);
     try {
       if (toolName === "draft_exam") {
-        const res = await fetch(`/api/proxy/materials/${materialId}/save-questions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ questions: parsedArgs.questions })
-        });
-        if (!res.ok) throw new Error("Failed to save questions");
+        await saveGeneratedQuestions(materialId, parsedArgs.questions);
         toast.add({ title: "Thành công", description: "Đã lưu bộ câu hỏi vào hệ thống", type: "success" });
       } else if (toolName === "draft_flashcards") {
-        const res = await fetch(`/api/proxy/materials/${materialId}/save-flashcards`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: "Flashcards từ AI", topic_id: null, flashcards: parsedArgs.flashcards })
-        });
-        if (!res.ok) throw new Error("Failed to save flashcards");
+        await saveGeneratedFlashcards(materialId, parsedArgs.flashcards);
         toast.add({ title: "Thành công", description: "Đã lưu bộ flashcard vào hệ thống", type: "success" });
       } else if (toolName === "draft_topic_brief") {
-        const res = await fetch(`/api/proxy/materials/${materialId}/save-topic-brief`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: "Bản tóm tắt AI", content: String(parsedArgs.content || ""), topic_id: null })
-        });
-        if (!res.ok) throw new Error("Failed to save brief");
+        await saveGeneratedTopicBrief(
+          materialId,
+          String(parsedArgs.content || ""),
+        );
         toast.add({ title: "Thành công", description: "Đã lưu bản tóm tắt vào hệ thống", type: "success" });
       }
     } catch (error) {
-      console.error(error);
-      toast.add({ title: "Lỗi", description: "Không thể lưu dữ liệu", type: "error" });
+      logBackendError("Generated content save failed", error);
+      toast.add({
+        title: "Save failed",
+        description: getBackendErrorMessage(
+          error,
+          "The generated content could not be saved.",
+        ),
+        type: "error",
+      });
     } finally {
       setIsSaving(false);
     }

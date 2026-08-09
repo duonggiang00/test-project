@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from "@/components/ui/toast";
+import { getBackendErrorMessage } from "@/lib/errors";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -28,10 +29,12 @@ export default function ForgotPasswordPage() {
         type: "success"
       });
     } catch (error) {
-      console.error("Forgot password error: ", error);
       toast.add({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra, vui lòng thử lại sau.",
+        title: "Request failed",
+        description: getBackendErrorMessage(
+          error,
+          "The password reset request could not be completed.",
+        ),
         type: "error"
       });
     } finally {

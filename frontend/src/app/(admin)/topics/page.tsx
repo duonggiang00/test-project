@@ -11,6 +11,7 @@ import { Loader2, Plus, Edit, Trash2 } from "lucide-react";
 import { Topic } from "@/types";
 import { toast } from "@/components/ui/toast";
 import { useConfirm } from "@/hooks/useConfirm";
+import { logBackendError } from "@/lib/errors";
 
 export default function TopicsPage() {
   const [search, setSearch] = useState("");
@@ -62,7 +63,7 @@ export default function TopicsPage() {
       mutate();
       closeModal();
     } catch (error) {
-      console.error(error);
+      logBackendError("Topic save failed", error);
       toast.add({ title: "Thông báo", description: "An error occurred", type: "error" });
     } finally {
       setIsSubmitting(false);
@@ -75,7 +76,7 @@ export default function TopicsPage() {
         await deleteTopic(id);
         mutate();
       } catch (error) {
-        console.error(error);
+        logBackendError("Topic delete failed", error);
         toast.add({ title: "Thông báo", description: "Failed to delete topic", type: "error" });
       }
     }

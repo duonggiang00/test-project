@@ -9,7 +9,7 @@ import { useUserStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { getErrorMessage } from "@/lib/errors";
+import { getBackendErrorMessage } from "@/lib/errors";
 import { toast } from "@/components/ui/toast";
 
 export default function LoginPage() {
@@ -51,16 +51,9 @@ export default function LoginPage() {
         router.push("/student/home");
       }
     } catch (error) {
-      let errorCode = "UNKNOWN_ERROR";
-      interface ApiError { response?: { data?: { error_code?: string } } }
-      const apiError = error as ApiError;
-      if (apiError?.response?.data?.error_code) {
-        errorCode = apiError.response.data.error_code;
-      }
-      console.error("Login error: ", error);
       toast.add({
-        title: "Lỗi đăng nhập",
-        description: getErrorMessage(errorCode),
+        title: "Login failed",
+        description: getBackendErrorMessage(error),
         type: "error"
       });
     } finally {

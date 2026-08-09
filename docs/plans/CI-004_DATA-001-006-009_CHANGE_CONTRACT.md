@@ -7,7 +7,12 @@ Approval required: Yes
 Approval evidence: Base A–E/default approval recorded in
 `REMAINING_HIGH_RISK_APPROVAL_PACKET.md`; the project owner explicitly approved
 the narrow Batch A amendment for revisions `73f523515ba5` and `e598471b8b6d` on
-2026-08-06
+2026-08-06. The error-envelope transition is also explicitly authorized: during
+canonical-spec confirmation the owner selected backend-owned `error_code` plus
+structured `details` with frontend-owned localization, and on 2026-08-05 the
+owner approved Batches A–E with all defaults, including the linked DATA-001
+contract that intentionally replaces `{error_code, message}` with
+`{error_code, details, request_id}`.
 
 ## Scope
 
@@ -35,6 +40,9 @@ Out of scope:
   database and runs upgrade/downgrade/upgrade with `finally` cleanup.
 - No canonical audit table/service, soft-delete mixin, restore service, purge
   runner, or retention registry exists.
+- `SPEC_DRIFT`: the live exception handler still emits the obsolete
+  `{error_code, message}` envelope and has no correlation ID, despite the
+  owner-approved canonical structured error contract.
 - Services generally commit independently. Required successful actions cannot
   become auditable merely through a logging side effect; the business change
   and audit row must share a transaction.
@@ -95,6 +103,10 @@ project owner separately and explicitly approved this narrow amendment on
   audit history survives business-record lifecycle changes. Use a non-reserved
   Python attribute such as `event_metadata` for the database `metadata` column.
 - Request-ID middleware and explicit job correlation populate every event.
+- DATA-001 resolves the correlation-dependent error drift with a pure ASGI
+  request context and canonical handlers for application, validation, HTTP,
+  rate-limit, and unexpected failures. Compatibility `message` values remain
+  internal only and are never serialized.
 
 ### Soft delete and purge
 
@@ -144,6 +156,10 @@ project owner separately and explicitly approved this narrow amendment on
 API/event impact:
 
 - Audit event names and fields follow `ERROR_AND_AUDIT_CONTRACTS.md`.
+- Expected error responses now use the already approved
+  `{error_code, details, request_id}` contract and return the same request ID in
+  `X-Request-ID`; CORS exposes that header. This intentionally replaces the
+  stale message-bearing implementation recorded above.
 - Restore/purge APIs are additive. Expected errors use the canonical structured
   error envelope. Any breaking path or response change returns for approval.
 
@@ -180,6 +196,18 @@ API/event impact:
   rollback; no cross-owner path access.
 - Fast, integration, migration, architecture, OpenAPI, and changed-code coverage
   gates plus independent migration/security review.
+
+## DATA-001 and DATA-006 completion evidence
+
+Completed on 2026-08-09. The additive audit schema, transaction-neutral writer,
+action-specific privacy policies, request correlation, canonical backend/BFF
+error contract, and safe frontend localization are implemented. The canonical
+specification now records the approved MVP retention policy. Full evidence is
+in `../handoffs/DATA-001.md`: fast, coverage, PostgreSQL integration, exact
+migration round trip, and real E2E gates passed; changed executable-line
+coverage is 83.84%; independent migration, security, frontend, and completion
+reviews found no remaining P1/P2 issue. DATA-002–005 and DATA-009 remain
+separate follow-up work under this contract.
 
 ## Rollback
 

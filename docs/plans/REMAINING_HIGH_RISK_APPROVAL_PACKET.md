@@ -10,6 +10,13 @@ amendment to name four foreign keys in revisions `73f523515ba5` and
 `e598471b8b6d`, discovered only by the required PostgreSQL round trip, was
 explicitly approved by the project owner on 2026-08-06.
 
+The approval includes the DATA-001 response-contract transition documented in
+the linked migration/data change contract. This implements the earlier explicit
+canonical-spec decision that the backend returns `error_code` and structured
+`details`, while the frontend localizes those codes; the target envelope is
+`{error_code, details, request_id}` and does not serialize legacy `message`
+values.
+
 ## 1. Why approval is required now
 
 The remaining implementation changes authentication, authorization/tenant

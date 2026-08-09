@@ -4,14 +4,7 @@ import { useState, useRef } from "react";
 import { useProfile, updateProfile, uploadAvatar } from "@/hooks/useProfile";
 import Image from "next/image";
 import { toast } from "@/components/ui/toast";
-
-interface ErrorResponse {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
+import { getBackendErrorMessage } from "@/lib/errors";
 
 export default function ProfileForm() {
   const { profile, mutate } = useProfile();
@@ -41,8 +34,7 @@ export default function ProfileForm() {
       await mutate();
       setIsEditing(false);
     } catch (err: unknown) {
-      const error = err as ErrorResponse;
-      setErrorMsg(error.response?.data?.message || "Failed to update profile");
+      setErrorMsg(getBackendErrorMessage(err, "The profile could not be updated."));
     } finally {
       setIsSaving(false);
     }
@@ -55,8 +47,11 @@ export default function ProfileForm() {
         await uploadAvatar(file);
         await mutate();
       } catch (err: unknown) {
-        const error = err as ErrorResponse;
-        toast.add({ title: "Thông báo", description: error.response?.data?.message || "Failed to upload avatar", type: "error" });
+        toast.add({
+          title: "Error",
+          description: getBackendErrorMessage(err, "The avatar could not be uploaded."),
+          type: "error",
+        });
       }
     }
   };

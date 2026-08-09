@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { toast } from "@/components/ui/toast";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { getBackendErrorMessage } from "@/lib/errors";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -54,10 +55,12 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
       });
       router.push("/login");
     } catch (error) {
-      console.error("Reset password error: ", error);
       toast.add({
-        title: "Lỗi",
-        description: "Mã khôi phục không hợp lệ hoặc đã hết hạn.",
+        title: "Password reset failed",
+        description: getBackendErrorMessage(
+          error,
+          "The reset link is invalid or has expired.",
+        ),
         type: "error"
       });
     } finally {

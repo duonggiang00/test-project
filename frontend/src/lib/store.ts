@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { logBackendError } from './errors';
 
 interface UserState {
   user: { id: string; email: string; role: string; full_name: string } | null;
@@ -16,7 +17,9 @@ export const useUserStore = create<UserState>()(
         set({ user: null });
         if (typeof window !== 'undefined') {
           localStorage.removeItem('token');
-          await fetch('/api/auth/logout', { method: 'POST' }).catch(console.error);
+          await fetch('/api/auth/logout', { method: 'POST' }).catch((error) => {
+            logBackendError('Logout failed', error);
+          });
         }
       },
     }),

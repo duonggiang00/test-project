@@ -10,6 +10,7 @@ import MatchingBuilder, { MatchingPair } from "@/components/features/admin/Match
 import FillInBlankBuilder, { BlankAnswer } from "@/components/features/admin/FillInBlankBuilder";
 import { toast } from "@/components/ui/toast";
 import { useConfirm } from "@/hooks/useConfirm";
+import { logBackendError } from "@/lib/errors";
 
 function QuestionsContent() {
   const searchParams = useSearchParams();
@@ -166,7 +167,7 @@ function QuestionsContent() {
       await mutate();
       handleCloseModal();
     } catch (error) {
-      console.error("Failed to save question", error);
+      logBackendError("Question save failed", error);
       toast.add({ title: "Thông báo", description: "Failed to save question", type: "error" });
     } finally {
       setIsSaving(false);
@@ -180,7 +181,7 @@ function QuestionsContent() {
       await deleteQuestion(id);
       await mutate();
     } catch (error) {
-      console.error("Failed to delete question", error);
+      logBackendError("Question delete failed", error);
       toast.add({ title: "Thông báo", description: "Failed to delete question", type: "error" });
     } finally {
       setIsDeleting(null);

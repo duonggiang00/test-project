@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useStudyCards, submitCardReview } from "@/hooks/useFlashcards";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
+import { logBackendError } from "@/lib/errors";
 
 export default function StudyDeckPage({ params }: { params: Promise<{ id: string; deck_id: string }> }) {
   const resolvedParams = use(params);
@@ -60,7 +61,7 @@ export default function StudyDeckPage({ params }: { params: Promise<{ id: string
       setIsFlipped(false);
       setCurrentIndex((prev) => prev + 1);
     } catch (error) {
-      console.error("Failed to submit review:", error);
+      logBackendError("Flashcard review submit failed", error);
       toast.add({ title: "Thông báo", description: "Đã xảy ra lỗi khi gửi đánh giá. Vui lòng thử lại.", type: "info" });
     } finally {
       setIsSubmitting(false);

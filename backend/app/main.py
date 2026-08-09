@@ -4,14 +4,14 @@ from app.api.endpoints import auth, exams, materials, student, admin, questions,
 
 from fastapi.middleware.cors import CORSMiddleware
 import app.models  # Ensure all models are registered in SQLAlchemy
-from slowapi import _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.core.rate_limit import limiter
+from app.core.correlation import CorrelationMiddleware, REQUEST_ID_HEADER
+from app.core.error_handlers import install_error_handlers
 
 app = FastAPI(title="AI Quiz System")
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+install_error_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,7 +19,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=[REQUEST_ID_HEADER],
 )
+app.add_middleware(CorrelationMiddleware)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(topics.router, prefix="/topics", tags=["topics"])
 app.include_router(exams.router, prefix="/exams", tags=["exams"])
@@ -36,18 +38,9 @@ from app.core.file_storage import material_file_storage
 material_file_storage.ensure_root()
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-from fastapi.responses import JSONResponse
-from app.core.exceptions import AppException
 from fastapi_pagination import add_pagination
 
 add_pagination(app)
-
-@app.exception_handler(AppException)
-def app_exception_handler(request, exc: AppException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error_code": exc.error_code, "message": exc.message},
-    )
 
 @app.get("/")
 def read_root():

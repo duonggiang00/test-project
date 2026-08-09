@@ -69,7 +69,15 @@ select = ["E9", "F63", "F7", "F82"]
 python_version = "3.12"
 files = [
     "app/core/config.py",
+    "app/core/correlation.py",
+    "app/core/error_handlers.py",
+    "app/core/exceptions.py",
+    "app/core/safe_payload.py",
     "app/core/security.py",
+    "app/models/audit_event.py",
+    "app/schemas/audit.py",
+    "app/services/audit_policy.py",
+    "app/services/audit_service.py",
     "scripts/test_database.py",
     "scripts/run_migration_roundtrip.py",
     "scripts/run_coverage.py",

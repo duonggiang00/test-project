@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import BrutalistMatchingUI from '@/components/features/student/BrutalistMatchingUI';
 import { toast } from "@/components/ui/toast";
 import { useConfirm } from "@/hooks/useConfirm";
+import { getBackendErrorMessage } from "@/lib/errors";
 // Utility for answers
 type MatchPair = { left: string; right: string };
 
@@ -40,8 +41,15 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
       setIsSubmitting(true);
       submitExam(unwrappedParams.id, { answers: Object.values(answers) })
         .then(() => router.push(`/student/exam/${unwrappedParams.id}/result`))
-        .catch((err: unknown) => {
-          console.error("Auto submit error:", err);
+        .catch((error: unknown) => {
+          toast.add({
+            title: "Submission failed",
+            description: getBackendErrorMessage(
+              error,
+              "The exam could not be submitted.",
+            ),
+            type: "error",
+          });
           setIsSubmitting(false);
         });
       return;
@@ -154,9 +162,14 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
       await submitExam(unwrappedParams.id, payload);
       router.push(`/student/exam/${unwrappedParams.id}/result`);
     } catch (error: unknown) {
-      console.error("Submit error:", error);
-      const err = error as { response?: { data?: { detail?: string } } };
-      toast.add({ title: "Thông báo", description: err?.response?.data?.detail || "Đã xảy ra lỗi khi nộp bài", type: "info" });
+      toast.add({
+        title: "Submission failed",
+        description: getBackendErrorMessage(
+          error,
+          "The exam could not be submitted.",
+        ),
+        type: "error",
+      });
       setIsSubmitting(false);
     }
   };

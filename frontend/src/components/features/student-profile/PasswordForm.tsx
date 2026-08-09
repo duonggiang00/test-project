@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 import { updatePassword } from "@/hooks/useProfile";
-
-interface ErrorResponse {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
+import { getBackendErrorMessage } from "@/lib/errors";
 
 export default function PasswordForm() {
   const [formData, setFormData] = useState({
@@ -50,8 +43,7 @@ export default function PasswordForm() {
       setSuccessMsg("Cập nhật mật khẩu thành công!");
       setFormData({ old_password: "", new_password: "", confirm_password: "" });
     } catch (err: unknown) {
-      const error = err as ErrorResponse;
-      setErrorMsg(error.response?.data?.message || "Lỗi khi cập nhật mật khẩu");
+      setErrorMsg(getBackendErrorMessage(err, "The password could not be updated."));
     } finally {
       setIsSaving(false);
     }

@@ -7,6 +7,7 @@ from app.models.submission import Submission, SubmissionAnswer
 from app.models.flashcard import FlashcardDeck, Flashcard, FlashcardProgress
 from app.models.document_chunk import DocumentChunk
 from app.models.topic_brief import TopicBrief
+from app.models.audit_event import AuditEvent
 
 __all__ = [
     "User",
@@ -16,5 +17,6 @@ __all__ = [
     "Submission", "SubmissionAnswer",
     "FlashcardDeck", "Flashcard", "FlashcardProgress",
     "DocumentChunk",
-    "TopicBrief"
+    "TopicBrief",
+    "AuditEvent",
 ]

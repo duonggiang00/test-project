@@ -24,8 +24,8 @@ export class StudentExamPage {
    */
   async selectExamByTitle(title: string) {
     const examHeading = this.page.getByRole('heading', { name: title });
-    const examRow = this.page.locator('div.border-4').filter({ has: examHeading }).first();
-    await examRow.getByRole('button').click();
+    const examRow = examHeading.locator('..').locator('..');
+    await examRow.getByRole('button', { name: /^LÀM BÀI$/i }).click();
   }
 
   /**

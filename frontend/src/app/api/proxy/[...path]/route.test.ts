@@ -51,4 +51,32 @@ describe('BFF proxy boundary', () => {
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe('/api/proxy/exams');
   });
+
+  test('creates a canonical correlated envelope for BFF-owned failures', async () => {
+    process.env.BACKEND_API_URL = 'https://backend.example.test';
+    jest
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new Error('canary upstream credential'));
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const requestId = '8f37b4ca-2014-4cec-aa2d-3f967c27eb8e';
+    const request = new NextRequest('http://frontend.test/api/proxy/exams', {
+      headers: { 'X-Request-ID': requestId },
+    });
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get('X-Request-ID')).toBe(requestId);
+    await expect(response.json()).resolves.toEqual({
+      error_code: 'PROXY_ERROR',
+      details: {},
+      request_id: requestId,
+    });
+    expect(consoleError).toHaveBeenCalledWith(
+      `Proxy request failed request_id=${requestId}`,
+    );
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('canary');
+  });
 });

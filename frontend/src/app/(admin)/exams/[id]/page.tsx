@@ -15,6 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { toast } from "@/components/ui/toast";
 import { useConfirm } from "@/hooks/useConfirm";
+import { logBackendError } from "@/lib/errors";
 
 export default function ExamDetailPage({
   params,
@@ -50,7 +51,7 @@ export default function ExamDetailPage({
       setSelectedGlobalQuestionIds([]);
       mutate();
     } catch (error) {
-      console.error(error);
+      logBackendError("Exam question bulk add failed", error);
       toast.add({ title: "Lỗi", description: "Không thể thêm câu hỏi", type: "error" });
     } finally {
       setIsAddingBulk(false);
@@ -213,7 +214,7 @@ export default function ExamDetailPage({
       await mutate(); // trigger refresh of exam detail
       handleCloseModal();
     } catch (error) {
-      console.error("Failed to save question", error);
+      logBackendError("Exam question save failed", error);
       toast.add({ title: "Thông báo", description: "Failed to save question", type: "error" });
     } finally {
       setIsSaving(false);
@@ -227,7 +228,7 @@ export default function ExamDetailPage({
       await deleteQuestion(id);
       await mutate();
     } catch (error) {
-      console.error("Failed to delete question", error);
+      logBackendError("Exam question delete failed", error);
       toast.add({ title: "Thông báo", description: "Failed to delete question", type: "error" });
     } finally {
       setIsDeleting(null);

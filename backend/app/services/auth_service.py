@@ -38,6 +38,7 @@ class AuthService:
             raise AppException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 error_code="INVALID_CREDENTIALS",
+                headers={"WWW-Authenticate": "Bearer"},
             )
         access_token = create_access_token(subject=user.id)
         return {"access_token": access_token, "token_type": "bearer", "user": user}

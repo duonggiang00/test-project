@@ -6,7 +6,7 @@ import { registerUser } from "@/services/apiService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { getErrorMessage } from "@/lib/errors";
+import { getBackendErrorMessage } from "@/lib/errors";
 import { toast } from "@/components/ui/toast";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
@@ -56,16 +56,9 @@ export default function RegisterPage() {
 
       router.push("/login");
     } catch (error) {
-      let errorCode = "UNKNOWN_ERROR";
-      interface ApiError { response?: { data?: { error_code?: string } } }
-      const apiError = error as ApiError;
-      if (apiError?.response?.data?.error_code) {
-        errorCode = apiError.response.data.error_code;
-      }
-      console.error("Register error: ", error);
       toast.add({
-        title: "Lỗi đăng ký",
-        description: getErrorMessage(errorCode),
+        title: "Registration failed",
+        description: getBackendErrorMessage(error),
         type: "error"
       });
     } finally {

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBackendUrl } from "@/lib/backend-url";
+import {
+  canonicalErrorResponse,
+  REQUEST_ID_HEADER,
+} from "@/lib/server-errors";
 
 async function proxyRequest(request: NextRequest) {
   // We use this route handler to proxy ALL requests to FastAPI.
@@ -46,9 +50,16 @@ async function proxyRequest(request: NextRequest) {
       status: backendResponse.status,
       headers: responseHeaders,
     });
-  } catch (error) {
-    console.error("Proxy error:", error);
-    return NextResponse.json({ error_code: "PROXY_ERROR" }, { status: 500 });
+  } catch {
+    const response = canonicalErrorResponse({
+      request,
+      status: 500,
+      errorCode: "PROXY_ERROR",
+    });
+    console.error(
+      `Proxy request failed request_id=${response.headers.get(REQUEST_ID_HEADER)}`,
+    );
+    return response;
   }
 }
 

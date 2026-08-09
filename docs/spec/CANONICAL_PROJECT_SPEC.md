@@ -2,6 +2,7 @@
 
 Status: Approved  
 Approved date: 2026-08-05  
+Last decision update: 2026-08-09
 Product stage: MVP with real users  
 Primary development environment: Windows
 
@@ -158,7 +159,21 @@ An audit event must capture the actor, action, entity type and identifier, times
 - A teacher may restore only an owned record when the resource policy allows restoration.
 - Purge operations must be auditable and support a dry-run mode.
 
-Educational records such as submissions and grades may require a stricter retention rule. Their final purge policy must be approved before permanent deletion is implemented.
+### 6.3 Approved MVP retention policy
+
+- Submissions and grades are retained without permanent purge in the MVP. A
+  later educational-record retention ADR and explicit owner approval are
+  required before permanent deletion is implemented.
+- Restricted raw AI prompts and retrieved context are retained for 30 days
+  after the generation job completes, then purged through the governed
+  lifecycle.
+- Redacted AI metadata, context-source identifiers and citations, reviewer, and
+  outcome are retained while the parent business record exists; they have no
+  independent automated MVP purge.
+- Extracted document chunks inherit the parent material lifecycle.
+- Audit events have no approved purge policy and must not be automatically
+  purged.
+- Any unclassified record remains ineligible for permanent purge.
 
 ## 7. File upload
 
@@ -333,10 +348,8 @@ Every completed implementation task must report:
 
 The following decisions require future approval before implementation:
 
-- Permanent retention policy for submissions, grades, and sensitive AI audit records.
 - Teacher-to-teacher or workspace-based sharing.
 - Production password-reset email provider.
 - Production object storage provider.
 - Formal accessibility conformance target.
 - Deployment topology for dev, staging, and production.
-

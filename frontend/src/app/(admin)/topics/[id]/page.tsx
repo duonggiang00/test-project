@@ -49,6 +49,12 @@ import type { Topic, FlashcardDeck, Material, Exam, PaginatedResponse } from "@/
 import { KeyedMutator } from "swr";
 import { toast } from "@/components/ui/toast";
 import { useConfirm } from "@/hooks/useConfirm";
+import {
+  getBackendErrorMessage,
+  getMaterialDeleteConfirmation,
+  parseBackendError,
+} from "@/lib/errors";
+import { deleteMaterial } from "@/services/apiService";
 
 interface TopicEditorProps {
   topic: Topic;
@@ -89,8 +95,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
       await updateTopic(topicId, settingsForm);
       mutateTopic();
       toast.add({ title: "Thông báo", description: "Settings saved successfully.", type: "info" });
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.add({ title: "Thông báo", description: "Failed to save settings.", type: "error" });
     } finally {
       setIsSavingSettings(false);
@@ -104,8 +109,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
       await updateTopicBrief(topicId, { brief_content: briefContent });
       mutateTopic();
       toast.add({ title: "Thông báo", description: "Topic brief saved successfully.", type: "info" });
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.add({ title: "Thông báo", description: "Failed to save topic brief.", type: "error" });
     } finally {
       setIsSavingBrief(false);
@@ -123,8 +127,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
       mutateTopic();
       mutateDecks();
       toast.add({ title: "Thông báo", description: "AI Generation completed successfully.", type: "info" });
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.add({ title: "Thông báo", description: "Failed to generate with AI.", type: "error" });
     } finally {
       setIsGeneratingAi(false);
@@ -140,8 +143,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
       mutateDecks();
       setIsDeckModalOpen(false);
       setDeckForm({ title: "", description: "" });
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.add({ title: "Thông báo", description: "Failed to create deck.", type: "error" });
     } finally {
       setIsCreatingDeck(false);
@@ -221,22 +223,51 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
                     variant="outline" 
                     onClick={async () => {
                       try {
-                        const res = await fetch(`/api/proxy/materials/${m.id}`, { method: "DELETE" });
-                        const data = await res.json();
-                        if (res.status === 409 || data.require_cascade) {
-                          if (await confirm(data.message + " Bạn có muốn xóa sạch các tài nguyên này không?")) {
-                            await fetch(`/api/proxy/materials/${m.id}?cascade=true`, { method: "DELETE" });
-                            toast.add({ title: "Thông báo", description: "Đã xóa tài liệu và tài nguyên liên quan.", type: "info" });
-                          }
-                        } else if (!res.ok) {
-                          toast.add({ title: "Thông báo", description: "Failed to delete material", type: "error" });
-                        } else {
-                          toast.add({ title: "Thông báo", description: "Đã xóa tài liệu.", type: "info" });
-                        }
-                        // Refresh data via SWR instead of full reload
+                        await deleteMaterial(m.id);
+                        toast.add({
+                          title: "Material deleted",
+                          description: "The material was deleted.",
+                          type: "info",
+                        });
                         mutateMaterials();
-                      } catch(e) {
-                        console.error(e);
+                      } catch (error) {
+                        const backendError = parseBackendError(error);
+                        if (
+                          backendError?.error_code ===
+                          "MATERIAL_DELETE_REQUIRES_CASCADE"
+                        ) {
+                          const prompt = getMaterialDeleteConfirmation(error);
+                          if (!(await confirm(prompt))) return;
+                          try {
+                            await deleteMaterial(m.id, true);
+                            toast.add({
+                              title: "Material deleted",
+                              description:
+                                "The material and linked resources were deleted.",
+                              type: "info",
+                            });
+                            mutateMaterials();
+                            return;
+                          } catch (cascadeError) {
+                            toast.add({
+                              title: "Delete failed",
+                              description: getBackendErrorMessage(
+                                cascadeError,
+                                "The material could not be deleted.",
+                              ),
+                              type: "error",
+                            });
+                            return;
+                          }
+                        }
+                        toast.add({
+                          title: "Delete failed",
+                          description: getBackendErrorMessage(
+                            error,
+                            "The material could not be deleted.",
+                          ),
+                          type: "error",
+                        });
                       }
                     }}
                     className="border-2 border-black rounded-none h-10 bg-white hover:bg-black hover:text-white transition-colors text-black font-bold uppercase"

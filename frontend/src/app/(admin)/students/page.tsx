@@ -5,6 +5,7 @@ import { Loader2, Eye, Trash2 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useConfirm } from "@/hooks/useConfirm";
+import { logBackendError } from "@/lib/errors";
 
 export default function StudentsPage() {
   const { users, isLoading, mutate } = useUsers();
@@ -17,7 +18,7 @@ export default function StudentsPage() {
       await updateUserRole(userId, newRole);
       await mutate();
     } catch (error) {
-      console.error("Failed to update role", error);
+      logBackendError("User role update failed", error);
     } finally {
       setUpdating(null);
     }
@@ -30,7 +31,7 @@ export default function StudentsPage() {
       await deleteUser(userId);
       await mutate();
     } catch (error) {
-      console.error("Failed to delete user", error);
+      logBackendError("User delete failed", error);
     } finally {
       setUpdating(null);
     }

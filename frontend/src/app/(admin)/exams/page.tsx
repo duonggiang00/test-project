@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+import { logBackendError } from "@/lib/errors";
 
 export default function ExamsPage() {
   const [page, setPage] = useState(1);
@@ -87,7 +88,7 @@ export default function ExamsPage() {
       toast.add({ title: "Thành công", description: "Đã xóa bài thi", type: "success" });
       mutate();
     } catch (error) {
-      console.error(error);
+      logBackendError("Exam delete failed", error);
       toast.add({ title: "Lỗi", description: "Lỗi khi xóa bài thi", type: "error" });
     } finally {
       setIsDeleting(false);
@@ -113,7 +114,7 @@ export default function ExamsPage() {
       toast.add({ title: "Thành công", description: "Đã lưu bài thi", type: "success" });
       mutate();
     } catch (error) {
-      console.error(error);
+      logBackendError("Exam save failed", error);
       toast.add({ title: "Lỗi", description: "Lỗi khi lưu bài thi", type: "error" });
     } finally {
       setIsSubmitting(false);

@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getBackendUrl } from '@/lib/backend-url';
+import {
+  canonicalErrorResponse,
+  canonicalizeRequestId,
+  forwardBackendError,
+  getOrCreateRequestId,
+  REQUEST_ID_HEADER,
+} from '@/lib/server-errors';
 
 export async function POST(request: NextRequest) {
+  const requestId = getOrCreateRequestId(request);
   try {
     const body = await request.json();
     const { email, password, rememberMe } = body;
@@ -17,6 +25,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
+        [REQUEST_ID_HEADER]: requestId,
       },
       body: formData.toString(),
     });
@@ -24,11 +33,15 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
 
     if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
+      return forwardBackendError(request, response, data, requestId);
     }
 
     // Set HttpOnly cookies
     const res = NextResponse.json({ user: data.user });
+    const backendRequestId = canonicalizeRequestId(
+      response.headers.get(REQUEST_ID_HEADER),
+    ) ?? requestId;
+    res.headers.set(REQUEST_ID_HEADER, backendRequestId);
     
     // 7 days if rememberMe is true, otherwise session cookie (no maxAge)
     const cookieOptions = {
@@ -56,8 +69,16 @@ export async function POST(request: NextRequest) {
     });
 
     return res;
-  } catch (error) {
-    console.error("Login route error:", error);
-    return NextResponse.json({ error_code: "INTERNAL_ERROR" }, { status: 500 });
+  } catch {
+    const response = canonicalErrorResponse({
+      request,
+      status: 500,
+      errorCode: "INTERNAL_ERROR",
+      upstreamRequestId: requestId,
+    });
+    console.error(
+      `Login route failed request_id=${response.headers.get(REQUEST_ID_HEADER)}`,
+    );
+    return response;
   }
 }

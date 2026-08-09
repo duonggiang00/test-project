@@ -147,6 +147,96 @@ export const deleteMaterial = async (materialId: string, cascade?: boolean, keep
   return res.data;
 };
 
+export const generateMaterialQuestions = async (
+  materialId: string,
+  count: number,
+) => {
+  const response = await api.post(
+    `/materials/${materialId}/generate-questions`,
+    {
+      count,
+      question_types: [
+        "SINGLE_CHOICE",
+        "MULTIPLE_CHOICE",
+        "MATCHING",
+        "FILL_IN_BLANK",
+      ],
+      difficulty: "MEDIUM",
+    },
+  );
+  return response.data;
+};
+
+export const generateMaterialFlashcards = async (
+  materialId: string,
+  count: number,
+) => {
+  const response = await api.post(
+    `/materials/${materialId}/generate-flashcards`,
+    { count },
+  );
+  return response.data;
+};
+
+export const generateMaterialTopicBrief = async (materialId: string) => {
+  const response = await api.post(
+    `/materials/${materialId}/generate-topic-brief`,
+  );
+  return response.data;
+};
+
+export const saveGeneratedQuestions = async (
+  materialId: string,
+  questions: unknown,
+) => {
+  const response = await api.post(`/materials/${materialId}/save-questions`, {
+    questions,
+  });
+  return response.data;
+};
+
+export const saveGeneratedFlashcards = async (
+  materialId: string,
+  flashcards: unknown,
+) => {
+  const response = await api.post(`/materials/${materialId}/save-flashcards`, {
+    title: "AI-generated flashcards",
+    topic_id: null,
+    flashcards,
+  });
+  return response.data;
+};
+
+export const saveGeneratedTopicBrief = async (
+  materialId: string,
+  content: string,
+) => {
+  const response = await api.post(
+    `/materials/${materialId}/save-topic-brief`,
+    {
+      title: "AI-generated topic brief",
+      content,
+      topic_id: null,
+    },
+  );
+  return response.data;
+};
+
+export interface AiChatTransportMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export const openAiChatStream = async (
+  messages: AiChatTransportMessage[],
+  materialId: string | null,
+): Promise<Response> =>
+  fetch("/api/proxy/ai/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, material_id: materialId }),
+  });
+
 export const registerUser = async (payload: { email: string; password: string; full_name: string }) => {
   const res = await api.post("/auth/register", payload);
   return res.data;

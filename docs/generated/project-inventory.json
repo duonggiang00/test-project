@@ -2,26 +2,138 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "da021c211c1f8991638f16755bdda5ac3522df9e",
-    "source_commit_timestamp": "2026-08-05T17:22:15+07:00",
-    "source_tree_sha256": "e0179692e4b26d06c312dee0415148111dbb7d402d0026c61fa9eb5ed2605a8e",
-    "relevant_file_count": 234,
+    "source_commit": "c69621a45c8b2943f934ef88df94de59dca8d527",
+    "source_commit_timestamp": "2026-08-06T09:17:27+07:00",
+    "source_tree_sha256": "0db06e38041d6e5009e01cbff802ed9baec73233f20996f2edb7e61a79cfdf3e",
+    "relevant_file_count": 257,
     "alembic_heads": [
-      "e598471b8b6d"
+      "b57c9a14d2e8"
     ]
   },
   "summary": {
-    "sqlalchemy_models": 13,
-    "pydantic_schemas": 67,
+    "sqlalchemy_models": 14,
+    "pydantic_schemas": 71,
     "fastapi_routes": 62,
     "next_pages": 25,
     "frontend_hooks": 15,
-    "frontend_services": 1,
-    "backend_test_functions": 54,
-    "frontend_test_calls": 17
+    "frontend_services": 2,
+    "backend_test_functions": 92,
+    "frontend_test_calls": 47
   },
   "backend": {
     "models": [
+      {
+        "class": "AuditEvent",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "event_id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "occurred_at",
+            "nullable": false,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "request_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(64)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "actor_type",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(16)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "actor_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "actor_role",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(32)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "action",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(128)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "entity_type",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(64)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "entity_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(64)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "owner_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "outcome",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(16)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "changes",
+            "nullable": false,
+            "primary_key": false,
+            "type": "JSONB",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "metadata",
+            "nullable": false,
+            "primary_key": false,
+            "type": "JSONB",
+            "unique": false
+          }
+        ],
+        "module": "app.models.audit_event",
+        "relationships": [],
+        "table": "audit_events"
+      },
       {
         "class": "DocumentChunk",
         "columns": [
@@ -1300,6 +1412,140 @@
           }
         ],
         "module": "app.schemas.analytics"
+      },
+      {
+        "class": "AuditActor",
+        "fields": [
+          {
+            "name": "actor_type",
+            "required": true,
+            "type": "Literal"
+          },
+          {
+            "name": "user_id",
+            "required": false,
+            "type": "uuid.UUID | None"
+          },
+          {
+            "name": "role",
+            "required": true,
+            "type": "Literal"
+          }
+        ],
+        "module": "app.schemas.audit"
+      },
+      {
+        "class": "AuditEntity",
+        "fields": [
+          {
+            "name": "type",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "id",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "owner_id",
+            "required": false,
+            "type": "uuid.UUID | None"
+          }
+        ],
+        "module": "app.schemas.audit"
+      },
+      {
+        "class": "AuditEventCreate",
+        "fields": [
+          {
+            "name": "request_id",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "actor",
+            "required": true,
+            "type": "AuditActor"
+          },
+          {
+            "name": "action",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "entity",
+            "required": true,
+            "type": "AuditEntity"
+          },
+          {
+            "name": "outcome",
+            "required": true,
+            "type": "Literal"
+          },
+          {
+            "name": "changes",
+            "required": false,
+            "type": "dict"
+          },
+          {
+            "name": "metadata",
+            "required": false,
+            "type": "dict"
+          }
+        ],
+        "module": "app.schemas.audit"
+      },
+      {
+        "class": "AuditEventRead",
+        "fields": [
+          {
+            "name": "event_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "occurred_at",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "name": "request_id",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "actor",
+            "required": true,
+            "type": "AuditActor"
+          },
+          {
+            "name": "action",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "entity",
+            "required": true,
+            "type": "AuditEntity"
+          },
+          {
+            "name": "outcome",
+            "required": true,
+            "type": "Literal"
+          },
+          {
+            "name": "changes",
+            "required": true,
+            "type": "dict"
+          },
+          {
+            "name": "metadata",
+            "required": true,
+            "type": "dict"
+          }
+        ],
+        "module": "app.schemas.audit"
       },
       {
         "class": "ExamBase",
@@ -4238,6 +4484,10 @@
     ],
     "services": [
       {
+        "file": "frontend/src/services/apiService.test.ts",
+        "exports": []
+      },
+      {
         "file": "frontend/src/services/apiService.ts",
         "exports": [
           "addQuestionToExam",
@@ -4251,10 +4501,17 @@
           "deleteStudent",
           "deleteTopic",
           "forgotPassword",
+          "generateMaterialFlashcards",
+          "generateMaterialQuestions",
+          "generateMaterialTopicBrief",
           "login",
           "logoutUser",
+          "openAiChatStream",
           "registerUser",
           "resetPassword",
+          "saveGeneratedFlashcards",
+          "saveGeneratedQuestions",
+          "saveGeneratedTopicBrief",
           "submitExam",
           "updateExam",
           "updateQuestion",
@@ -4288,22 +4545,88 @@
   "tests": {
     "backend": [
       {
+        "path": "tests/contract/test_error_contract.py",
+        "tests": [
+          {
+            "line": 160,
+            "markers": [],
+            "name": "test_success_and_app_error_propagate_the_same_valid_request_id"
+          },
+          {
+            "line": 174,
+            "markers": [],
+            "name": "test_validation_http_and_unexpected_errors_are_sanitized"
+          },
+          {
+            "line": 190,
+            "markers": [],
+            "name": "test_app_error_details_are_allowlisted_and_fail_closed"
+          },
+          {
+            "line": 213,
+            "markers": [],
+            "name": "test_material_delete_conflict_keeps_only_reviewed_structured_details"
+          },
+          {
+            "line": 228,
+            "markers": [],
+            "name": "test_material_endpoint_maps_delete_conflict_to_app_exception"
+          },
+          {
+            "line": 265,
+            "markers": [],
+            "name": "test_custom_validation_context_does_not_echo_submitted_values"
+          },
+          {
+            "line": 279,
+            "markers": [],
+            "name": "test_validation_paths_do_not_reflect_keys_and_output_is_bounded"
+          },
+          {
+            "line": 299,
+            "markers": [],
+            "name": "test_http_protocol_headers_are_preserved_but_other_headers_are_dropped"
+          },
+          {
+            "line": 324,
+            "markers": [],
+            "name": "test_production_login_invalid_credentials_keep_bearer_challenge"
+          },
+          {
+            "line": 361,
+            "markers": [],
+            "name": "test_invalid_request_ids_are_replaced_and_requests_do_not_share_ids"
+          },
+          {
+            "line": 376,
+            "markers": [],
+            "name": "test_rate_limit_handler_uses_the_canonical_envelope"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
         "path": "tests/contract/test_openapi_contract.py",
         "tests": [
           {
-            "line": 17,
+            "line": 24,
             "markers": [],
             "name": "test_openapi_operations_have_unique_ids_and_canonical_paths"
           },
           {
-            "line": 28,
+            "line": 35,
             "markers": [],
             "name": "test_openapi_operations_are_tagged_for_domain_discovery"
           },
           {
-            "line": 38,
+            "line": 45,
             "markers": [],
             "name": "test_app_exception_uses_stable_machine_readable_envelope"
+          },
+          {
+            "line": 72,
+            "markers": [],
+            "name": "test_main_app_propagates_and_exposes_request_id_contract"
           }
         ],
         "tier": "integration"
@@ -4341,6 +4664,42 @@
             "line": 33,
             "markers": [],
             "name": "test_chat_prompt_injection"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_audit.py",
+        "tests": [
+          {
+            "line": 27,
+            "markers": [],
+            "name": "test_audit_service_persists_timezone_aware_jsonb"
+          },
+          {
+            "line": 39,
+            "markers": [],
+            "name": "test_business_change_and_audit_roll_back_together"
+          },
+          {
+            "line": 64,
+            "markers": [],
+            "name": "test_audit_constraint_failure_prevents_business_commit"
+          },
+          {
+            "line": 95,
+            "markers": [],
+            "name": "test_jsonb_object_constraint_rejects_array_payload"
+          },
+          {
+            "line": 115,
+            "markers": [],
+            "name": "test_database_trigger_rejects_update_delete_and_truncate"
+          },
+          {
+            "line": 145,
+            "markers": [],
+            "name": "test_audit_identifiers_are_denormalized_without_foreign_keys"
           }
         ],
         "tier": "integration"
@@ -4501,6 +4860,56 @@
         "tier": "integration"
       },
       {
+        "path": "tests/unit/test_audit_core.py",
+        "tests": [
+          {
+            "line": 54,
+            "markers": [],
+            "name": "test_audit_actor_and_event_schema_fail_closed"
+          },
+          {
+            "line": 67,
+            "markers": [],
+            "name": "test_payload_validation_returns_a_copy_without_mutating_safe_input"
+          },
+          {
+            "line": 116,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_payload_validation_rejects_sensitive_keys_and_values"
+          },
+          {
+            "line": 124,
+            "markers": [],
+            "name": "test_payload_validation_rejects_non_json_depth_size_and_cycles"
+          },
+          {
+            "line": 148,
+            "markers": [],
+            "name": "test_audit_service_adds_and_flushes_without_committing"
+          },
+          {
+            "line": 165,
+            "markers": [],
+            "name": "test_audit_service_requires_an_action_specific_payload_policy"
+          },
+          {
+            "line": 232,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_audit_service_rejects_invalid_event_semantics_before_persistence"
+          },
+          {
+            "line": 243,
+            "markers": [],
+            "name": "test_audit_service_propagates_flush_failure_without_committing"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_config.py",
         "tests": [
           {
@@ -4537,6 +4946,24 @@
             "line": 73,
             "markers": [],
             "name": "test_explicit_test_database_url_overrides_the_derived_target"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_correlation.py",
+        "tests": [
+          {
+            "line": 18,
+            "markers": [],
+            "name": "test_normalizes_only_uuid_or_crockford_ulid_request_ids"
+          },
+          {
+            "line": 39,
+            "markers": [
+              "asyncio"
+            ],
+            "name": "test_asgi_middleware_isolates_concurrent_context_and_resets_it"
           }
         ],
         "tier": "unit"
@@ -4596,34 +5023,92 @@
         "path": "tests/unit/test_migration_roundtrip.py",
         "tests": [
           {
-            "line": 13,
+            "line": 30,
             "markers": [],
             "name": "test_import_does_not_mutate_existing_environment_mode"
           },
           {
-            "line": 35,
+            "line": 52,
             "markers": [],
             "name": "test_accepts_exact_head_and_base_schema_states"
           },
           {
-            "line": 52,
+            "line": 73,
             "markers": [],
             "name": "test_rejects_mismatched_head_revision"
           },
           {
-            "line": 72,
+            "line": 95,
             "markers": [
               "parametrize"
             ],
             "name": "test_rejects_missing_or_stray_base_schema_objects"
           },
           {
-            "line": 83,
+            "line": 136,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_missing_append_only_database_objects"
+          },
+          {
+            "line": 153,
+            "markers": [],
+            "name": "test_rejects_incorrect_append_only_trigger_definition"
+          },
+          {
+            "line": 173,
+            "markers": [],
+            "name": "test_accepts_exact_audit_schema_at_head_and_absence_at_base"
+          },
+          {
+            "line": 201,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_incomplete_audit_schema"
+          },
+          {
+            "line": 230,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_incorrect_audit_column_contract"
+          },
+          {
+            "line": 251,
+            "markers": [],
+            "name": "test_rejects_incomplete_audit_constraint_set"
+          },
+          {
+            "line": 289,
+            "markers": [],
+            "name": "test_rejects_incorrect_audit_constraint_properties_and_definition"
+          },
+          {
+            "line": 359,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_incorrect_audit_index_definition"
+          },
+          {
+            "line": 380,
+            "markers": [],
+            "name": "test_rejects_weakened_audit_check_constraint"
+          },
+          {
+            "line": 404,
+            "markers": [],
+            "name": "test_rejects_case_changed_audit_check_literal"
+          },
+          {
+            "line": 427,
             "markers": [],
             "name": "test_rejects_multiple_or_signature_mismatched_heads"
           },
           {
-            "line": 94,
+            "line": 438,
             "markers": [],
             "name": "test_cleanup_runs_when_schema_assertion_fails"
           }
@@ -4656,9 +5141,14 @@
     ],
     "frontend": [
       {
+        "path": "frontend/src/app/api/auth/login/route.test.ts",
+        "tier": "unit",
+        "test_count": 3
+      },
+      {
         "path": "frontend/src/app/api/proxy/[...path]/route.test.ts",
         "tier": "unit",
-        "test_count": 2
+        "test_count": 3
       },
       {
         "path": "frontend/src/hooks/useExams.cache.test.tsx",
@@ -4671,6 +5161,11 @@
         "test_count": 3
       },
       {
+        "path": "frontend/src/lib/errors.test.ts",
+        "tier": "unit",
+        "test_count": 6
+      },
+      {
         "path": "frontend/src/lib/store.hydration.test.ts",
         "tier": "unit",
         "test_count": 1
@@ -4681,12 +5176,52 @@
         "test_count": 3
       },
       {
+        "path": "frontend/src/services/apiService.test.ts",
+        "tier": "unit",
+        "test_count": 6
+      },
+      {
+        "path": "frontend/tests/component/ai-workspace-errors.test.tsx",
+        "tier": "component",
+        "test_count": 3
+      },
+      {
+        "path": "frontend/tests/component/auth-error-localization.test.tsx",
+        "tier": "component",
+        "test_count": 2
+      },
+      {
         "path": "frontend/tests/component/button.states.test.tsx",
         "tier": "component",
         "test_count": 2
       },
       {
         "path": "frontend/tests/component/featured-exam-list.states.test.tsx",
+        "tier": "component",
+        "test_count": 3
+      },
+      {
+        "path": "frontend/tests/component/generative-preview-save.test.tsx",
+        "tier": "component",
+        "test_count": 1
+      },
+      {
+        "path": "frontend/tests/component/password-reset-errors.test.tsx",
+        "tier": "component",
+        "test_count": 2
+      },
+      {
+        "path": "frontend/tests/component/profile-error-localization.test.tsx",
+        "tier": "component",
+        "test_count": 2
+      },
+      {
+        "path": "frontend/tests/component/student-exam-errors.test.tsx",
+        "tier": "component",
+        "test_count": 1
+      },
+      {
+        "path": "frontend/tests/component/topic-material-delete.test.tsx",
         "tier": "component",
         "test_count": 3
       },

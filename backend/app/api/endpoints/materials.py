@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks, Form
 from sqlalchemy.orm import Session
-from fastapi.responses import JSONResponse
 from typing import List, Optional
 from uuid import UUID
 
@@ -19,6 +18,7 @@ from app.schemas.question import QuestionResponse
 from app.api.deps import get_current_active_teacher
 from app.services.material_service import MaterialService
 from app.core.security_guardrails import MAX_FILE_SIZE_BYTES
+from app.core.exceptions import AppException
 
 router = APIRouter()
 
@@ -79,7 +79,14 @@ def delete_material(
         keep_assets=keep_assets
     )
     if result.get("require_cascade"):
-        return JSONResponse(status_code=409, content=result)
+        raise AppException(
+            status_code=409,
+            error_code="MATERIAL_DELETE_REQUIRES_CASCADE",
+            details={
+                "require_cascade": True,
+                "linked_counts": result.get("linked_counts", {}),
+            },
+        )
     return result
 
 @router.post("/{material_id}/generate-questions")

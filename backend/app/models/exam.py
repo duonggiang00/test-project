@@ -30,8 +30,16 @@ class Question(Base):
     topic_id = Column(UUID(as_uuid=True), ForeignKey("topics.id", ondelete="SET NULL"), nullable=True)
     material_id = Column(UUID(as_uuid=True), ForeignKey("study_materials.id", ondelete="SET NULL"), nullable=True)
     
-    question_type = Column(SQLAlchemyEnum(QuestionType), nullable=False, default=QuestionType.MULTIPLE_CHOICE)
-    difficulty = Column(SQLAlchemyEnum(DifficultyLevel), nullable=False, default=DifficultyLevel.MEDIUM)
+    question_type: Column[QuestionType] = Column(
+        SQLAlchemyEnum(QuestionType),
+        nullable=False,
+        default=QuestionType.MULTIPLE_CHOICE,
+    )
+    difficulty: Column[DifficultyLevel] = Column(
+        SQLAlchemyEnum(DifficultyLevel),
+        nullable=False,
+        default=DifficultyLevel.MEDIUM,
+    )
     
     content = Column(Text, nullable=False)
     metadata_json = Column(JSONB, nullable=True) # Used for MATCHING pairs, FILL_IN_BLANK words, etc.

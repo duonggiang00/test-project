@@ -27,6 +27,7 @@ from app.models.submission import Submission, SubmissionAnswer
 from app.models.flashcard import FlashcardDeck, Flashcard, FlashcardProgress
 from app.models.document_chunk import DocumentChunk
 from app.models.topic_brief import TopicBrief
+from app.models.audit_event import AuditEvent
 from app.core.config import settings
 
 # add your model's MetaData object here

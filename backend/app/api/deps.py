@@ -26,6 +26,7 @@ def get_current_user(
         raise AppException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             error_code="UNAUTHORIZED",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     user = db.query(User).filter(User.id == token_data.user_id).first()
     if not user:
