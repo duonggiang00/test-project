@@ -1,71 +1,65 @@
 import time
+import logging
+from pathlib import Path
+from uuid import UUID
+from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.models.material import StudyMaterial
 from app.models.exam import Question, Option
 from app.models.topic import Topic
 from app.models.flashcard import FlashcardDeck, Flashcard
 from app.models.document_chunk import DocumentChunk
+from app.models.user import User
+from app.core.permissions import Permission, evaluate_owned_resource
+from app.services.authorization_service import AuthorizationService
+from app.services.material_processing import extract_and_chunk_material
 import os
 
-def mock_process_document_and_generate_questions(material_id: str):
+logger = logging.getLogger(__name__)
+
+
+def mock_process_document_and_generate_questions(
+    material_id: str,
+    expected_owner_id: str,
+    request_id: str,
+):
     # Simulate processing time
     time.sleep(5)
     
     with SessionLocal() as db:
-        material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()
+        material = db.scalar(
+            select(StudyMaterial).where(
+                StudyMaterial.id == UUID(material_id),
+                StudyMaterial.uploader_id == UUID(expected_owner_id),
+            )
+        )
         if not material:
             return
             
         # 1. Process Document and Create Chunks
         try:
-            content = ""
-            if material.file_path.lower().endswith(".pdf"):
-                import pdfplumber
-                with pdfplumber.open(material.file_path) as pdf:
-                    for page in pdf.pages:
-                        page_text = page.extract_text()
-                        if page_text:
-                            content += page_text + "\n\n"
-            elif material.file_path.lower().endswith(".pptx"):
-                import pptx
-                prs = pptx.Presentation(material.file_path)
-                for slide in prs.slides:
-                    for shape in slide.shapes:
-                        if hasattr(shape, "text"):
-                            content += shape.text + "\n\n"
-            elif material.file_path.lower().endswith(".docx"):
-                import docx
-                doc = docx.Document(material.file_path)
-                for para in doc.paragraphs:
-                    if para.text:
-                        content += para.text + "\n\n"
-            else:
-                with open(material.file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-            
-            
-            # Simple chunking by paragraph (split by double newline)
-            paragraphs = [p.strip() for p in content.split("\n\n") if len(p.strip()) > 10]
-            
-            if not paragraphs:
-                paragraphs = [content[:1000]] # Fallback if no newlines
-                
-            for para in paragraphs:
+            content, chunks = extract_and_chunk_material(Path(material.file_path))
+            for para in chunks:
                 chunk = DocumentChunk(
                     material_id=material.id,
-                    content=para[:2000], # Limit size
-                    embedding=[0.1] * 1536 # Mock embedding
+                    content=para,
+                    embedding=[0.1] * 1536,
                 )
                 db.add(chunk)
+            material.parsed_text = content
             db.commit()
-        except Exception as e:
-            print(f"Failed to chunk document: {e}")
+        except Exception:
+            logger.warning(
+                "Background document processing failed request_id=%s",
+                request_id,
+            )
             material.ai_status = 'failed'
             db.commit()
             return
             
         # Mock generating questions
         q1 = Question(
+            owner_id=material.uploader_id,
             material_id=material.id,
             content=f"What is the main topic of {material.title}?",
             is_ai_generated=True,
@@ -78,6 +72,7 @@ def mock_process_document_and_generate_questions(material_id: str):
         db.add(Option(question_id=q1.id, content="Blockchain", is_correct=False))
         
         q2 = Question(
+            owner_id=material.uploader_id,
             material_id=material.id,
             content="Which statement is true based on the document?",
             is_ai_generated=True,
@@ -92,17 +87,45 @@ def mock_process_document_and_generate_questions(material_id: str):
         material.ai_status = "completed"
         db.commit()
 
-def mock_generate_topic_kit(material_id: str, topic_id: str):
+def mock_generate_topic_kit(
+    material_id: str,
+    topic_id: str,
+    expected_owner_id: str,
+    actor_id: str,
+    request_id: str,
+):
     """
     Mock function to simulate AI generating a Topic Brief and Flashcards from a Study Material.
     """
     time.sleep(3) # Simulate AI processing time
     
     with SessionLocal() as db:
-        material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()
-        topic = db.query(Topic).filter(Topic.id == topic_id).first()
+        owner_id = UUID(expected_owner_id)
+        material = db.scalar(
+            select(StudyMaterial).where(
+                StudyMaterial.id == UUID(material_id),
+                StudyMaterial.uploader_id == owner_id,
+            )
+        )
+        topic = db.scalar(
+            select(Topic).where(
+                Topic.id == UUID(topic_id),
+                Topic.owner_id == owner_id,
+            )
+        )
+        actor = db.scalar(
+            select(User)
+            .where(User.id == UUID(actor_id))
+            .with_for_update(read=True)
+        )
         
-        if not material or not topic:
+        if not material or not topic or not actor:
+            return
+        if not evaluate_owned_resource(
+            actor,
+            Permission.UPDATE_OWNED_CONTENT,
+            topic.owner_id,
+        ).allowed:
             return
 
         # 1. Generate Topic Brief
@@ -112,6 +135,7 @@ def mock_generate_topic_kit(material_id: str, topic_id: str):
         # 2. Generate Flashcard Deck
         deck = FlashcardDeck(
             topic_id=topic.id,
+            material_id=material.id,
             title=f"Flashcards: {material.title}",
             description="Bộ thẻ ghi nhớ tự động tạo từ tài liệu."
         )
@@ -134,4 +158,13 @@ def mock_generate_topic_kit(material_id: str, topic_id: str):
             )
             db.add(card)
 
-        db.commit()
+        AuthorizationService.commit_with_admin_override(
+            db,
+            actor=actor,
+            permission=Permission.UPDATE_OWNED_CONTENT,
+            entity_type="topic",
+            entity_id=topic.id,
+            owner_id=topic.owner_id,
+            operation="generate",
+            request_id=request_id,
+        )

@@ -202,6 +202,11 @@
       },
       "ChatRequest": {
         "properties": {
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
           "messages": {
             "items": {
               "additionalProperties": true,
@@ -212,6 +217,7 @@
           }
         },
         "required": [
+          "material_id",
           "messages"
         ],
         "title": "ChatRequest",
@@ -365,9 +371,16 @@
             "type": "string"
           },
           "creator_id": {
-            "format": "uuid",
-            "title": "Creator Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creator Id"
           },
           "description": {
             "anyOf": [
@@ -437,9 +450,16 @@
             "type": "string"
           },
           "creator_id": {
-            "format": "uuid",
-            "title": "Creator Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creator Id"
           },
           "description": {
             "anyOf": [
@@ -891,17 +911,6 @@
             "title": "Created At",
             "type": "string"
           },
-          "file_path": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "File Path"
-          },
           "file_type": {
             "title": "File Type",
             "type": "string"
@@ -936,17 +945,6 @@
             "format": "date-time",
             "title": "Created At",
             "type": "string"
-          },
-          "file_path": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "File Path"
           },
           "file_type": {
             "title": "File Type",
@@ -1429,6 +1427,8 @@
               "format": "uuid",
               "type": "string"
             },
+            "maxItems": 500,
+            "minItems": 1,
             "title": "Question Ids",
             "type": "array"
           }
@@ -3815,6 +3815,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Read Exams",
         "tags": [
           "exams"
@@ -4948,6 +4953,50 @@
         ]
       }
     },
+    "/materials/{material_id}/download": {
+      "get": {
+        "operationId": "download_material_materials__material_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {}
+            },
+            "description": "Material file download"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Download Material",
+        "tags": [
+          "materials"
+        ]
+      }
+    },
     "/materials/{material_id}/generate-flashcards": {
       "post": {
         "operationId": "generate_flashcards_materials__material_id__generate_flashcards_post",
@@ -5940,6 +5989,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Topics",
         "tags": [
           "topics"
@@ -6073,6 +6127,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Topic",
         "tags": [
           "topics"

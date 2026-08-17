@@ -1,0 +1,344 @@
+[
+  {
+    "key": "deck-math-limits",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "title": "Flashcards - Giới hạn và tính liên tục",
+    "description": "Bộ thẻ ôn tập do giáo viên biên soạn.",
+    "cards": [
+      {
+        "key": "card-math-limits-01",
+        "front": "Giới hạn tại a",
+        "back": "Giá trị mà f(x) tiến gần khi x tiến gần a.",
+        "order_index": 1
+      },
+      {
+        "key": "card-math-limits-02",
+        "front": "Giới hạn hai phía",
+        "back": "Tồn tại khi giới hạn trái và phải tồn tại và bằng nhau.",
+        "order_index": 2
+      },
+      {
+        "key": "card-math-limits-03",
+        "front": "Liên tục tại a",
+        "back": "f(a) xác định và lim x->a f(x)=f(a).",
+        "order_index": 3
+      },
+      {
+        "key": "card-math-limits-04",
+        "front": "Hàm đa thức",
+        "back": "Liên tục trên toàn bộ tập số thực.",
+        "order_index": 4
+      },
+      {
+        "key": "card-math-limits-05",
+        "front": "Hàm hữu tỉ",
+        "back": "Liên tục tại mọi điểm có mẫu khác 0.",
+        "order_index": 5
+      },
+      {
+        "key": "card-math-limits-06",
+        "front": "Dạng 0/0",
+        "back": "Một dạng vô định, cần biến đổi thêm trước khi kết luận.",
+        "order_index": 6
+      },
+      {
+        "key": "card-math-limits-07",
+        "front": "Định lý giá trị trung gian",
+        "back": "Hàm liên tục trên đoạn nhận mọi giá trị giữa hai giá trị đầu mút.",
+        "order_index": 7
+      },
+      {
+        "key": "card-math-limits-08",
+        "front": "Rút gọn giới hạn",
+        "back": "Phân tích nhân tử rồi loại nhân tử chung khi hợp lệ.",
+        "order_index": 8
+      }
+    ]
+  },
+  {
+    "key": "deck-math-derivatives",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "title": "Flashcards - Đạo hàm và ứng dụng",
+    "description": "Bộ thẻ ôn tập do giáo viên biên soạn.",
+    "cards": [
+      {
+        "key": "card-math-derivatives-01",
+        "front": "Đạo hàm",
+        "back": "Tốc độ biến thiên tức thời của hàm số.",
+        "order_index": 1
+      },
+      {
+        "key": "card-math-derivatives-02",
+        "front": "Ý nghĩa hình học",
+        "back": "Hệ số góc của tiếp tuyến với đồ thị.",
+        "order_index": 2
+      },
+      {
+        "key": "card-math-derivatives-03",
+        "front": "Đạo hàm x^n",
+        "back": "n*x^(n-1).",
+        "order_index": 3
+      },
+      {
+        "key": "card-math-derivatives-04",
+        "front": "Quy tắc dây chuyền",
+        "back": "Dùng để đạo hàm hàm hợp.",
+        "order_index": 4
+      },
+      {
+        "key": "card-math-derivatives-05",
+        "front": "Điểm tới hạn",
+        "back": "Điểm f'=0 hoặc f' không xác định trong miền.",
+        "order_index": 5
+      },
+      {
+        "key": "card-math-derivatives-06",
+        "front": "f'>0",
+        "back": "Hàm đồng biến trên khoảng đang xét.",
+        "order_index": 6
+      },
+      {
+        "key": "card-math-derivatives-07",
+        "front": "f'<0",
+        "back": "Hàm nghịch biến trên khoảng đang xét.",
+        "order_index": 7
+      },
+      {
+        "key": "card-math-derivatives-08",
+        "front": "Tối ưu trên đoạn",
+        "back": "So sánh giá trị tại điểm tới hạn và hai đầu mút.",
+        "order_index": 8
+      }
+    ]
+  },
+  {
+    "key": "deck-python-foundations",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "title": "Flashcards - Nền tảng Python",
+    "description": "Bộ thẻ ôn tập do giáo viên biên soạn.",
+    "cards": [
+      {
+        "key": "card-python-foundations-01",
+        "front": "int",
+        "back": "Kiểu số nguyên.",
+        "order_index": 1
+      },
+      {
+        "key": "card-python-foundations-02",
+        "front": "float",
+        "back": "Kiểu số thực dấu phẩy động.",
+        "order_index": 2
+      },
+      {
+        "key": "card-python-foundations-03",
+        "front": "str",
+        "back": "Kiểu chuỗi văn bản.",
+        "order_index": 3
+      },
+      {
+        "key": "card-python-foundations-04",
+        "front": "bool",
+        "back": "Kiểu logic True hoặc False.",
+        "order_index": 4
+      },
+      {
+        "key": "card-python-foundations-05",
+        "front": "list",
+        "back": "Dãy có thứ tự và có thể thay đổi.",
+        "order_index": 5
+      },
+      {
+        "key": "card-python-foundations-06",
+        "front": "tuple",
+        "back": "Dãy có thứ tự và bất biến.",
+        "order_index": 6
+      },
+      {
+        "key": "card-python-foundations-07",
+        "front": "dictionary",
+        "back": "Cấu trúc cặp khóa-giá trị.",
+        "order_index": 7
+      },
+      {
+        "key": "card-python-foundations-08",
+        "front": "set",
+        "back": "Tập phần tử không trùng nhau.",
+        "order_index": 8
+      }
+    ]
+  },
+  {
+    "key": "deck-python-control",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "title": "Flashcards - Điều khiển luồng và hàm",
+    "description": "Bộ thẻ ôn tập do giáo viên biên soạn.",
+    "cards": [
+      {
+        "key": "card-python-control-01",
+        "front": "if",
+        "back": "Bắt đầu cấu trúc rẽ nhánh.",
+        "order_index": 1
+      },
+      {
+        "key": "card-python-control-02",
+        "front": "elif",
+        "back": "Kiểm tra điều kiện bổ sung.",
+        "order_index": 2
+      },
+      {
+        "key": "card-python-control-03",
+        "front": "else",
+        "back": "Nhánh khi các điều kiện trước đều sai.",
+        "order_index": 3
+      },
+      {
+        "key": "card-python-control-04",
+        "front": "for",
+        "back": "Duyệt phần tử của iterable.",
+        "order_index": 4
+      },
+      {
+        "key": "card-python-control-05",
+        "front": "while",
+        "back": "Lặp trong khi điều kiện còn đúng.",
+        "order_index": 5
+      },
+      {
+        "key": "card-python-control-06",
+        "front": "break",
+        "back": "Kết thúc vòng lặp.",
+        "order_index": 6
+      },
+      {
+        "key": "card-python-control-07",
+        "front": "continue",
+        "back": "Bỏ qua phần còn lại của lượt hiện tại.",
+        "order_index": 7
+      },
+      {
+        "key": "card-python-control-08",
+        "front": "return",
+        "back": "Trả kết quả từ hàm.",
+        "order_index": 8
+      }
+    ]
+  },
+  {
+    "key": "deck-english-reading",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "title": "Flashcards - Chiến lược đọc học thuật",
+    "description": "Bộ thẻ ôn tập do giáo viên biên soạn.",
+    "cards": [
+      {
+        "key": "card-english-reading-01",
+        "front": "Skimming",
+        "back": "Reading quickly for topic, structure, and main claim.",
+        "order_index": 1
+      },
+      {
+        "key": "card-english-reading-02",
+        "front": "Scanning",
+        "back": "Searching for a specific detail.",
+        "order_index": 2
+      },
+      {
+        "key": "card-english-reading-03",
+        "front": "Main idea",
+        "back": "The central point developed in a paragraph.",
+        "order_index": 3
+      },
+      {
+        "key": "card-english-reading-04",
+        "front": "Supporting detail",
+        "back": "Evidence, explanation, or illustration of the main idea.",
+        "order_index": 4
+      },
+      {
+        "key": "card-english-reading-05",
+        "front": "However",
+        "back": "A signal of contrast.",
+        "order_index": 5
+      },
+      {
+        "key": "card-english-reading-06",
+        "front": "Therefore",
+        "back": "A signal of result.",
+        "order_index": 6
+      },
+      {
+        "key": "card-english-reading-07",
+        "front": "Source evaluation",
+        "back": "Checking author, evidence, purpose, and alternatives.",
+        "order_index": 7
+      },
+      {
+        "key": "card-english-reading-08",
+        "front": "Critical note",
+        "back": "Separates the author's claim from the reader's response.",
+        "order_index": 8
+      }
+    ]
+  },
+  {
+    "key": "deck-english-writing",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "title": "Flashcards - Từ vựng và viết đoạn học thuật",
+    "description": "Bộ thẻ ôn tập do giáo viên biên soạn.",
+    "cards": [
+      {
+        "key": "card-english-writing-01",
+        "front": "Topic sentence",
+        "back": "Introduces the controlling idea.",
+        "order_index": 1
+      },
+      {
+        "key": "card-english-writing-02",
+        "front": "Supporting sentence",
+        "back": "Develops evidence or explanation.",
+        "order_index": 2
+      },
+      {
+        "key": "card-english-writing-03",
+        "front": "Unity",
+        "back": "All sentences support one controlling idea.",
+        "order_index": 3
+      },
+      {
+        "key": "card-english-writing-04",
+        "front": "Coherence",
+        "back": "Ideas follow a clear logical order.",
+        "order_index": 4
+      },
+      {
+        "key": "card-english-writing-05",
+        "front": "Cohesion",
+        "back": "Language links sentences and references clearly.",
+        "order_index": 5
+      },
+      {
+        "key": "card-english-writing-06",
+        "front": "Cautious claim",
+        "back": "Uses wording such as suggests or indicates.",
+        "order_index": 6
+      },
+      {
+        "key": "card-english-writing-07",
+        "front": "Paraphrase",
+        "back": "Restates a source idea in new wording and still requires citation.",
+        "order_index": 7
+      },
+      {
+        "key": "card-english-writing-08",
+        "front": "Revision",
+        "back": "Checks focus, evidence, organization, grammar, and citation.",
+        "order_index": 8
+      }
+    ]
+  }
+]

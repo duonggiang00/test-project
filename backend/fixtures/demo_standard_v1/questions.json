@@ -1,0 +1,1581 @@
+[
+  {
+    "key": "math-limits-q01",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Điều kiện nào không bắt buộc để lim x->a f(x)=L tồn tại?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "f(a) phải xác định",
+        "is_correct": true
+      },
+      {
+        "content": "Giá trị x tiến gần a",
+        "is_correct": false
+      },
+      {
+        "content": "f(x) tiến gần L",
+        "is_correct": false
+      },
+      {
+        "content": "Giới hạn trái và phải bằng nhau",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-limits-q02",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Hàm đa thức liên tục trên tập nào?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Toàn bộ R",
+        "is_correct": true
+      },
+      {
+        "content": "Chỉ số dương",
+        "is_correct": false
+      },
+      {
+        "content": "R trừ 0",
+        "is_correct": false
+      },
+      {
+        "content": "Chỉ đoạn hữu hạn",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-limits-q03",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Khi tính giới hạn dạng 0/0 của phân thức đại số, thao tác phù hợp đầu tiên là gì?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Phân tích nhân tử và rút gọn",
+        "is_correct": true
+      },
+      {
+        "content": "Kết luận giới hạn bằng 0",
+        "is_correct": false
+      },
+      {
+        "content": "Bỏ mẫu số",
+        "is_correct": false
+      },
+      {
+        "content": "Thay x bằng vô cực",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-limits-q04",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Hàm f liên tục tại a khi điều kiện nào đúng?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "lim x->a f(x)=f(a)",
+        "is_correct": true
+      },
+      {
+        "content": "f(a)=0",
+        "is_correct": false
+      },
+      {
+        "content": "f'(a)=0",
+        "is_correct": false
+      },
+      {
+        "content": "a phải dương",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-limits-q05",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Chọn tất cả phát biểu đúng về tính liên tục.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Đa thức liên tục trên R",
+        "is_correct": true
+      },
+      {
+        "content": "Hàm hữu tỉ liên tục nơi mẫu khác 0",
+        "is_correct": true
+      },
+      {
+        "content": "Mọi hàm đều liên tục tại điểm xác định",
+        "is_correct": false
+      },
+      {
+        "content": "Liên tục tại a đòi hỏi f(a) xác định",
+        "is_correct": true
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-limits-q06",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "HARD",
+    "content": "Chọn các bước có thể xử lý giới hạn đại số dạng 0/0.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Phân tích nhân tử",
+        "is_correct": true
+      },
+      {
+        "content": "Rút gọn nhân tử chung",
+        "is_correct": true
+      },
+      {
+        "content": "Thay trực tiếp rồi dừng",
+        "is_correct": false
+      },
+      {
+        "content": "Dùng hằng đẳng thức thích hợp",
+        "is_correct": true
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-limits-q07",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "MATCHING",
+    "difficulty": "EASY",
+    "content": "Ghép khái niệm giới hạn với mô tả đúng.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "Giới hạn hai phía",
+          "right": "Giới hạn trái và phải cùng tồn tại và bằng nhau"
+        },
+        {
+          "left": "Liên tục tại a",
+          "right": "Giới hạn tại a bằng giá trị hàm tại a"
+        }
+      ]
+    }
+  },
+  {
+    "key": "math-limits-q08",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "MATCHING",
+    "difficulty": "MEDIUM",
+    "content": "Ghép loại hàm với miền liên tục mặc định.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "Đa thức",
+          "right": "R"
+        },
+        {
+          "left": "Hàm hữu tỉ",
+          "right": "Nơi mẫu khác 0"
+        }
+      ]
+    }
+  },
+  {
+    "key": "math-limits-q09",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "MEDIUM",
+    "content": "Điền điều kiện còn thiếu: f liên tục tại a nếu f(a) xác định và lim x->a f(x) bằng ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "f(a)",
+            "giá trị f(a)"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "math-limits-q10",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "HARD",
+    "content": "Điền tên định lý: Hàm liên tục trên [a,b] nhận mọi giá trị nằm giữa f(a) và f(b) là định lý ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "giá trị trung gian",
+            "intermediate value"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "math-derivatives-q01",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Ý nghĩa hình học của f'(a) là gì?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Hệ số góc tiếp tuyến tại a",
+        "is_correct": true
+      },
+      {
+        "content": "Diện tích dưới đồ thị",
+        "is_correct": false
+      },
+      {
+        "content": "Giá trị lớn nhất của hàm",
+        "is_correct": false
+      },
+      {
+        "content": "Khoảng cách đến gốc tọa độ",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-derivatives-q02",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Đạo hàm của x^n là biểu thức nào?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "n*x^(n-1)",
+        "is_correct": true
+      },
+      {
+        "content": "x^(n+1)",
+        "is_correct": false
+      },
+      {
+        "content": "n*x^n",
+        "is_correct": false
+      },
+      {
+        "content": "x/n",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-derivatives-q03",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Điểm tới hạn có thể xuất hiện khi nào?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "f'(x)=0 hoặc f' không xác định",
+        "is_correct": true
+      },
+      {
+        "content": "f(x)=1",
+        "is_correct": false
+      },
+      {
+        "content": "x luôn dương",
+        "is_correct": false
+      },
+      {
+        "content": "f liên tục mọi nơi",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-derivatives-q04",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Trong tối ưu trên đoạn đóng, cần so sánh giá trị tại đâu?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Điểm tới hạn và hai đầu mút",
+        "is_correct": true
+      },
+      {
+        "content": "Chỉ điểm giữa",
+        "is_correct": false
+      },
+      {
+        "content": "Chỉ nghiệm f=0",
+        "is_correct": false
+      },
+      {
+        "content": "Mọi số thực",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-derivatives-q05",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Chọn các diễn giải đúng của đạo hàm.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Tốc độ biến thiên tức thời",
+        "is_correct": true
+      },
+      {
+        "content": "Hệ số góc tiếp tuyến",
+        "is_correct": true
+      },
+      {
+        "content": "Tổng diện tích",
+        "is_correct": false
+      },
+      {
+        "content": "Giới hạn của tỉ số thay đổi",
+        "is_correct": true
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-derivatives-q06",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "HARD",
+    "content": "Chọn các bước cần thiết trong một bài toán tối ưu cơ bản.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Lập hàm mục tiêu",
+        "is_correct": true
+      },
+      {
+        "content": "Xác định miền khả thi",
+        "is_correct": true
+      },
+      {
+        "content": "Tìm điểm tới hạn",
+        "is_correct": true
+      },
+      {
+        "content": "Bỏ qua giá trị biên",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "math-derivatives-q07",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "MATCHING",
+    "difficulty": "EASY",
+    "content": "Ghép dấu của đạo hàm với tính đơn điệu.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "f'(x)>0",
+          "right": "Hàm đồng biến"
+        },
+        {
+          "left": "f'(x)<0",
+          "right": "Hàm nghịch biến"
+        }
+      ]
+    }
+  },
+  {
+    "key": "math-derivatives-q08",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "MATCHING",
+    "difficulty": "MEDIUM",
+    "content": "Ghép quy tắc đạo hàm với tình huống sử dụng.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "Quy tắc tích",
+          "right": "Tích của hai hàm"
+        },
+        {
+          "left": "Quy tắc dây chuyền",
+          "right": "Hàm hợp"
+        }
+      ]
+    }
+  },
+  {
+    "key": "math-derivatives-q09",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "MEDIUM",
+    "content": "Điền kết quả: đạo hàm của x^3 là ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "3x^2",
+            "3*x^2"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "math-derivatives-q10",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "HARD",
+    "content": "Điền thuật ngữ: nghiệm của f'(x)=0 trong miền xác định là một điểm ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "tới hạn",
+            "critical"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "python-foundations-q01",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Kiểu dữ liệu nào biểu diễn giá trị đúng hoặc sai trong Python?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "bool",
+        "is_correct": true
+      },
+      {
+        "content": "str",
+        "is_correct": false
+      },
+      {
+        "content": "float",
+        "is_correct": false
+      },
+      {
+        "content": "list",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-foundations-q02",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Chỉ số đầu tiên của một list trong Python là bao nhiêu?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "0",
+        "is_correct": true
+      },
+      {
+        "content": "1",
+        "is_correct": false
+      },
+      {
+        "content": "-2",
+        "is_correct": false
+      },
+      {
+        "content": "Không có chỉ số",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-foundations-q03",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Cấu trúc nào lưu các cặp khóa-giá trị?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "dictionary",
+        "is_correct": true
+      },
+      {
+        "content": "tuple",
+        "is_correct": false
+      },
+      {
+        "content": "set",
+        "is_correct": false
+      },
+      {
+        "content": "string",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-foundations-q04",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Điểm khác biệt cơ bản giữa list và tuple là gì?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "List có thể thay đổi, tuple bất biến",
+        "is_correct": true
+      },
+      {
+        "content": "Tuple không có thứ tự",
+        "is_correct": false
+      },
+      {
+        "content": "List không có chỉ số",
+        "is_correct": false
+      },
+      {
+        "content": "Tuple chỉ chứa số",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-foundations-q05",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Chọn các kiểu dữ liệu cơ bản của Python.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "int",
+        "is_correct": true
+      },
+      {
+        "content": "float",
+        "is_correct": true
+      },
+      {
+        "content": "str",
+        "is_correct": true
+      },
+      {
+        "content": "compile",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-foundations-q06",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "HARD",
+    "content": "Chọn các phát biểu đúng về cấu trúc dữ liệu Python.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Set loại bỏ phần tử trùng",
+        "is_correct": true
+      },
+      {
+        "content": "Dictionary dùng khóa",
+        "is_correct": true
+      },
+      {
+        "content": "Tuple có thể sửa trực tiếp",
+        "is_correct": false
+      },
+      {
+        "content": "List có thứ tự",
+        "is_correct": true
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-foundations-q07",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "MATCHING",
+    "difficulty": "EASY",
+    "content": "Ghép cấu trúc với đặc điểm.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "list",
+          "right": "Có thứ tự và có thể thay đổi"
+        },
+        {
+          "left": "tuple",
+          "right": "Có thứ tự và bất biến"
+        }
+      ]
+    }
+  },
+  {
+    "key": "python-foundations-q08",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "MATCHING",
+    "difficulty": "MEDIUM",
+    "content": "Ghép hàm chuyển kiểu với kết quả mong muốn.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "int('12')",
+          "right": "Số nguyên 12"
+        },
+        {
+          "left": "str(12)",
+          "right": "Chuỗi '12'"
+        }
+      ]
+    }
+  },
+  {
+    "key": "python-foundations-q09",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "MEDIUM",
+    "content": "Điền kết quả: len([10, 20, 30]) trả về ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "3",
+            "ba"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "python-foundations-q10",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "HARD",
+    "content": "Điền cú pháp lát cắt lấy phần tử chỉ số 1 và 2 của values: values[___].",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "1:3"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "python-control-q01",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Câu lệnh nào khai báo một hàm trong Python?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "def",
+        "is_correct": true
+      },
+      {
+        "content": "func",
+        "is_correct": false
+      },
+      {
+        "content": "method",
+        "is_correct": false
+      },
+      {
+        "content": "return",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-control-q02",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Từ khóa nào kết thúc ngay vòng lặp hiện tại?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "break",
+        "is_correct": true
+      },
+      {
+        "content": "continue",
+        "is_correct": false
+      },
+      {
+        "content": "pass",
+        "is_correct": false
+      },
+      {
+        "content": "yield",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-control-q03",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Vòng lặp nào phù hợp để duyệt từng phần tử của một list?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "for",
+        "is_correct": true
+      },
+      {
+        "content": "if",
+        "is_correct": false
+      },
+      {
+        "content": "def",
+        "is_correct": false
+      },
+      {
+        "content": "import",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-control-q04",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Biến được tạo bên trong hàm thường có phạm vi nào?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Cục bộ",
+        "is_correct": true
+      },
+      {
+        "content": "Toàn hệ thống",
+        "is_correct": false
+      },
+      {
+        "content": "Chỉ đọc",
+        "is_correct": false
+      },
+      {
+        "content": "Không có phạm vi",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-control-q05",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Chọn các thành phần thuộc cấu trúc rẽ nhánh Python.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "if",
+        "is_correct": true
+      },
+      {
+        "content": "elif",
+        "is_correct": true
+      },
+      {
+        "content": "else",
+        "is_correct": true
+      },
+      {
+        "content": "repeat",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-control-q06",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "HARD",
+    "content": "Chọn các đặc điểm của một hàm được thiết kế tốt.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Một trách nhiệm rõ ràng",
+        "is_correct": true
+      },
+      {
+        "content": "Tên mô tả mục đích",
+        "is_correct": true
+      },
+      {
+        "content": "Phụ thuộc nhiều biến toàn cục",
+        "is_correct": false
+      },
+      {
+        "content": "Trả về kết quả khi phù hợp",
+        "is_correct": true
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "python-control-q07",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "MATCHING",
+    "difficulty": "EASY",
+    "content": "Ghép từ khóa vòng lặp với tác dụng.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "break",
+          "right": "Kết thúc vòng lặp"
+        },
+        {
+          "left": "continue",
+          "right": "Chuyển sang lượt lặp tiếp theo"
+        }
+      ]
+    }
+  },
+  {
+    "key": "python-control-q08",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "MATCHING",
+    "difficulty": "MEDIUM",
+    "content": "Ghép cấu trúc với tình huống phù hợp.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "for",
+          "right": "Duyệt một iterable"
+        },
+        {
+          "left": "while",
+          "right": "Lặp đến khi điều kiện thay đổi"
+        }
+      ]
+    }
+  },
+  {
+    "key": "python-control-q09",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "MEDIUM",
+    "content": "Điền từ khóa: Hàm gửi kết quả về nơi gọi bằng câu lệnh ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "return"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "python-control-q10",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "HARD",
+    "content": "Điền từ khóa: Nhánh được kiểm tra sau if và trước else là ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "elif"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "english-reading-q01",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Which strategy is used to identify a text's overall structure quickly?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Skimming",
+        "is_correct": true
+      },
+      {
+        "content": "Scanning",
+        "is_correct": false
+      },
+      {
+        "content": "Copying",
+        "is_correct": false
+      },
+      {
+        "content": "Translating every word",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-reading-q02",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Which strategy is best for finding a specific date?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Scanning",
+        "is_correct": true
+      },
+      {
+        "content": "Skimming",
+        "is_correct": false
+      },
+      {
+        "content": "Predicting",
+        "is_correct": false
+      },
+      {
+        "content": "Memorizing",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-reading-q03",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "What usually states the central point of a paragraph?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "The topic sentence",
+        "is_correct": true
+      },
+      {
+        "content": "A page number",
+        "is_correct": false
+      },
+      {
+        "content": "A citation style",
+        "is_correct": false
+      },
+      {
+        "content": "A footnote marker",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-reading-q04",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Which question belongs to critical reading?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "What evidence supports the claim?",
+        "is_correct": true
+      },
+      {
+        "content": "How many letters are in the title?",
+        "is_correct": false
+      },
+      {
+        "content": "Is every sentence the same length?",
+        "is_correct": false
+      },
+      {
+        "content": "Can I skip the source?",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-reading-q05",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Select the elements commonly inspected while skimming.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Title",
+        "is_correct": true
+      },
+      {
+        "content": "Topic sentences",
+        "is_correct": true
+      },
+      {
+        "content": "Conclusion",
+        "is_correct": true
+      },
+      {
+        "content": "Every dictionary entry",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-reading-q06",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "HARD",
+    "content": "Select the functions of supporting details.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Explain the main idea",
+        "is_correct": true
+      },
+      {
+        "content": "Provide evidence",
+        "is_correct": true
+      },
+      {
+        "content": "Illustrate the claim",
+        "is_correct": true
+      },
+      {
+        "content": "Replace the topic completely",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-reading-q07",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "MATCHING",
+    "difficulty": "EASY",
+    "content": "Match the reading strategy to its purpose.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "Skimming",
+          "right": "Identify topic and structure"
+        },
+        {
+          "left": "Scanning",
+          "right": "Locate specific information"
+        }
+      ]
+    }
+  },
+  {
+    "key": "english-reading-q08",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "MATCHING",
+    "difficulty": "MEDIUM",
+    "content": "Match the signal word to its relationship.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "however",
+          "right": "contrast"
+        },
+        {
+          "left": "therefore",
+          "right": "result"
+        }
+      ]
+    }
+  },
+  {
+    "key": "english-reading-q09",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "MEDIUM",
+    "content": "Complete the sentence: The central point of a paragraph is its ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "main idea",
+            "central idea"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "english-reading-q10",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "HARD",
+    "content": "Complete the sentence: Critical readers evaluate the claim and the supporting ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "evidence"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "english-writing-q01",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "What is the primary role of a topic sentence?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Introduce the paragraph's controlling idea",
+        "is_correct": true
+      },
+      {
+        "content": "List every citation",
+        "is_correct": false
+      },
+      {
+        "content": "End the document",
+        "is_correct": false
+      },
+      {
+        "content": "Define all vocabulary",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-writing-q02",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "EASY",
+    "content": "Which connector normally signals contrast?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "However",
+        "is_correct": true
+      },
+      {
+        "content": "Therefore",
+        "is_correct": false
+      },
+      {
+        "content": "For example",
+        "is_correct": false
+      },
+      {
+        "content": "Similarly",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-writing-q03",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Which verb makes a claim appropriately cautious?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "suggests",
+        "is_correct": true
+      },
+      {
+        "content": "proves forever",
+        "is_correct": false
+      },
+      {
+        "content": "guarantees",
+        "is_correct": false
+      },
+      {
+        "content": "ignores",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-writing-q04",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "SINGLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "When must a source be acknowledged?",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "When its ideas, data, or words are used",
+        "is_correct": true
+      },
+      {
+        "content": "Only for a long quotation",
+        "is_correct": false
+      },
+      {
+        "content": "Only when the author is famous",
+        "is_correct": false
+      },
+      {
+        "content": "Never after paraphrasing",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-writing-q05",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "MEDIUM",
+    "content": "Select the parts of a focused academic paragraph.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Topic sentence",
+        "is_correct": true
+      },
+      {
+        "content": "Supporting evidence",
+        "is_correct": true
+      },
+      {
+        "content": "Explanation",
+        "is_correct": true
+      },
+      {
+        "content": "Unrelated anecdote",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-writing-q06",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "MULTIPLE_CHOICE",
+    "difficulty": "HARD",
+    "content": "Select qualities to check during revision.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [
+      {
+        "content": "Unity",
+        "is_correct": true
+      },
+      {
+        "content": "Coherence",
+        "is_correct": true
+      },
+      {
+        "content": "Grammar",
+        "is_correct": true
+      },
+      {
+        "content": "Random topic changes",
+        "is_correct": false
+      }
+    ],
+    "metadata": {}
+  },
+  {
+    "key": "english-writing-q07",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "MATCHING",
+    "difficulty": "EASY",
+    "content": "Match the connector to its function.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "therefore",
+          "right": "result"
+        },
+        {
+          "left": "for example",
+          "right": "illustration"
+        }
+      ]
+    }
+  },
+  {
+    "key": "english-writing-q08",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "MATCHING",
+    "difficulty": "MEDIUM",
+    "content": "Match the paragraph element to its role.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "pairs": [
+        {
+          "left": "Topic sentence",
+          "right": "Introduces the controlling idea"
+        },
+        {
+          "left": "Supporting sentence",
+          "right": "Develops evidence or explanation"
+        }
+      ]
+    }
+  },
+  {
+    "key": "english-writing-q09",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "MEDIUM",
+    "content": "Complete the sentence: A paragraph with one controlling idea has ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "unity"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "key": "english-writing-q10",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "question_type": "FILL_IN_BLANK",
+    "difficulty": "HARD",
+    "content": "Complete the sentence: Logical connections between sentences create ___.",
+    "points": 10,
+    "is_ai_generated": false,
+    "options": [],
+    "metadata": {
+      "blanks": [
+        {
+          "blank_index": 0,
+          "acceptable_answers": [
+            "coherence",
+            "cohesion"
+          ]
+        }
+      ]
+    }
+  }
+]

@@ -429,4 +429,7 @@ def seed() -> None:
 
 
 if __name__ == "__main__":
-    seed()
+    raise SystemExit(
+        "Deprecated unsafe seed entry point. Use "
+        "'uv run --frozen python -m scripts.seed_demo_data plan' first."
+    )

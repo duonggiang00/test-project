@@ -17,7 +17,19 @@ if TYPE_CHECKING:
     from scripts.test_database import TestDatabaseManager
 
 
+OWNERSHIP_PREVIOUS_REVISION = "b57c9a14d2e8"
+SINGLE_CHOICE_PREVIOUS_REVISION = "ca82f9a51d44"
 MIGRATION_STAGES = (
+    (
+        "upgrade-ownership-previous-head",
+        "upgrade",
+        OWNERSHIP_PREVIOUS_REVISION,
+    ),
+    (
+        "upgrade-single-choice-previous-head",
+        "upgrade",
+        SINGLE_CHOICE_PREVIOUS_REVISION,
+    ),
     ("upgrade-head-1", "upgrade", "head"),
     ("downgrade-base", "downgrade", "base"),
     ("upgrade-head-2", "upgrade", "head"),
@@ -40,8 +52,26 @@ EXPECTED_HEAD_TABLES = {
     "users",
 }
 EXPECTED_HEAD_ENUMS = {"difficultylevel", "questiontype"}
+EXPECTED_HEAD_ENUM_LABELS: dict[str, tuple[str, ...]] = {
+    "difficultylevel": ("EASY", "MEDIUM", "HARD"),
+    "questiontype": (
+        "SINGLE_CHOICE",
+        "MULTIPLE_CHOICE",
+        "MATCHING",
+        "FILL_IN_BLANK",
+    ),
+}
 EXPECTED_BASE_TABLES = {"user"}
 EXPECTED_BASE_ENUMS = {"role"}
+EXPECTED_BASE_ENUM_LABELS: dict[str, tuple[str, ...]] = {
+    "role": ("ADMIN", "USER")
+}
+EXPECTED_QUESTION_TYPE_COLUMN = (
+    "USER-DEFINED",
+    "questiontype",
+    False,
+    "'MULTIPLE_CHOICE'::questiontype",
+)
 AUDIT_MUTATION_FUNCTION = "prevent_audit_event_mutation"
 AUDIT_MUTATION_TRIGGER = "trg_audit_events_append_only"
 AUDIT_TRUNCATE_TRIGGER = "trg_audit_events_no_truncate"
@@ -240,6 +270,61 @@ EXPECTED_AUDIT_TRIGGER_FRAGMENTS = {
         f"execute function {AUDIT_MUTATION_FUNCTION}()",
     ),
 }
+EXPECTED_OWNERSHIP_COLUMN_DEFINITIONS = {
+    ("questions", "owner_id"): ("uuid", True, None),
+    ("topics", "owner_id"): ("uuid", True, None),
+}
+EXPECTED_OWNERSHIP_FOREIGN_KEY_DEFINITIONS = {
+    "questions_owner_id_fkey": (
+        "questions",
+        ("owner_id",),
+        "users",
+        ("id",),
+        "r",
+        "a",
+        True,
+        False,
+        False,
+        "FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE RESTRICT",
+    ),
+    "topics_owner_id_fkey": (
+        "topics",
+        ("owner_id",),
+        "users",
+        ("id",),
+        "r",
+        "a",
+        True,
+        False,
+        False,
+        "FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE RESTRICT",
+    ),
+}
+EXPECTED_OWNERSHIP_INDEX_DEFINITIONS = {
+    name: (
+        False,
+        False,
+        True,
+        True,
+        "btree",
+        f"CREATE INDEX {name} ON public.{table} USING btree ({column})",
+    )
+    for name, table, column in (
+        ("ix_document_chunks_material_id", "document_chunks", "material_id"),
+        ("ix_exams_creator_id", "exams", "creator_id"),
+        ("ix_flashcard_decks_topic_id", "flashcard_decks", "topic_id"),
+        ("ix_flashcards_deck_id", "flashcards", "deck_id"),
+        ("ix_questions_exam_id", "questions", "exam_id"),
+        ("ix_questions_owner_id", "questions", "owner_id"),
+        (
+            "ix_study_materials_uploader_id",
+            "study_materials",
+            "uploader_id",
+        ),
+        ("ix_topic_briefs_topic_id", "topic_briefs", "topic_id"),
+        ("ix_topics_owner_id", "topics", "owner_id"),
+    )
+}
 DATABASE_SIGNATURE_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "database-model-signature.json"
 )
@@ -313,6 +398,65 @@ def public_enum_names(cursor: PsycopgCursor) -> set[str]:
         """,
     )
     return {row[0] for row in cursor.fetchall()}
+
+
+def public_enum_labels(cursor: PsycopgCursor) -> dict[str, tuple[str, ...]]:
+    cursor.execute(
+        """
+        SELECT pg_type.typname, pg_enum.enumlabel
+        FROM pg_type
+        JOIN pg_namespace ON pg_namespace.oid = pg_type.typnamespace
+        JOIN pg_enum ON pg_enum.enumtypid = pg_type.oid
+        WHERE pg_namespace.nspname = 'public'
+        ORDER BY pg_type.typname, pg_enum.enumsortorder
+        """,
+    )
+    labels: dict[str, list[str]] = {}
+    for enum_name, label in cursor.fetchall():
+        labels.setdefault(enum_name, []).append(label)
+    return {name: tuple(values) for name, values in labels.items()}
+
+
+def question_type_column_definition(
+    cursor: PsycopgCursor,
+) -> tuple[str, str, bool, str | None] | None:
+    cursor.execute(
+        """
+        SELECT data_type, udt_name, is_nullable = 'YES', column_default
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'questions'
+          AND column_name = 'question_type'
+        """,
+    )
+    return cursor.fetchone()
+
+
+def validate_question_type_schema_state(
+    revision: str,
+    *,
+    enum_labels: dict[str, tuple[str, ...]],
+    column_definition: tuple[str, str, bool, str | None] | None,
+) -> None:
+    expected_labels: dict[str, tuple[str, ...]]
+    if revision == "head":
+        expected_labels = EXPECTED_HEAD_ENUM_LABELS
+        expected_column = EXPECTED_QUESTION_TYPE_COLUMN
+    elif revision == "base":
+        expected_labels = EXPECTED_BASE_ENUM_LABELS
+        expected_column = None
+    else:
+        raise RuntimeError(f"Unsupported question-type assertion revision: {revision}")
+    if enum_labels != expected_labels:
+        raise RuntimeError(
+            f"Unexpected public enum labels at {revision}: "
+            f"expected={expected_labels!r} actual={enum_labels!r}"
+        )
+    if column_definition != expected_column:
+        raise RuntimeError(
+            f"Unexpected question_type column definition at {revision}: "
+            f"expected={expected_column!r} actual={column_definition!r}"
+        )
 
 
 def audit_function_exists(cursor: PsycopgCursor) -> bool:
@@ -443,6 +587,153 @@ def audit_constraint_definitions(
     }
 
 
+def ownership_column_definitions(
+    cursor: PsycopgCursor,
+) -> dict[tuple[str, str], tuple[str, bool, str | None]]:
+    cursor.execute(
+        """
+        SELECT
+            pg_class.relname,
+            pg_attribute.attname,
+            format_type(pg_attribute.atttypid, pg_attribute.atttypmod),
+            NOT pg_attribute.attnotnull,
+            pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)
+        FROM pg_attribute
+        JOIN pg_class ON pg_class.oid = pg_attribute.attrelid
+        JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+        LEFT JOIN pg_attrdef
+          ON pg_attrdef.adrelid = pg_attribute.attrelid
+         AND pg_attrdef.adnum = pg_attribute.attnum
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_class.relname IN ('questions', 'topics')
+          AND pg_attribute.attname = 'owner_id'
+          AND pg_attribute.attnum > 0
+          AND NOT pg_attribute.attisdropped
+        """
+    )
+    return {
+        (row[0], row[1]): (row[2], row[3], row[4])
+        for row in cursor.fetchall()
+    }
+
+
+def ownership_foreign_key_definitions(
+    cursor: PsycopgCursor,
+) -> dict[
+    str,
+    tuple[
+        str,
+        tuple[str, ...],
+        str,
+        tuple[str, ...],
+        str,
+        str,
+        bool,
+        bool,
+        bool,
+        str,
+    ],
+]:
+    cursor.execute(
+        """
+        SELECT
+            pg_constraint.conname,
+            source_class.relname,
+            ARRAY(
+                SELECT source_attribute.attname
+                FROM unnest(pg_constraint.conkey)
+                     WITH ORDINALITY AS source_key(attnum, position)
+                JOIN pg_attribute AS source_attribute
+                  ON source_attribute.attrelid = pg_constraint.conrelid
+                 AND source_attribute.attnum = source_key.attnum
+                ORDER BY source_key.position
+            ),
+            target_class.relname,
+            ARRAY(
+                SELECT target_attribute.attname
+                FROM unnest(pg_constraint.confkey)
+                     WITH ORDINALITY AS target_key(attnum, position)
+                JOIN pg_attribute AS target_attribute
+                  ON target_attribute.attrelid = pg_constraint.confrelid
+                 AND target_attribute.attnum = target_key.attnum
+                ORDER BY target_key.position
+            ),
+            pg_constraint.confdeltype,
+            pg_constraint.confupdtype,
+            pg_constraint.convalidated,
+            pg_constraint.condeferrable,
+            pg_constraint.condeferred,
+            pg_get_constraintdef(pg_constraint.oid, true)
+        FROM pg_constraint
+        JOIN pg_class AS source_class
+          ON source_class.oid = pg_constraint.conrelid
+        JOIN pg_class AS target_class
+          ON target_class.oid = pg_constraint.confrelid
+        JOIN pg_namespace
+          ON pg_namespace.oid = source_class.relnamespace
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_constraint.contype = 'f'
+          AND source_class.relname IN ('questions', 'topics')
+          AND EXISTS (
+              SELECT 1
+              FROM unnest(pg_constraint.conkey) AS source_key(attnum)
+              JOIN pg_attribute AS source_attribute
+                ON source_attribute.attrelid = pg_constraint.conrelid
+               AND source_attribute.attnum = source_key.attnum
+              WHERE source_attribute.attname = 'owner_id'
+          )
+        """
+    )
+    return {
+        row[0]: (
+            row[1],
+            tuple(row[2]),
+            row[3],
+            tuple(row[4]),
+            row[5],
+            row[6],
+            row[7],
+            row[8],
+            row[9],
+            row[10],
+        )
+        for row in cursor.fetchall()
+    }
+
+
+def ownership_index_definitions(
+    cursor: PsycopgCursor,
+) -> dict[str, tuple[bool, bool, bool, bool, str, str]]:
+    cursor.execute(
+        """
+        SELECT
+            index_class.relname,
+            pg_index.indisunique,
+            pg_index.indisprimary,
+            pg_index.indisvalid,
+            pg_index.indisready,
+            pg_am.amname,
+            pg_get_indexdef(index_class.oid)
+        FROM pg_index
+        JOIN pg_class AS index_class
+          ON index_class.oid = pg_index.indexrelid
+        JOIN pg_class AS table_class
+          ON table_class.oid = pg_index.indrelid
+        JOIN pg_namespace
+          ON pg_namespace.oid = table_class.relnamespace
+        JOIN pg_am
+          ON pg_am.oid = index_class.relam
+        WHERE pg_namespace.nspname = 'public'
+          AND index_class.relname = ANY(%s)
+        """,
+        (list(EXPECTED_OWNERSHIP_INDEX_DEFINITIONS),),
+    )
+    return {
+        row[0]: (row[1], row[2], row[3], row[4], row[5], row[6])
+        for row in cursor.fetchall()
+    }
+
+
 def normalize_sql(definition: str) -> str:
     return " ".join(definition.split())
 
@@ -537,6 +828,77 @@ def validate_audit_schema_state(
         )
 
 
+def validate_ownership_schema_state(
+    revision: str,
+    *,
+    column_definitions: dict[
+        tuple[str, str], tuple[str, bool, str | None]
+    ],
+    foreign_key_definitions: dict[
+        str,
+        tuple[
+            str,
+            tuple[str, ...],
+            str,
+            tuple[str, ...],
+            str,
+            str,
+            bool,
+            bool,
+            bool,
+            str,
+        ],
+    ],
+    index_definitions: dict[str, tuple[bool, bool, bool, bool, str, str]],
+) -> None:
+    expected_columns = (
+        EXPECTED_OWNERSHIP_COLUMN_DEFINITIONS if revision == "head" else {}
+    )
+    expected_foreign_keys = (
+        EXPECTED_OWNERSHIP_FOREIGN_KEY_DEFINITIONS
+        if revision == "head"
+        else {}
+    )
+    expected_indexes = (
+        EXPECTED_OWNERSHIP_INDEX_DEFINITIONS if revision == "head" else {}
+    )
+    if column_definitions != expected_columns:
+        raise RuntimeError(
+            f"Unexpected ownership column definitions at {revision}: "
+            f"expected={expected_columns!r} actual={column_definitions!r}"
+        )
+
+    normalized_foreign_keys = {
+        name: (*definition[:9], normalize_sql(definition[9]))
+        for name, definition in foreign_key_definitions.items()
+    }
+    normalized_expected_foreign_keys = {
+        name: (*definition[:9], normalize_sql(definition[9]))
+        for name, definition in expected_foreign_keys.items()
+    }
+    if normalized_foreign_keys != normalized_expected_foreign_keys:
+        raise RuntimeError(
+            f"Unexpected ownership foreign key definitions at {revision}: "
+            f"expected={normalized_expected_foreign_keys!r} "
+            f"actual={normalized_foreign_keys!r}"
+        )
+
+    normalized_indexes = {
+        name: (*definition[:5], normalize_sql(definition[5]))
+        for name, definition in index_definitions.items()
+    }
+    normalized_expected_indexes = {
+        name: (*definition[:5], normalize_sql(definition[5]))
+        for name, definition in expected_indexes.items()
+    }
+    if normalized_indexes != normalized_expected_indexes:
+        raise RuntimeError(
+            f"Unexpected ownership index definitions at {revision}: "
+            f"expected={normalized_expected_indexes!r} "
+            f"actual={normalized_indexes!r}"
+        )
+
+
 def validate_schema_state(
     revision: str,
     *,
@@ -607,12 +969,17 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
             revisions = current_revisions(cursor)
             tables = public_table_names(cursor)
             enums = public_enum_names(cursor)
+            enum_labels = public_enum_labels(cursor)
+            question_type_column = question_type_column_definition(cursor)
             audit_function = audit_function_exists(cursor)
             audit_triggers = audit_trigger_definitions(cursor)
             audit_columns = audit_column_definitions(cursor)
             audit_non_nullable_columns = audit_non_nullable_column_names(cursor)
             audit_indexes = audit_index_definitions(cursor)
             audit_constraints = audit_constraint_definitions(cursor)
+            ownership_columns = ownership_column_definitions(cursor)
+            ownership_foreign_keys = ownership_foreign_key_definitions(cursor)
+            ownership_indexes = ownership_index_definitions(cursor)
     finally:
         connection.close()
 
@@ -625,12 +992,23 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
         audit_function=audit_function,
         audit_triggers=audit_triggers,
     )
+    validate_question_type_schema_state(
+        revision,
+        enum_labels=enum_labels,
+        column_definition=question_type_column,
+    )
     validate_audit_schema_state(
         revision,
         column_definitions=audit_columns,
         non_nullable_columns=audit_non_nullable_columns,
         index_definitions=audit_indexes,
         constraint_definitions=audit_constraints,
+    )
+    validate_ownership_schema_state(
+        revision,
+        column_definitions=ownership_columns,
+        foreign_key_definitions=ownership_foreign_keys,
+        index_definitions=ownership_indexes,
     )
 
     print(
@@ -642,7 +1020,10 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
         f"audit_columns={len(audit_columns)} "
         f"audit_non_null={len(audit_non_nullable_columns)} "
         f"audit_indexes={len(audit_indexes)} "
-        f"audit_constraints={len(audit_constraints)}",
+        f"audit_constraints={len(audit_constraints)} "
+        f"ownership_columns={len(ownership_columns)} "
+        f"ownership_foreign_keys={len(ownership_foreign_keys)} "
+        f"ownership_indexes={len(ownership_indexes)}",
         flush=True,
     )
 
@@ -722,9 +1103,251 @@ def assert_audit_append_only(
     print("MIGRATION_AUDIT_APPEND_ONLY_ASSERTION_PASSED", flush=True)
 
 
+def seed_legacy_ownership_fixture(
+    manager: TestDatabaseManager,
+) -> tuple[uuid.UUID, uuid.UUID]:
+    topic_id = uuid.uuid4()
+    question_id = uuid.uuid4()
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            revisions = current_revisions(cursor)
+            if revisions != {OWNERSHIP_PREVIOUS_REVISION}:
+                raise RuntimeError(
+                    "Legacy ownership fixture requires the previous head: "
+                    f"expected={OWNERSHIP_PREVIOUS_REVISION} "
+                    f"actual={sorted(revisions)}"
+                )
+            cursor.execute(
+                "INSERT INTO topics (id, name) VALUES (%s, %s)",
+                (str(topic_id), f"Legacy topic {topic_id}"),
+            )
+            cursor.execute(
+                "INSERT INTO questions (id, content) VALUES (%s, %s)",
+                (str(question_id), f"Legacy question {question_id}"),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+
+    print("MIGRATION_LEGACY_OWNERSHIP_FIXTURE_SEEDED", flush=True)
+    return topic_id, question_id
+
+
+def seed_pre_migration_question_types(
+    manager: TestDatabaseManager,
+) -> dict[str, uuid.UUID]:
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            if current_revisions(cursor) != {SINGLE_CHOICE_PREVIOUS_REVISION}:
+                raise RuntimeError("Question fixture requires ca82f9a51d44")
+            expected_labels = dict(EXPECTED_HEAD_ENUM_LABELS)
+            expected_labels["questiontype"] = (
+                "MULTIPLE_CHOICE",
+                "MATCHING",
+                "FILL_IN_BLANK",
+            )
+            if public_enum_labels(cursor) != expected_labels:
+                raise RuntimeError("Pre-migration enum labels are not exact")
+            question_ids = {
+                label: uuid.uuid4()
+                for label in (
+                    "MULTIPLE_CHOICE",
+                    "MATCHING",
+                    "FILL_IN_BLANK",
+                )
+            }
+            for label, question_id in question_ids.items():
+                cursor.execute(
+                    """
+                    INSERT INTO questions (
+                        id, content, question_type, difficulty,
+                        is_ai_generated, points
+                    )
+                    VALUES (%s, %s, %s, 'EASY', false, 1)
+                    """,
+                    (
+                        str(question_id),
+                        f"Pre-migration preservation {label} {question_id}",
+                        label,
+                    ),
+                )
+        connection.commit()
+    finally:
+        connection.close()
+    print("MIGRATION_PREEXISTING_QUESTION_TYPES_SEEDED", flush=True)
+    return question_ids
+
+
+def assert_question_types(
+    manager: TestDatabaseManager,
+    expected: dict[uuid.UUID, str],
+) -> None:
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, question_type::text FROM questions "
+                "WHERE id = ANY(%s::uuid[])",
+                ([str(question_id) for question_id in expected],),
+            )
+            actual = {uuid.UUID(str(row[0])): row[1] for row in cursor.fetchall()}
+    finally:
+        connection.close()
+    if actual != expected:
+        raise RuntimeError(
+            "Question rows were not preserved across enum migration: "
+            f"expected={expected!r} actual={actual!r}"
+        )
+
+
+def assert_legacy_ownership_not_backfilled(
+    manager: TestDatabaseManager,
+    topic_id: uuid.UUID,
+    question_id: uuid.UUID,
+) -> None:
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT owner_id FROM topics WHERE id = %s",
+                (str(topic_id),),
+            )
+            topic_row = cursor.fetchone()
+            cursor.execute(
+                "SELECT owner_id FROM questions WHERE id = %s",
+                (str(question_id),),
+            )
+            question_row = cursor.fetchone()
+    finally:
+        connection.close()
+
+    if topic_row != (None,) or question_row != (None,):
+        raise RuntimeError(
+            "Ownership migration unexpectedly backfilled legacy rows: "
+            f"topic={topic_row!r} question={question_row!r}"
+        )
+    print("MIGRATION_LEGACY_OWNERSHIP_NULL_ASSERTION_PASSED", flush=True)
+
+
+def assert_single_choice_downgrade_guard(
+    manager: TestDatabaseManager,
+    preserved_questions: dict[uuid.UUID, str],
+) -> None:
+    single_choice_id = uuid.uuid4()
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO questions ("
+                "id, content, question_type, difficulty, is_ai_generated, points"
+                ") VALUES (%s, %s, 'SINGLE_CHOICE', 'EASY', false, 1)",
+                (
+                    str(single_choice_id),
+                    f"Downgrade guard {single_choice_id}",
+                ),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+
+    rejected = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "downgrade",
+            SINGLE_CHOICE_PREVIOUS_REVISION,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if rejected.returncode == 0:
+        raise RuntimeError("Single-choice downgrade unexpectedly succeeded")
+
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            if current_revisions(cursor) != {expected_head()}:
+                raise RuntimeError("Rejected downgrade changed the Alembic revision")
+            if public_enum_labels(cursor) != EXPECTED_HEAD_ENUM_LABELS:
+                raise RuntimeError("Rejected downgrade changed enum labels")
+            if question_type_column_definition(cursor) != EXPECTED_QUESTION_TYPE_COLUMN:
+                raise RuntimeError("Rejected downgrade changed the question_type column")
+            cursor.execute(
+                "DELETE FROM questions WHERE id = ANY(%s::uuid[])",
+                ([str(single_choice_id)],),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+    assert_question_types(
+        manager,
+        {**preserved_questions},
+    )
+
+    downgraded = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "downgrade",
+            SINGLE_CHOICE_PREVIOUS_REVISION,
+        ],
+        check=False,
+    )
+    if downgraded.returncode != 0:
+        raise RuntimeError("Clean single-choice downgrade failed")
+
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            if current_revisions(cursor) != {SINGLE_CHOICE_PREVIOUS_REVISION}:
+                raise RuntimeError("Clean downgrade reached the wrong revision")
+            expected_previous_labels = dict(EXPECTED_HEAD_ENUM_LABELS)
+            expected_previous_labels["questiontype"] = (
+                "MULTIPLE_CHOICE",
+                "MATCHING",
+                "FILL_IN_BLANK",
+            )
+            if public_enum_labels(cursor) != expected_previous_labels:
+                raise RuntimeError("Clean downgrade produced incorrect enum labels")
+            if question_type_column_definition(cursor) != EXPECTED_QUESTION_TYPE_COLUMN:
+                raise RuntimeError("Clean downgrade changed the column contract")
+    finally:
+        connection.close()
+    assert_question_types(manager, preserved_questions)
+
+    upgraded = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "upgrade",
+            "head",
+        ],
+        check=False,
+    )
+    if upgraded.returncode != 0:
+        raise RuntimeError("Re-upgrade after the enum downgrade failed")
+    assert_schema_state(manager, "head")
+    assert_question_types(manager, preserved_questions)
+    print("MIGRATION_SINGLE_CHOICE_DOWNGRADE_GUARD_PASSED", flush=True)
+
+
 def main() -> int:
     manager = build_manager()
     manager.create()
+    legacy_fixture_ids: tuple[uuid.UUID, uuid.UUID] | None = None
+    pre_migration_question_ids: dict[str, uuid.UUID] | None = None
     try:
         for stage_name, action, revision in MIGRATION_STAGES:
             print(f"MIGRATION_STAGE_STARTED stage={stage_name}", flush=True)
@@ -747,8 +1370,42 @@ def main() -> int:
                     flush=True,
                 )
                 return completed.returncode
+            if revision == OWNERSHIP_PREVIOUS_REVISION:
+                legacy_fixture_ids = seed_legacy_ownership_fixture(manager)
+                print(f"MIGRATION_STAGE_PASSED stage={stage_name}", flush=True)
+                continue
+            if revision == SINGLE_CHOICE_PREVIOUS_REVISION:
+                pre_migration_question_ids = seed_pre_migration_question_types(
+                    manager
+                )
+                print(f"MIGRATION_STAGE_PASSED stage={stage_name}", flush=True)
+                continue
             assert_schema_state(manager, revision)
             assert_audit_append_only(manager, revision)
+            if stage_name == "upgrade-head-1":
+                if legacy_fixture_ids is None:
+                    raise RuntimeError("Legacy ownership fixture was not seeded")
+                if pre_migration_question_ids is None:
+                    raise RuntimeError("Pre-migration question fixture was not seeded")
+                assert_legacy_ownership_not_backfilled(
+                    manager,
+                    *legacy_fixture_ids,
+                )
+                expected_pre_migration_questions = {
+                    question_id: label
+                    for label, question_id in pre_migration_question_ids.items()
+                }
+                assert_question_types(
+                    manager,
+                    expected_pre_migration_questions,
+                )
+                assert_single_choice_downgrade_guard(
+                    manager,
+                    {
+                        legacy_fixture_ids[1]: "MULTIPLE_CHOICE",
+                        **expected_pre_migration_questions,
+                    },
+                )
             print(f"MIGRATION_STAGE_PASSED stage={stage_name}", flush=True)
         return 0
     finally:

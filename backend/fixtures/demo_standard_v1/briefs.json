@@ -1,0 +1,44 @@
+[
+  {
+    "key": "brief-math-limits",
+    "topic": "math-limits",
+    "material": "math-limits-text",
+    "title": "Tóm lược giới hạn và liên tục",
+    "content": "Phân biệt giá trị hàm và giới hạn; áp dụng quy tắc tính giới hạn; kiểm tra ba điều kiện liên tục; dùng định lý giá trị trung gian để chứng minh sự tồn tại nghiệm."
+  },
+  {
+    "key": "brief-math-derivatives",
+    "topic": "math-derivatives",
+    "material": "math-derivatives-pdf",
+    "title": "Tóm lược đạo hàm và ứng dụng",
+    "content": "Hiểu đạo hàm như tốc độ biến thiên và hệ số góc; vận dụng các quy tắc đạo hàm; xét dấu đạo hàm để phân tích cực trị; kiểm tra cả điểm tới hạn và biên khi tối ưu."
+  },
+  {
+    "key": "brief-python-foundations",
+    "topic": "python-foundations",
+    "material": "python-foundations-text",
+    "title": "Tóm lược nền tảng Python",
+    "content": "Sử dụng kiểu dữ liệu và phép chuyển kiểu đúng mục đích; phân biệt list, tuple, dictionary và set; truy cập dãy bằng chỉ số và lát cắt; đặt tên biến rõ nghĩa."
+  },
+  {
+    "key": "brief-python-control",
+    "topic": "python-control",
+    "material": "python-control-pdf",
+    "title": "Tóm lược điều khiển luồng và hàm",
+    "content": "Chọn nhánh bằng if/elif/else; dùng for hoặc while theo điều kiện bài toán; tách trách nhiệm thành hàm; hiểu phạm vi cục bộ và tránh giá trị mặc định có thể thay đổi."
+  },
+  {
+    "key": "brief-english-reading",
+    "topic": "english-reading",
+    "material": "english-reading-text",
+    "title": "Academic Reading Strategy Brief",
+    "content": "Use skimming for structure and the main claim, scanning for specific information, topic sentences for main ideas, signal words for relationships, and source evaluation for critical reading."
+  },
+  {
+    "key": "brief-english-writing",
+    "topic": "english-writing",
+    "material": "english-writing-pdf",
+    "title": "Academic Paragraph Writing Brief",
+    "content": "Build one controlling idea with a topic sentence, evidence and explanation; use cohesive signals accurately; make cautious claims; revise for unity, coherence, grammar and citation."
+  }
+]

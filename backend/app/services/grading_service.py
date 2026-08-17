@@ -34,7 +34,7 @@ class GradingService:
         if not expected_blanks:
             return 0.0
             
-        points_per_blank = question.points / len(expected_blanks)
+        points_per_blank = float(question.points) / len(expected_blanks)
         score = 0.0
         
         for expected in expected_blanks:
@@ -66,7 +66,7 @@ class GradingService:
         if not expected_pairs:
             return 0.0
             
-        points_per_pair = question.points / len(expected_pairs)
+        points_per_pair = float(question.points) / len(expected_pairs)
         score = 0.0
         
         for expected in expected_pairs:

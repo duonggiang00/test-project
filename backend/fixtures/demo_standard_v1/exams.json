@@ -1,0 +1,107 @@
+[
+  {
+    "key": "math-published",
+    "topic": "math",
+    "title": "Bài đánh giá Toán cao cấp",
+    "description": "Đề tổng hợp đã công bố cho dữ liệu demo.",
+    "duration_minutes": 45,
+    "is_published": true,
+    "questions": [
+      "math-limits-q05",
+      "math-limits-q06",
+      "math-limits-q07",
+      "math-limits-q08",
+      "math-limits-q09",
+      "math-derivatives-q05",
+      "math-derivatives-q06",
+      "math-derivatives-q07",
+      "math-derivatives-q08",
+      "math-derivatives-q09"
+    ]
+  },
+  {
+    "key": "math-draft",
+    "topic": "math",
+    "title": "Bản nháp Toán cao cấp",
+    "description": "Đề đang biên soạn, chưa công bố cho sinh viên.",
+    "duration_minutes": 30,
+    "is_published": false,
+    "questions": [
+      "math-limits-q01",
+      "math-limits-q02",
+      "math-derivatives-q03",
+      "math-derivatives-q04",
+      "math-derivatives-q10"
+    ]
+  },
+  {
+    "key": "python-published",
+    "topic": "python",
+    "title": "Bài đánh giá Nhập môn lập trình Python",
+    "description": "Đề tổng hợp đã công bố cho dữ liệu demo.",
+    "duration_minutes": 45,
+    "is_published": true,
+    "questions": [
+      "python-foundations-q05",
+      "python-foundations-q06",
+      "python-foundations-q07",
+      "python-foundations-q08",
+      "python-foundations-q09",
+      "python-control-q05",
+      "python-control-q06",
+      "python-control-q07",
+      "python-control-q08",
+      "python-control-q09"
+    ]
+  },
+  {
+    "key": "python-draft",
+    "topic": "python",
+    "title": "Bản nháp Nhập môn lập trình Python",
+    "description": "Đề đang biên soạn, chưa công bố cho sinh viên.",
+    "duration_minutes": 30,
+    "is_published": false,
+    "questions": [
+      "python-foundations-q01",
+      "python-foundations-q02",
+      "python-control-q03",
+      "python-control-q04",
+      "python-control-q10"
+    ]
+  },
+  {
+    "key": "english-published",
+    "topic": "english",
+    "title": "Bài đánh giá Academic English",
+    "description": "Đề tổng hợp đã công bố cho dữ liệu demo.",
+    "duration_minutes": 45,
+    "is_published": true,
+    "questions": [
+      "english-reading-q05",
+      "english-reading-q06",
+      "english-reading-q07",
+      "english-reading-q08",
+      "english-reading-q09",
+      "english-writing-q05",
+      "english-writing-q06",
+      "english-writing-q07",
+      "english-writing-q08",
+      "english-writing-q09"
+    ]
+  },
+  {
+    "key": "english-draft",
+    "topic": "english",
+    "title": "Bản nháp Academic English",
+    "description": "Đề đang biên soạn, chưa công bố cho sinh viên.",
+    "duration_minutes": 30,
+    "is_published": false,
+    "questions": [
+      "english-reading-q01",
+      "english-reading-q02",
+      "english-writing-q03",
+      "english-writing-q04",
+      "english-writing-q10"
+    ]
+  }
+]

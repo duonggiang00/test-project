@@ -1,0 +1,56 @@
+[
+  {
+    "key": "math",
+    "name": "Toán cao cấp",
+    "description": "Kiến thức giải tích nền tảng cho sinh viên năm nhất.",
+    "parent": null
+  },
+  {
+    "key": "math-limits",
+    "name": "Giới hạn và tính liên tục",
+    "description": "Giới hạn hàm số, quy tắc tính giới hạn và tính liên tục.",
+    "parent": "math"
+  },
+  {
+    "key": "math-derivatives",
+    "name": "Đạo hàm và ứng dụng",
+    "description": "Đạo hàm, tiếp tuyến, cực trị và bài toán tối ưu cơ bản.",
+    "parent": "math"
+  },
+  {
+    "key": "python",
+    "name": "Nhập môn lập trình Python",
+    "description": "Tư duy lập trình và cú pháp Python cho người mới bắt đầu.",
+    "parent": null
+  },
+  {
+    "key": "python-foundations",
+    "name": "Nền tảng Python",
+    "description": "Biến, kiểu dữ liệu, biểu thức và cấu trúc dữ liệu cơ bản.",
+    "parent": "python"
+  },
+  {
+    "key": "python-control",
+    "name": "Điều khiển luồng và hàm",
+    "description": "Rẽ nhánh, vòng lặp, hàm và phạm vi biến trong Python.",
+    "parent": "python"
+  },
+  {
+    "key": "english",
+    "name": "Tiếng Anh học thuật",
+    "description": "Kỹ năng đọc và viết học thuật ở mức nhập môn.",
+    "parent": null
+  },
+  {
+    "key": "english-reading",
+    "name": "Chiến lược đọc học thuật",
+    "description": "Đọc lướt, đọc tìm thông tin và xác định luận điểm chính.",
+    "parent": "english"
+  },
+  {
+    "key": "english-writing",
+    "name": "Từ vựng và viết đoạn học thuật",
+    "description": "Từ vựng học thuật, câu chủ đề và tính mạch lạc của đoạn văn.",
+    "parent": "english"
+  }
+]

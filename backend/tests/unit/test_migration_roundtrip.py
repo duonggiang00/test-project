@@ -27,6 +27,14 @@ def exact_audit_index_definitions():
     return dict(migration_runner.EXPECTED_AUDIT_INDEX_DEFINITIONS)
 
 
+def exact_ownership_foreign_key_definitions():
+    return dict(migration_runner.EXPECTED_OWNERSHIP_FOREIGN_KEY_DEFINITIONS)
+
+
+def exact_ownership_index_definitions():
+    return dict(migration_runner.EXPECTED_OWNERSHIP_INDEX_DEFINITIONS)
+
+
 def test_import_does_not_mutate_existing_environment_mode():
     completed = subprocess.run(
         [
@@ -68,6 +76,69 @@ def test_accepts_exact_head_and_base_schema_states():
         audit_function=False,
         audit_triggers={},
     )
+
+
+def test_accepts_exact_question_type_schema_at_head_and_base():
+    migration_runner.validate_question_type_schema_state(
+        "head",
+        enum_labels=dict(migration_runner.EXPECTED_HEAD_ENUM_LABELS),
+        column_definition=migration_runner.EXPECTED_QUESTION_TYPE_COLUMN,
+    )
+    migration_runner.validate_question_type_schema_state(
+        "base",
+        enum_labels=dict(migration_runner.EXPECTED_BASE_ENUM_LABELS),
+        column_definition=None,
+    )
+
+
+@pytest.mark.parametrize(
+    "unexpected_labels",
+    [
+        ("MULTIPLE_CHOICE", "MATCHING", "FILL_IN_BLANK"),
+        (
+            "MULTIPLE_CHOICE",
+            "SINGLE_CHOICE",
+            "MATCHING",
+            "FILL_IN_BLANK",
+        ),
+        (
+            "SINGLE_CHOICE",
+            "MULTIPLE_CHOICE",
+            "MATCHING",
+            "FILL_IN_BLANK",
+            "TRUE_FALSE",
+        ),
+    ],
+)
+def test_rejects_missing_reordered_or_stray_question_type_labels(
+    unexpected_labels,
+):
+    labels = dict(migration_runner.EXPECTED_HEAD_ENUM_LABELS)
+    labels["questiontype"] = unexpected_labels
+
+    with pytest.raises(RuntimeError, match="enum labels"):
+        migration_runner.validate_question_type_schema_state(
+            "head",
+            enum_labels=labels,
+            column_definition=migration_runner.EXPECTED_QUESTION_TYPE_COLUMN,
+        )
+
+
+@pytest.mark.parametrize(
+    "unexpected_column",
+    [
+        ("character varying", "varchar", False, "'MULTIPLE_CHOICE'::text"),
+        ("USER-DEFINED", "questiontype", True, "'MULTIPLE_CHOICE'::questiontype"),
+        ("USER-DEFINED", "questiontype", False, None),
+    ],
+)
+def test_rejects_incorrect_question_type_column_contract(unexpected_column):
+    with pytest.raises(RuntimeError, match="column definition"):
+        migration_runner.validate_question_type_schema_state(
+            "head",
+            enum_labels=dict(migration_runner.EXPECTED_HEAD_ENUM_LABELS),
+            column_definition=unexpected_column,
+        )
 
 
 def test_rejects_mismatched_head_revision():
@@ -424,6 +495,121 @@ def test_rejects_case_changed_audit_check_literal():
         )
 
 
+def test_accepts_exact_ownership_schema_at_head_and_absence_at_base():
+    migration_runner.validate_ownership_schema_state(
+        "head",
+        column_definitions=dict(
+            migration_runner.EXPECTED_OWNERSHIP_COLUMN_DEFINITIONS
+        ),
+        foreign_key_definitions=exact_ownership_foreign_key_definitions(),
+        index_definitions=exact_ownership_index_definitions(),
+    )
+    migration_runner.validate_ownership_schema_state(
+        "base",
+        column_definitions={},
+        foreign_key_definitions={},
+        index_definitions={},
+    )
+
+
+@pytest.mark.parametrize(
+    "unexpected_definition",
+    [
+        ("character varying(36)", True, None),
+        ("uuid", False, None),
+        ("uuid", True, "gen_random_uuid()"),
+    ],
+)
+def test_rejects_incorrect_ownership_column_definition(
+    unexpected_definition,
+):
+    columns = dict(migration_runner.EXPECTED_OWNERSHIP_COLUMN_DEFINITIONS)
+    columns[("topics", "owner_id")] = unexpected_definition
+
+    with pytest.raises(RuntimeError, match="ownership column definitions"):
+        migration_runner.validate_ownership_schema_state(
+            "head",
+            column_definitions=columns,
+            foreign_key_definitions=(
+                exact_ownership_foreign_key_definitions()
+            ),
+            index_definitions=exact_ownership_index_definitions(),
+        )
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_message"),
+    [
+        ("name", "ownership foreign key definitions"),
+        ("target", "ownership foreign key definitions"),
+        ("delete", "ownership foreign key definitions"),
+    ],
+)
+def test_rejects_incorrect_ownership_foreign_key(
+    mutation,
+    expected_message,
+):
+    foreign_keys = exact_ownership_foreign_key_definitions()
+    definition = foreign_keys["topics_owner_id_fkey"]
+    if mutation == "name":
+        foreign_keys["unexpected_topics_owner_fkey"] = foreign_keys.pop(
+            "topics_owner_id_fkey"
+        )
+    elif mutation == "target":
+        foreign_keys["topics_owner_id_fkey"] = (
+            *definition[:2],
+            "topics",
+            *definition[3:],
+        )
+    else:
+        foreign_keys["topics_owner_id_fkey"] = (
+            *definition[:4],
+            "c",
+            *definition[5:9],
+            "FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE",
+        )
+
+    with pytest.raises(RuntimeError, match=expected_message):
+        migration_runner.validate_ownership_schema_state(
+            "head",
+            column_definitions=dict(
+                migration_runner.EXPECTED_OWNERSHIP_COLUMN_DEFINITIONS
+            ),
+            foreign_key_definitions=foreign_keys,
+            index_definitions=exact_ownership_index_definitions(),
+        )
+
+
+@pytest.mark.parametrize("mutation", ["missing", "unique", "method", "column"])
+def test_rejects_incorrect_ownership_index(mutation):
+    indexes = exact_ownership_index_definitions()
+    name = "ix_topics_owner_id"
+    definition = indexes[name]
+    if mutation == "missing":
+        indexes.pop(name)
+    elif mutation == "unique":
+        indexes[name] = (True, *definition[1:])
+    elif mutation == "method":
+        indexes[name] = (*definition[:4], "hash", definition[5])
+    else:
+        indexes[name] = (
+            *definition[:5],
+            definition[5].replace("(owner_id)", "(parent_id)"),
+        )
+
+    with pytest.raises(RuntimeError, match="ownership index definitions"):
+        migration_runner.validate_ownership_schema_state(
+            "head",
+            column_definitions=dict(
+                migration_runner.EXPECTED_OWNERSHIP_COLUMN_DEFINITIONS
+            ),
+            foreign_key_definitions=(
+                exact_ownership_foreign_key_definitions()
+            ),
+            index_definitions=indexes,
+        )
+
+
 def test_rejects_multiple_or_signature_mismatched_heads():
     with pytest.raises(RuntimeError, match="exactly one Alembic head"):
         migration_runner.validate_expected_head(
@@ -452,6 +638,16 @@ def test_cleanup_runs_when_schema_assertion_fails(monkeypatch):
         migration_runner.subprocess,
         "run",
         lambda *args, **kwargs: subprocess.CompletedProcess(args=[], returncode=0),
+    )
+    monkeypatch.setattr(
+        migration_runner,
+        "seed_legacy_ownership_fixture",
+        lambda _manager: (None, None),
+    )
+    monkeypatch.setattr(
+        migration_runner,
+        "seed_pre_migration_question_types",
+        lambda _manager: {},
     )
 
     def fail_assertion(*args, **kwargs):

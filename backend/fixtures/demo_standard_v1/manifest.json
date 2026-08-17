@@ -1,0 +1,51 @@
+{
+  "dataset_id": "demo-standard-v1",
+  "version": 1,
+  "alembic_head": "a83c1d7e9f02",
+  "namespace": "playstudy/demo-standard-v1",
+  "teacher_email": "teacher@example.com",
+  "interactive_student_email": "student@example.com",
+  "files": {
+    "topics": "topics.json",
+    "materials": "materials.json",
+    "briefs": "briefs.json",
+    "questions": "questions.json",
+    "exams": "exams.json",
+    "flashcards": "flashcards.json",
+    "students": "students.json",
+    "submissions": "submissions.json"
+  },
+  "material_directory": "materials",
+  "content_files": [
+    "topics.json",
+    "materials.json",
+    "briefs.json",
+    "questions.json",
+    "exams.json",
+    "flashcards.json",
+    "students.json",
+    "submissions.json",
+    "materials/academic_reading.txt",
+    "materials/academic_writing.pdf",
+    "materials/math_derivatives.pdf",
+    "materials/math_limits.txt",
+    "materials/python_control.pdf",
+    "materials/python_foundations.txt"
+  ],
+  "content_sha256": "8fa2e015f647b53919157603cba337d5b0162871bb0e717707ed147ea587b4dd",
+  "expected_counts": {
+    "users": 6,
+    "topics": 9,
+    "materials": 6,
+    "document_chunks": 6,
+    "topic_briefs": 6,
+    "questions": 60,
+    "options": 144,
+    "flashcard_decks": 6,
+    "flashcards": 48,
+    "exams": 6,
+    "submissions": 15,
+    "submission_answers": 120,
+    "flashcard_progress": 24
+  }
+}

@@ -1,0 +1,9 @@
+GIỚI HẠN VÀ TÍNH LIÊN TỤC
+
+Giới hạn mô tả giá trị mà hàm số tiến gần tới khi biến số tiến gần một điểm. Ký hiệu lim x->a f(x)=L không yêu cầu f(a) phải bằng L hoặc thậm chí phải xác định.
+
+Các quy tắc tổng, hiệu, tích và thương cho phép kết hợp các giới hạn đã biết. Với dạng vô định 0/0, có thể phân tích nhân tử, rút gọn hoặc dùng giới hạn lượng giác cơ bản.
+
+Hàm f liên tục tại a khi f(a) xác định, lim x->a f(x) tồn tại và giới hạn đó bằng f(a). Hàm đa thức liên tục trên R; hàm hữu tỉ liên tục tại nơi mẫu khác 0.
+
+Định lý giá trị trung gian khẳng định rằng hàm liên tục trên đoạn [a,b] nhận mọi giá trị nằm giữa f(a) và f(b). Đây là công cụ quan trọng để chứng minh phương trình có nghiệm.

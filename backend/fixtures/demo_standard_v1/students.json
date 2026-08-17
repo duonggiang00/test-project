@@ -1,0 +1,38 @@
+[
+  {
+    "key": "student-primary",
+    "email": "student@example.com",
+    "full_name": "Demo Student",
+    "interactive": true
+  },
+  {
+    "key": "student-analytics-01",
+    "email": "analytics.student01@example.invalid",
+    "full_name": "Nguyễn Minh Anh",
+    "interactive": false
+  },
+  {
+    "key": "student-analytics-02",
+    "email": "analytics.student02@example.invalid",
+    "full_name": "Trần Gia Bảo",
+    "interactive": false
+  },
+  {
+    "key": "student-analytics-03",
+    "email": "analytics.student03@example.invalid",
+    "full_name": "Lê Hoàng Chi",
+    "interactive": false
+  },
+  {
+    "key": "student-analytics-04",
+    "email": "analytics.student04@example.invalid",
+    "full_name": "Phạm Đức Duy",
+    "interactive": false
+  },
+  {
+    "key": "student-analytics-05",
+    "email": "analytics.student05@example.invalid",
+    "full_name": "Vũ Khánh Linh",
+    "interactive": false
+  }
+]

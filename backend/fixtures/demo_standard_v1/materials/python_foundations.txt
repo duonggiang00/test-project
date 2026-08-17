@@ -1,0 +1,9 @@
+NỀN TẢNG PYTHON
+
+Python dùng thụt lề để biểu diễn khối lệnh. Biến được tạo khi gán giá trị và tên biến nên mô tả rõ ý nghĩa. Các kiểu cơ bản gồm int, float, str và bool.
+
+Toán tử số học xử lý phép tính; toán tử so sánh trả về True hoặc False. Hàm type() cho biết kiểu hiện tại và các hàm int(), float(), str() hỗ trợ chuyển kiểu có kiểm soát.
+
+List là dãy có thứ tự và có thể thay đổi; tuple có thứ tự nhưng bất biến; dictionary lưu cặp khóa-giá trị; set lưu các phần tử không trùng nhau.
+
+Chỉ số của dãy bắt đầu từ 0. Biểu thức cắt list[start:stop] lấy từ start đến trước stop. Cần chọn cấu trúc dữ liệu theo thao tác chính thay vì theo thói quen.

@@ -1,0 +1,44 @@
+[
+  {
+    "key": "math-limits-text",
+    "topic": "math-limits",
+    "title": "Giới hạn và tính liên tục - Tóm tắt",
+    "source_file": "math_limits.txt",
+    "file_type": "txt"
+  },
+  {
+    "key": "math-derivatives-pdf",
+    "topic": "math-derivatives",
+    "title": "Đạo hàm và ứng dụng - Ghi chú học tập",
+    "source_file": "math_derivatives.pdf",
+    "file_type": "pdf"
+  },
+  {
+    "key": "python-foundations-text",
+    "topic": "python-foundations",
+    "title": "Nền tảng Python - Tóm tắt",
+    "source_file": "python_foundations.txt",
+    "file_type": "txt"
+  },
+  {
+    "key": "python-control-pdf",
+    "topic": "python-control",
+    "title": "Điều khiển luồng và hàm - Ghi chú học tập",
+    "source_file": "python_control.pdf",
+    "file_type": "pdf"
+  },
+  {
+    "key": "english-reading-text",
+    "topic": "english-reading",
+    "title": "Academic Reading Strategies",
+    "source_file": "academic_reading.txt",
+    "file_type": "txt"
+  },
+  {
+    "key": "english-writing-pdf",
+    "topic": "english-writing",
+    "title": "Academic Vocabulary and Paragraph Writing",
+    "source_file": "academic_writing.pdf",
+    "file_type": "pdf"
+  }
+]
