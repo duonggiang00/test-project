@@ -1,8 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
-import LoginPage from "@/app/(auth)/login/page";
-import RegisterPage from "@/app/(auth)/register/page";
-import { toast } from "@/components/ui/toast";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 import { login, registerUser } from "@/services/apiService";
 
 const push = jest.fn();
@@ -21,13 +20,8 @@ jest.mock("../../src/services/apiService", () => ({
   registerUser: jest.fn(),
 }));
 
-jest.mock("../../src/components/ui/toast", () => ({
-  toast: { add: jest.fn() },
-}));
-
 const mockedLogin = jest.mocked(login);
 const mockedRegister = jest.mocked(registerUser);
-const mockedToast = jest.mocked(toast.add);
 
 const canonicalError = (errorCode: string) => ({
   response: {
@@ -46,9 +40,9 @@ describe("authentication error localization", () => {
     jest.clearAllMocks();
   });
 
-  test("login does not expose the rejected credential payload", async () => {
+  test("login renders a safe inline error without the rejected credential payload", async () => {
     mockedLogin.mockRejectedValue(canonicalError("INVALID_CREDENTIALS"));
-    render(<LoginPage />);
+    render(<LoginForm />);
 
     fireEvent.change(screen.getByTestId("login-email-input"), {
       target: { value: "teacher@example.test" },
@@ -58,19 +52,15 @@ describe("authentication error localization", () => {
     });
     fireEvent.click(screen.getByTestId("login-submit-button"));
 
-    await waitFor(() =>
-      expect(mockedToast).toHaveBeenCalledWith({
-        title: "Login failed",
-        description: "The email address or password is incorrect.",
-        type: "error",
-      }),
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The email address or password is incorrect.",
     );
-    expect(JSON.stringify(mockedToast.mock.calls)).not.toContain("canary");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("canary");
   });
 
-  test("registration does not expose the Axios request body", async () => {
+  test("registration renders a safe inline error without the Axios request body", async () => {
     mockedRegister.mockRejectedValue(canonicalError("USER_ALREADY_EXISTS"));
-    render(<RegisterPage />);
+    render(<RegisterForm />);
 
     fireEvent.change(screen.getByTestId("register-fullname-input"), {
       target: { value: "Test Student" },
@@ -87,12 +77,10 @@ describe("authentication error localization", () => {
     fireEvent.click(screen.getByTestId("register-submit-button"));
 
     await waitFor(() =>
-      expect(mockedToast).toHaveBeenCalledWith({
-        title: "Registration failed",
-        description: "This email address is already in use.",
-        type: "error",
-      }),
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "This email address is already in use.",
+      ),
     );
-    expect(JSON.stringify(mockedToast.mock.calls)).not.toContain("canary");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("canary");
   });
 });

@@ -3,14 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/lib/store";
-import { Loader2 } from "lucide-react";
 
 /**
- * Auth Layout — protects all routes under (auth)/.
+ * Auth layout protects all routes under (auth)/.
  * Only unauthenticated users are allowed.
  * Logged-in users are redirected to their appropriate home:
- * - student -> /student/dashboard
- * - teacher/admin -> /admin/dashboard
+ * - student -> /student/home
+ * - teacher/admin -> /dashboard
  */
 export default function AuthLayout({
   children,
@@ -51,8 +50,19 @@ export default function AuthLayout({
 
   if (!isMounted || user) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-white">
-        <Loader2 className="h-6 w-6 animate-spin text-black" />
+      <div
+        className="flex min-h-dvh w-full items-center justify-center bg-white px-6 text-black"
+        data-auth-surface
+      >
+        <div className="border-4 border-black bg-white p-6 text-center shadow-[6px_6px_0_0_#000]">
+          <span
+            aria-hidden="true"
+            className="mx-auto block size-5 animate-pulse bg-black"
+          />
+          <p className="mt-4 text-sm font-black tracking-[0.16em] uppercase">
+            Checking session
+          </p>
+        </div>
       </div>
     );
   }

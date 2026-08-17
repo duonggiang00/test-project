@@ -1,0 +1,16 @@
+.surface {
+  color-scheme: only light;
+}
+
+.surface,
+.surface * {
+  border-radius: 0 !important;
+}
+
+.surface input:-webkit-autofill,
+.surface input:-webkit-autofill:hover,
+.surface input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #000;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+  caret-color: #000;
+}
