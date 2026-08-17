@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="playstudy-mark-title" shape-rendering="crispEdges">
+  <title id="playstudy-mark-title">PlayStudy</title>
+  <rect width="64" height="64" fill="#000000" />
+  <path d="M16 12H40V20H48V36H40V44H24V52H16V12ZM24 20V36H40V20H24Z" fill="#ffffff" fill-rule="evenodd" />
+</svg>

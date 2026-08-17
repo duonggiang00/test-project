@@ -1,19 +1,15 @@
 import Link from "next/link";
 import { ArrowRight, LogIn, UserPlus } from "lucide-react";
+import { PlayStudyBrand } from "@/components/branding/PlayStudyBrand";
 
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white text-black max-w-7xl mx-auto border-x-4 border-black">
       {/* Header */}
       <header className="flex items-center justify-between px-8 py-6 w-full border-b-4 border-black bg-white">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 flex items-center justify-center border-4 border-black bg-black text-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-            <span className="font-mono font-bold text-2xl uppercase">Q</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-widest font-mono uppercase">
-            QuizBuddy <span className="text-gray-400">AI</span>
-          </h1>
-        </div>
+        <Link href="/" aria-label="PlayStudy home">
+          <PlayStudyBrand />
+        </Link>
         <nav className="hidden md:flex gap-6 items-center">
           <Link href="#features" className="text-base font-bold font-mono tracking-widest uppercase hover:underline underline-offset-4">
             Tính Năng
@@ -65,7 +61,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t-4 border-black py-8 px-8 flex justify-between items-center text-black font-mono font-bold uppercase text-sm">
-        <p>© 2026 QuizBuddy AI.</p>
+        <p>© 2026 PlayStudy.</p>
         <p>Wireframe Edition.</p>
       </footer>
     </div>

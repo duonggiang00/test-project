@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useUserStore } from '@/lib/store';
 import { useProfile } from '@/hooks/useProfile';
 import Image from 'next/image';
+import { PlayStudyBrand } from '@/components/branding/PlayStudyBrand';
 
 export default function StudentHeader() {
   const { logout } = useUserStore();
@@ -18,11 +19,8 @@ export default function StudentHeader() {
   return (
     <header className="w-full top-0 sticky bg-white border-b-4 border-black z-40">
       <div className="flex items-center justify-between px-4 md:px-8 h-20 w-full max-w-[1200px] mx-auto">
-        <Link href="/student/home" className="flex items-center gap-4 cursor-pointer">
-          <div className="w-12 h-12 bg-white border-4 border-black flex items-center justify-center shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-            <span className="material-symbols-outlined text-black">face</span>
-          </div>
-          <h1 className="font-mono text-2xl font-black text-black tracking-tighter uppercase hidden sm:block">QuizBuddy</h1>
+        <Link href="/student/home" aria-label="PlayStudy student home" className="cursor-pointer">
+          <PlayStudyBrand className="[&>span:last-child]:hidden sm:[&>span:last-child]:block" />
         </Link>
         <nav className="flex gap-4 md:gap-8">
           <Link
