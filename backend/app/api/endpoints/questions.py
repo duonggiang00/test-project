@@ -26,7 +26,13 @@ def read_questions(
     """
     Get paginated question bank list with eager-loaded options and filters.
     """
-    query = QuestionService.get_questions_query(db, topic_id, difficulty, search)
+    query = QuestionService.get_questions_query(
+        db,
+        current_user,
+        topic_id,
+        difficulty,
+        search,
+    )
     return paginate(db, query)
 
 @router.post("", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)

@@ -5,6 +5,7 @@ const backendUrl = new URL(getBackendUrl());
 
 const nextConfig: NextConfig = {
   /* config options here */
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   reactCompiler: true,
   images: {
     remotePatterns: [

@@ -9,6 +9,7 @@ from app.core.safe_payload import (
     UnsafeStructuredPayloadError,
     validate_safe_mapping,
 )
+from app.core.permissions import Permission
 
 
 MAX_AUDIT_PAYLOAD_BYTES = 32 * 1024
@@ -107,6 +108,33 @@ def _validate_user_create(
         allowed_values=(None, "admin", "teacher", "student"),
     ):
         _reject_invalid_action_payload()
+
+
+_ADMIN_OVERRIDE_OPERATIONS = frozenset(
+    {
+        "bulk_assign",
+        "create_child",
+        "delete",
+        "generate",
+        "process",
+        "publish",
+        "update",
+    }
+)
+
+
+def _validate_admin_override(
+    changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    if changes:
+        _reject_invalid_action_payload()
+    permission = metadata.get("permission")
+    operation = metadata.get("operation")
+    if permission not in {value.value for value in Permission}:
+        _reject_invalid_action_payload()
+    if operation not in _ADMIN_OVERRIDE_OPERATIONS:
+        _reject_invalid_action_payload()
     active = changes.get("is_active")
     if active is not None and not _is_change(
         active,
@@ -120,6 +148,27 @@ def _validate_user_create(
 # is syntactically valid.
 AUDIT_ACTION_POLICIES = MappingProxyType(
     {
+        "admin.override": AuditActionPolicy(
+            entity_types=frozenset(
+                {
+                    "exam",
+                    "flashcard",
+                    "flashcard_deck",
+                    "question",
+                    "study_material",
+                    "topic",
+                    "topic_brief",
+                }
+            ),
+            success_roles=frozenset({"admin"}),
+            denied_roles=frozenset({"admin"}),
+            failure_roles=frozenset({"admin"}),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset({"operation", "permission"}),
+            validate_payload=_validate_admin_override,
+        ),
         "audit.verify": AuditActionPolicy(
             entity_types=frozenset({"audit_test"}),
             success_roles=frozenset({"system"}),

@@ -20,9 +20,10 @@ router = APIRouter()
 def read_exams(
     search: Optional[str] = None,
     topic_id: Optional[UUID] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher),
 ):
-    query = ExamService.get_exams_query(db, search, topic_id)
+    query = ExamService.get_exams_query(db, current_user, search, topic_id)
     return paginate(db, query)
 
 @router.post("", response_model=ExamResponse)
@@ -31,7 +32,7 @@ def create_exam(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return ExamService.create_exam(db, exam_in, current_user.id)
+    return ExamService.create_exam(db, exam_in, current_user)
 
 @router.put("/{exam_id}", response_model=ExamResponse)
 def update_exam(

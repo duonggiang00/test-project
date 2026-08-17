@@ -14,6 +14,8 @@ class FileStorage(Protocol):
 
     def delete(self, stored_path: str) -> None: ...
 
+    def resolve_for_read(self, stored_path: str) -> Path: ...
+
 
 class LocalFileStorage:
     """Store files below a configured local root without trusting user paths."""
@@ -59,6 +61,13 @@ class LocalFileStorage:
         candidate = Path(stored_path).resolve()
         self._assert_within_root(candidate)
         candidate.unlink(missing_ok=True)
+
+    def resolve_for_read(self, stored_path: str) -> Path:
+        candidate = Path(stored_path).resolve()
+        self._assert_within_root(candidate)
+        if not candidate.is_file():
+            raise FileNotFoundError(stored_path)
+        return candidate
 
     def _assert_within_root(self, candidate: Path) -> None:
         if not candidate.is_relative_to(self._resolved_root):

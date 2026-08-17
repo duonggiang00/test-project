@@ -1,4 +1,12 @@
+import { resolve } from 'node:path';
+
 import { defineConfig, devices } from '@playwright/test';
+
+const host = '127.0.0.1';
+const port = process.env.REAL_E2E_PORT ?? '3101';
+const baseURL = `http://${host}:${port}`;
+const nextCli = resolve(process.cwd(), 'node_modules/next/dist/bin/next');
+const webServerCommand = `${JSON.stringify(process.execPath)} ${JSON.stringify(nextCli)} dev --hostname ${host} --port ${port}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -14,7 +22,7 @@ export default defineConfig({
   ],
   outputDir: 'reports/playwright/real-results',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -30,8 +38,9 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    command: webServerCommand,
+    env: { NEXT_DIST_DIR: '.next-e2e-real' },
+    url: baseURL,
+    reuseExistingServer: false,
   },
 });

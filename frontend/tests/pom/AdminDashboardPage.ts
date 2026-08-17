@@ -69,6 +69,13 @@ export class AdminDashboardPage {
     await expect(this.page.getByTestId('confirm-delete-exam-button')).toBeHidden();
   }
 
+  async expectExamVisible(examTitle: string) {
+    await this.page.getByTestId('search-exam-input').fill(examTitle);
+    await expect(
+      this.page.getByTestId(`exam-row-${examTitle}`).first(),
+    ).toBeVisible();
+  }
+
   async openExamBuilder(examTitle: string) {
     await this.page.getByTestId('search-exam-input').fill(examTitle);
     const row = this.page.getByTestId(`exam-row-${examTitle}`).first();

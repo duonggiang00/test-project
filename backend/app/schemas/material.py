@@ -8,7 +8,6 @@ class MaterialResponse(BaseModel):
     title: str
     file_type: str
     ai_status: str
-    file_path: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

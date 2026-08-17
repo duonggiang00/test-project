@@ -103,6 +103,7 @@ describe("AI workspace stream failures", () => {
   });
 
   test("reports a sanitized provider error event immediately", async () => {
+    mockSelectableMaterial();
     const bytes = new TextEncoder().encode(
       'data: {"error":"AI_PROVIDER_UNAVAILABLE",' +
         '"text":"canary provider detail"}\n\n' +
@@ -118,6 +119,7 @@ describe("AI workspace stream failures", () => {
     } as unknown as Response);
 
     render(<AIWorkspacePage />);
+    fireEvent.click(screen.getByText("Source material"));
     const input = screen.getByPlaceholderText("Nhập yêu cầu chat...");
     fireEvent.change(input, { target: { value: "Create a quiz" } });
     fireEvent.submit(input.closest("form") as HTMLFormElement);
@@ -126,7 +128,25 @@ describe("AI workspace stream failures", () => {
       expect(screen.getByText(/The AI service is currently unavailable/)).toBeVisible(),
     );
     expect(mockedOpenAiChatStream).toHaveBeenCalledTimes(1);
+    expect(mockedOpenAiChatStream.mock.calls[0][1]).toBe("material-1");
     expect(document.body.textContent).not.toContain("canary");
+  });
+
+  test("requires a selected material before sending chat", () => {
+    render(<AIWorkspacePage />);
+
+    const input = screen.getByRole("textbox");
+    const form = input.closest("form") as HTMLFormElement;
+
+    expect(
+      screen.getByText(/Select a material before starting AI chat/i),
+    ).toBeVisible();
+    expect(input).toBeDisabled();
+    expect(form.querySelector('button[type="submit"]')).toBeDisabled();
+
+    fireEvent.submit(form);
+
+    expect(mockedOpenAiChatStream).not.toHaveBeenCalled();
   });
 
   test("localizes upload failures without exposing backend details", async () => {

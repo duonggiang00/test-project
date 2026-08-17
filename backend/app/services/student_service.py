@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 from uuid import UUID
 from datetime import datetime, timezone
@@ -8,20 +9,23 @@ from app.models.submission import Submission, SubmissionAnswer
 from app.schemas.student import SubmitExamRequest, SubmitExamResponse, StudentExamResultResponse, StudentExamResultAnswer
 from app.services.grading_service import GradingService
 from app.core.exceptions import AppException
+from app.services.content_visibility import StudentContentVisibility
 
 class StudentService:
     @staticmethod
     def get_available_exams(db: Session, current_user_id: UUID, search: Optional[str] = None):
-        query = db.query(Exam).filter(Exam.is_published == True)
+        query = StudentContentVisibility.exam_statement()
         if search:
             safe_search = search.replace("%", "\\%").replace("_", "\\_")
-            query = query.filter(Exam.title.ilike(f"%{safe_search}%"))
-        exams = query.order_by(Exam.created_at.desc()).all()
+            query = query.where(Exam.title.ilike(f"%{safe_search}%"))
+        exams = db.scalars(query.order_by(Exam.created_at.desc(), Exam.id)).all()
         
         exam_ids = [e.id for e in exams]
-        submissions = db.query(Submission).filter(
-            Submission.student_id == current_user_id,
-            Submission.exam_id.in_(exam_ids)
+        submissions = db.scalars(
+            select(Submission).where(
+                Submission.student_id == current_user_id,
+                Submission.exam_id.in_(exam_ids),
+            )
         ).all()
         
         sub_map = {s.exam_id: s for s in submissions}
@@ -41,16 +45,21 @@ class StudentService:
 
     @staticmethod
     def start_exam(db: Session, current_user_id: UUID, exam_id: UUID):
-        exam = db.query(Exam).options(
-            selectinload(Exam.questions).selectinload(Question.options)
-        ).filter(Exam.id == exam_id, Exam.is_published == True).first()
+        exam = db.scalar(
+            StudentContentVisibility.exam_statement()
+            .options(selectinload(Exam.questions).selectinload(Question.options))
+            .where(Exam.id == exam_id)
+            .with_for_update(read=True)
+        )
         if not exam:
             raise AppException(status_code=404, error_code="EXAM_NOT_FOUND")
             
-        existing_sub = db.query(Submission).filter(
-            Submission.exam_id == exam.id,
-            Submission.student_id == current_user_id
-        ).first()
+        existing_sub = db.scalar(
+            select(Submission).where(
+                Submission.exam_id == exam.id,
+                Submission.student_id == current_user_id,
+            )
+        )
         
         if not existing_sub:
             submission = Submission(
@@ -67,14 +76,20 @@ class StudentService:
 
     @staticmethod
     def submit_exam(db: Session, current_user_id: UUID, exam_id: UUID, payload: SubmitExamRequest):
-        exam = db.query(Exam).options(selectinload(Exam.questions).selectinload(Question.options)).filter(Exam.id == exam_id).first()
+        exam = db.scalar(
+            StudentContentVisibility.exam_statement()
+            .options(selectinload(Exam.questions).selectinload(Question.options))
+            .where(Exam.id == exam_id)
+        )
         if not exam:
             raise AppException(status_code=404, error_code="EXAM_NOT_FOUND")
             
-        submission = db.query(Submission).filter(
-            Submission.exam_id == exam.id,
-            Submission.student_id == current_user_id
-        ).first()
+        submission = db.scalar(
+            select(Submission).where(
+                Submission.exam_id == exam.id,
+                Submission.student_id == current_user_id,
+            )
+        )
         
         if not submission:
             raise AppException(status_code=400, error_code="NOT_STARTED_YET")
@@ -135,19 +150,23 @@ class StudentService:
 
     @staticmethod
     def get_exam_result(db: Session, current_user_id: UUID, exam_id: UUID):
-        exam = db.query(Exam).options(
-            selectinload(Exam.questions).selectinload(Question.options)
-        ).filter(Exam.id == exam_id).first()
+        exam = db.scalar(
+            StudentContentVisibility.exam_statement()
+            .options(selectinload(Exam.questions).selectinload(Question.options))
+            .where(Exam.id == exam_id)
+        )
         
         if not exam:
             raise AppException(status_code=404, error_code="EXAM_NOT_FOUND")
 
-        submission = db.query(Submission).options(
-            selectinload(Submission.answers)
-        ).filter(
-            Submission.exam_id == exam.id,
-            Submission.student_id == current_user_id
-        ).first()
+        submission = db.scalar(
+            select(Submission)
+            .options(selectinload(Submission.answers))
+            .where(
+                Submission.exam_id == exam.id,
+                Submission.student_id == current_user_id,
+            )
+        )
 
         if not submission or submission.status != "submitted":
             raise AppException(status_code=400, error_code="NOT_SUBMITTED")

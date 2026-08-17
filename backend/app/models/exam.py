@@ -10,7 +10,11 @@ class Exam(Base):
     __tablename__ = "exams"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    creator_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    creator_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
     topic_id = Column(UUID(as_uuid=True), ForeignKey("topics.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(255), nullable=False)
     description = Column(Text)
@@ -26,7 +30,22 @@ class Question(Base):
     __tablename__ = "questions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    exam_id = Column(UUID(as_uuid=True), ForeignKey("exams.id", ondelete="CASCADE"), nullable=True)
+    owner_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "users.id",
+            name="questions_owner_id_fkey",
+            ondelete="RESTRICT",
+        ),
+        nullable=True,
+        index=True,
+    )
+    exam_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("exams.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     topic_id = Column(UUID(as_uuid=True), ForeignKey("topics.id", ondelete="SET NULL"), nullable=True)
     material_id = Column(UUID(as_uuid=True), ForeignKey("study_materials.id", ondelete="SET NULL"), nullable=True)
     
@@ -49,6 +68,7 @@ class Question(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     exam = relationship("Exam", back_populates="questions")
+    owner = relationship("User", foreign_keys=[owner_id])
     topic = relationship("Topic", back_populates="questions")
     options = relationship("Option", back_populates="question", cascade="all, delete-orphan")
     material = relationship("StudyMaterial")

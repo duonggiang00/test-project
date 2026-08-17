@@ -10,18 +10,26 @@ from app.db.session import get_db
 from app.models.topic import Topic
 from app.schemas.topic import TopicCreate, TopicUpdate, TopicResponse
 from app.services.topic_service import TopicService
-from app.api.deps import get_current_active_teacher, get_current_user
+from app.api.deps import (
+    get_current_active_student,
+    get_current_active_teacher,
+    get_current_user,
+)
 from app.models.user import User
 from app.core.exceptions import AppException
 
 router = APIRouter()
 
 @router.get("", response_model=Page[TopicResponse])
-def get_topics(search: Optional[str] = None, db: Session = Depends(get_db)):
+def get_topics(
+    search: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """
     Get all topics with pagination and optional search by name.
     """
-    query = TopicService.get_topics_query(db, search)
+    query = TopicService.get_topics_query(db, current_user, search)
     return paginate(db, query)
 
 @router.post("", response_model=TopicResponse, status_code=status.HTTP_201_CREATED)
@@ -36,8 +44,12 @@ def create_topic(
     return TopicService.create_topic(db, topic_in, current_user)
 
 @router.get("/{topic_id}", response_model=TopicResponse)
-def get_topic(topic_id: UUID, db: Session = Depends(get_db)):
-    return TopicService.get_topic(db, topic_id)
+def get_topic(
+    topic_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return TopicService.get_topic(db, topic_id, current_user)
 
 @router.put("/{topic_id}", response_model=TopicResponse)
 def update_topic(
@@ -67,10 +79,10 @@ def delete_topic(
 def get_topic_progress(
     topic_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_student)
 ):
     """
     Get the current user's progress percentage for a topic.
     """
-    progress = TopicService.get_topic_progress(db, topic_id, current_user.id)
+    progress = TopicService.get_topic_progress(db, topic_id, current_user)
     return {"progress": progress}

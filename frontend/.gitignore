@@ -19,6 +19,8 @@
 
 # next.js
 /.next/
+/.next-e2e-mocked/
+/.next-e2e-real/
 /out/
 
 # production

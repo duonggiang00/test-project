@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 import uuid
 
@@ -103,14 +103,14 @@ def test_admin(client, db):
     
     # Fix role directly in DB since register forces student
     from app.models.user import User
-    user = db.query(User).filter(User.email == email).first()
+    user = db.scalar(select(User).where(User.email == email))
     if user:
         user.role = "admin"
         db.commit()
 
     res = client.post("/auth/login", data={"username": email, "password": "testpassword"})
     token = res.json()["access_token"]
-    return {"email": email, "token": token, "headers": {"Authorization": f"Bearer {token}"}}
+    return {"id": user.id, "email": email, "token": token, "headers": {"Authorization": f"Bearer {token}"}}
 
 @pytest.fixture
 def test_teacher(client, db):
@@ -119,14 +119,14 @@ def test_teacher(client, db):
     
     # Fix role directly in DB since register forces student
     from app.models.user import User
-    user = db.query(User).filter(User.email == email).first()
+    user = db.scalar(select(User).where(User.email == email))
     if user:
         user.role = "teacher"
         db.commit()
 
     res = client.post("/auth/login", data={"username": email, "password": "testpassword"})
     token = res.json()["access_token"]
-    return {"email": email, "token": token, "headers": {"Authorization": f"Bearer {token}"}}
+    return {"id": user.id, "email": email, "token": token, "headers": {"Authorization": f"Bearer {token}"}}
 
 @pytest.fixture
 def test_student(client):
@@ -139,7 +139,7 @@ def test_student(client):
 
 @pytest.fixture
 def sample_exam(client, test_teacher):
-    res = client.post("/exams/", json={"title": "Mock Exam", "duration_minutes": 30, "is_published": True}, headers=test_teacher["headers"])
+    res = client.post("/exams", json={"title": "Mock Exam", "duration_minutes": 30, "is_published": True}, headers=test_teacher["headers"])
     exam = res.json()
     
     q1 = client.post(f"/exams/{exam['id']}/questions", json={

@@ -8,12 +8,17 @@ from app.schemas.flashcard import (
     FlashcardCreate, FlashcardUpdate, FlashcardResponse, FlashcardReviewSubmit
 )
 from app.schemas.topic import TopicBriefUpdate
-from app.api.deps import get_current_active_teacher, get_current_active_user
+from app.api.deps import (
+    get_current_active_student,
+    get_current_active_teacher,
+    get_current_active_user,
+)
 from fastapi import BackgroundTasks
 from app.services.ai_service import mock_generate_topic_kit
 from app.services.flashcard_service import FlashcardService
 from pydantic import BaseModel
 from app.core.exceptions import AppException
+from app.core.correlation import get_current_request_id, new_correlation_id
 
 router = APIRouter()
 
@@ -27,9 +32,23 @@ class GenerateTopicKitRequest(BaseModel):
 def generate_topic_kit_ai(
     request: GenerateTopicKitRequest,
     background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
     current_user = Depends(get_current_active_teacher)
 ):
-    background_tasks.add_task(mock_generate_topic_kit, str(request.material_id), str(request.topic_id))
+    authorized_scope = FlashcardService.authorize_topic_kit(
+        db,
+        request.material_id,
+        request.topic_id,
+        current_user,
+    )
+    background_tasks.add_task(
+        mock_generate_topic_kit,
+        str(request.material_id),
+        str(request.topic_id),
+        str(authorized_scope.owner_id),
+        str(authorized_scope.actor_id),
+        get_current_request_id() or new_correlation_id(),
+    )
     return {"message": "AI is generating topic brief and flashcards in the background"}
 
 @router.put("/topics/{topic_id}/brief")
@@ -39,7 +58,13 @@ def update_topic_brief(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_active_teacher)
 ):
-    FlashcardService.update_topic_brief(db, topic_id, data.brief_content, data.brief_ai_generated)
+    FlashcardService.update_topic_brief(
+        db,
+        topic_id,
+        data.brief_content,
+        data.brief_ai_generated,
+        current_user,
+    )
     return {"message": "Topic brief updated"}
 
 @router.post("/decks", response_model=FlashcardDeckResponse)
@@ -48,7 +73,7 @@ def create_deck(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_active_teacher)
 ):
-    return FlashcardService.create_deck(db, deck.model_dump())
+    return FlashcardService.create_deck(db, deck.model_dump(), current_user)
 
 @router.get("/topics/{topic_id}/decks", response_model=List[FlashcardDeckResponse])
 def get_topic_decks(
@@ -56,7 +81,7 @@ def get_topic_decks(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_active_user)
 ):
-    return FlashcardService.get_topic_decks(db, topic_id)
+    return FlashcardService.get_topic_decks(db, topic_id, current_user)
 
 @router.get("/decks/{deck_id}", response_model=FlashcardDeckWithCardsResponse)
 def get_deck(
@@ -64,7 +89,7 @@ def get_deck(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_active_user)
 ):
-    return FlashcardService.get_deck(db, deck_id)
+    return FlashcardService.get_deck(db, deck_id, current_user)
 
 @router.post("/decks/{deck_id}/cards", response_model=FlashcardResponse)
 def create_card(
@@ -73,7 +98,12 @@ def create_card(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_active_teacher)
 ):
-    return FlashcardService.create_card(db, deck_id, card.model_dump())
+    return FlashcardService.create_card(
+        db,
+        deck_id,
+        card.model_dump(),
+        current_user,
+    )
 
 # --- STUDENT ROUTES (SPACED REPETITION) ---
 
@@ -81,21 +111,15 @@ def create_card(
 def get_study_cards(
     deck_id: UUID,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_student)
 ):
-    if current_user.role != "student":
-        raise AppException(status_code=403, error_code="FORBIDDEN", detail="Only students can study")
-    
-    return FlashcardService.get_study_cards(db, deck_id, current_user.id)
+    return FlashcardService.get_study_cards(db, deck_id, current_user)
 
 @router.post("/student/cards/{card_id}/review")
 def review_card(
     card_id: UUID,
     review: FlashcardReviewSubmit,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    current_user = Depends(get_current_active_student)
 ):
-    if current_user.role != "student":
-        raise AppException(status_code=403, error_code="FORBIDDEN", detail="Only students can study")
-        
-    return FlashcardService.review_card(db, card_id, current_user.id, review.rating)
+    return FlashcardService.review_card(db, card_id, current_user, review.rating)

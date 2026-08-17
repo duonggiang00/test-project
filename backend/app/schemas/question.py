@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from uuid import UUID
 from typing import List, Optional, Dict, Any
 from app.models.enums import QuestionType, DifficultyLevel
@@ -46,4 +46,11 @@ class QuestionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class QuestionBulkCreate(BaseModel):
-    question_ids: List[UUID]
+    question_ids: List[UUID] = Field(min_length=1, max_length=500)
+
+    @field_validator("question_ids")
+    @classmethod
+    def require_unique_question_ids(cls, question_ids: List[UUID]) -> List[UUID]:
+        if len(question_ids) != len(set(question_ids)):
+            raise ValueError("question_ids must not contain duplicates")
+        return question_ids

@@ -18,7 +18,7 @@ class ExamUpdate(ExamBase):
 
 class ExamResponse(ExamBase):
     id: UUID
-    creator_id: UUID
+    creator_id: Optional[UUID]
     created_at: datetime
     topic_id: Optional[UUID] = None
 

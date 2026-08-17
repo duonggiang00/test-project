@@ -1,4 +1,6 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import select
+from uuid import UUID
 from app.models.material import StudyMaterial
 from app.models.document_chunk import DocumentChunk
 from app.core.exceptions import AppException
@@ -12,6 +14,9 @@ from app.core.security_guardrails import (
 )
 from app.core.config import settings
 from openai import AsyncOpenAI
+from app.core.permissions import Permission
+from app.models.user import User
+from app.services.authorization_service import AuthorizationService
 
 client = AsyncOpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -20,10 +25,34 @@ client = AsyncOpenAI(
 
 class AiStudioService:
     @staticmethod
-    def process_document(db: Session, material_id: str):
-        material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()
-        if not material:
-            raise AppException(status_code=404, error_code="MATERIAL_NOT_FOUND", detail="Material not found")
+    def authorize_material(
+        db: Session,
+        material_id: UUID,
+        current_user: User,
+    ) -> StudyMaterial:
+        material = db.scalar(
+            AuthorizationService.scope_owned_statement(
+                select(StudyMaterial),
+                current_user,
+                Permission.READ_OWNED_CONTENT,
+                StudyMaterial.uploader_id,
+            ).where(StudyMaterial.id == material_id)
+        )
+        if material is None:
+            raise AppException(status_code=404, error_code="MATERIAL_NOT_FOUND")
+        return material
+
+    @staticmethod
+    def process_document(
+        db: Session,
+        material_id: UUID,
+        current_user: User,
+    ):
+        material = AiStudioService.authorize_material(
+            db,
+            material_id,
+            current_user,
+        )
 
         title = material.title or "document"
         chunks_text = [f"{title} - chunk 1", f"{title} - chunk 2"]
@@ -38,11 +67,24 @@ class AiStudioService:
             )
             db.add(chunk)
 
-        db.commit()
+        AuthorizationService.commit_with_admin_override(
+            db,
+            actor=current_user,
+            permission=Permission.READ_OWNED_CONTENT,
+            entity_type="study_material",
+            entity_id=material.id,
+            owner_id=material.uploader_id,
+            operation="process",
+        )
         return len(chunks_text)
 
     @staticmethod
-    async def chat_generator(db: Session, messages: list):
+    async def chat_generator(
+        db: Session,
+        material: StudyMaterial,
+        messages: list,
+        current_user: User,
+    ):
         try:
             safe_messages = validate_messages(messages)
             if not safe_messages:
@@ -62,11 +104,31 @@ class AiStudioService:
 
             safe_query = sanitize_user_message(last_user_msg)
 
-            chunks = db.query(DocumentChunk).filter(
-                DocumentChunk.content.ilike(f"%{safe_query[:100]}%")
-            ).limit(3).all()
+            chunks = db.scalars(
+                select(DocumentChunk)
+                .where(
+                    DocumentChunk.material_id == material.id,
+                    DocumentChunk.content.ilike(f"%{safe_query[:100]}%"),
+                )
+                .limit(3)
+            ).all()
             if not chunks:
-                chunks = db.query(DocumentChunk).order_by(DocumentChunk.id.desc()).limit(3).all()
+                chunks = db.scalars(
+                    select(DocumentChunk)
+                    .where(DocumentChunk.material_id == material.id)
+                    .order_by(DocumentChunk.id.desc())
+                    .limit(3)
+                ).all()
+
+            AuthorizationService.commit_with_admin_override(
+                db,
+                actor=current_user,
+                permission=Permission.READ_OWNED_CONTENT,
+                entity_type="study_material",
+                entity_id=material.id,
+                owner_id=material.uploader_id,
+                operation="generate",
+            )
 
             context_text = "\n".join([c.content for c in chunks])
 

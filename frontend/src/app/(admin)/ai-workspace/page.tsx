@@ -210,7 +210,7 @@ export default function AIWorkspacePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isStreaming) return;
+    if (!input.trim() || isStreaming || !activeMaterial) return;
 
     const userMessage: Message = { role: "user", content: input };
     setMessages(prev => [...prev, userMessage]);
@@ -473,18 +473,27 @@ export default function AIWorkspacePage() {
         </div>
 
         {/* Khung nhập chat */}
+        {!activeMaterial && (
+          <div className="border-t-4 border-black px-4 py-2 font-mono text-xs font-bold uppercase">
+            [REQUIRED] Select a material before starting AI chat.
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="p-3 bg-white border-t-4 border-black flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={isStreaming}
-            placeholder="Nhập yêu cầu chat..."
+            disabled={isStreaming || !activeMaterial}
+            placeholder={
+              activeMaterial
+                ? "Nhập yêu cầu chat..."
+                : "Select a material to enable chat"
+            }
             className="flex-1 p-2 border-4 border-black font-mono focus:outline-none disabled:bg-gray-200"
           />
           <button 
             type="submit" 
-            disabled={isStreaming || !input.trim()}
+            disabled={isStreaming || !activeMaterial || !input.trim()}
             className="px-4 border-4 border-black bg-black text-white font-bold font-mono hover:bg-white hover:text-black transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50 flex items-center justify-center"
           >
             {isStreaming ? <Loader2 className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5" />}

@@ -7,11 +7,13 @@ from app.api.deps import get_current_active_teacher
 from app.models.user import User
 from pydantic import BaseModel, field_validator
 from typing import List, Dict, Any
+from uuid import UUID
 from fastapi.responses import StreamingResponse
 
 from app.services.ai_studio_service import AiStudioService
 
 class ChatRequest(BaseModel):
+    material_id: UUID
     messages: List[Dict[str, Any]]
 
     @field_validator("messages")
@@ -29,7 +31,11 @@ def process_document(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    chunks_created = AiStudioService.process_document(db, request.material_id)
+    chunks_created = AiStudioService.process_document(
+        db,
+        request.material_id,
+        current_user,
+    )
     return ProcessDocumentResponse(message="Processed successfully", chunks_created=chunks_created)
 
 @router.post("/chat")
@@ -38,7 +44,17 @@ async def chat(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
+    material = AiStudioService.authorize_material(
+        db,
+        request.material_id,
+        current_user,
+    )
     return StreamingResponse(
-        AiStudioService.chat_generator(db, request.messages),
+        AiStudioService.chat_generator(
+            db,
+            material,
+            request.messages,
+            current_user,
+        ),
         media_type="text/event-stream"
     )

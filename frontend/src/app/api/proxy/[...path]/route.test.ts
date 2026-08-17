@@ -52,6 +52,38 @@ describe('BFF proxy boundary', () => {
     expect(response.headers.get('location')).toBe('/api/proxy/exams');
   });
 
+  test('preserves private download bytes and content headers', async () => {
+    process.env.BACKEND_API_URL = 'https://backend.example.test';
+    const fileBytes = new Uint8Array([0, 37, 80, 68, 70, 255]);
+    const backendFetch = jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(fileBytes, {
+        status: 200,
+        headers: {
+          'content-type': 'application/pdf',
+          'content-disposition': 'attachment; filename="lesson.pdf"',
+        },
+      }),
+    );
+    const request = new NextRequest(
+      'http://frontend.test/api/proxy/materials/00000000-0000-0000-0000-000000000001/download',
+      { headers: { cookie: 'token=cookie-token' } },
+    );
+
+    const response = await GET(request);
+
+    expect(backendFetch).toHaveBeenCalledTimes(1);
+    const backendRequest = backendFetch.mock.calls[0][0] as Request;
+    expect(backendRequest.headers.get('authorization')).toBe(
+      'Bearer cookie-token',
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('application/pdf');
+    expect(response.headers.get('content-disposition')).toBe(
+      'attachment; filename="lesson.pdf"',
+    );
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(fileBytes);
+  });
+
   test('creates a canonical correlated envelope for BFF-owned failures', async () => {
     process.env.BACKEND_API_URL = 'https://backend.example.test';
     jest

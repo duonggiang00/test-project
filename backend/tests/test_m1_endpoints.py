@@ -3,14 +3,14 @@ import uuid
 
 def test_topics_crud(client, test_teacher):
     # 1. Create topic
-    res = client.post("/topics/", json={"name": "Algebra", "description": "Basic Algebra"}, headers=test_teacher["headers"])
+    res = client.post("/topics", json={"name": "Algebra", "description": "Basic Algebra"}, headers=test_teacher["headers"])
     assert res.status_code == 201
     topic = res.json()
     assert topic["name"] == "Algebra"
     topic_id = topic["id"]
 
     # 2. Get topics list
-    res = client.get("/topics/")
+    res = client.get("/topics", headers=test_teacher["headers"])
     assert res.status_code == 200
     data = res.json()
     assert data["total"] >= 1
@@ -21,7 +21,7 @@ def test_topics_crud(client, test_teacher):
     assert res.json()["name"] == "Linear Algebra"
 
     # 4. Get topic detail
-    res = client.get(f"/topics/{topic_id}")
+    res = client.get(f"/topics/{topic_id}", headers=test_teacher["headers"])
     assert res.status_code == 200
     assert res.json()["name"] == "Linear Algebra"
 
@@ -31,12 +31,12 @@ def test_topics_crud(client, test_teacher):
     assert res.json()["id"] == topic_id
 
     # 6. Verify deleted
-    res = client.get(f"/topics/{topic_id}")
+    res = client.get(f"/topics/{topic_id}", headers=test_teacher["headers"])
     assert res.status_code == 404
 
 def test_questions_crud(client, test_teacher):
     # 1. Create question
-    res = client.post("/questions/", json={
+    res = client.post("/questions", json={
         "content": "What is the capital of France?",
         "points": 2.0,
         "question_type": "MULTIPLE_CHOICE",
@@ -53,7 +53,7 @@ def test_questions_crud(client, test_teacher):
     assert len(question["options"]) == 2
 
     # 2. Get questions list
-    res = client.get("/questions/", headers=test_teacher["headers"])
+    res = client.get("/questions", headers=test_teacher["headers"])
     assert res.status_code == 200
     data = res.json()
     assert data["total"] >= 1

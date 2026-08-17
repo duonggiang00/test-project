@@ -28,6 +28,7 @@ def get_submission_history(
     """
     query = HistoryService.get_submission_history(
         db=db,
+        current_user=current_user,
         student_id=student_id,
         exam_id=exam_id,
         status=status,
@@ -44,4 +45,8 @@ def get_submission_detail(
     """
     Get full submission detail with questions and student answers.
     """
-    return HistoryService.get_submission_detail(db=db, submission_id=submission_id)
+    return HistoryService.get_submission_detail(
+        db=db,
+        submission_id=submission_id,
+        current_user=current_user,
+    )

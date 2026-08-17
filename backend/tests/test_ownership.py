@@ -1,6 +1,5 @@
 import uuid
 
-import pytest
 from sqlalchemy import select
 
 from app.models.material import StudyMaterial
@@ -81,8 +80,8 @@ def test_exam_update_authorization_matrix(
         json=exam_update_payload("Non-owner update"),
         headers=non_owner["headers"],
     )
-    assert non_owner_response.status_code == 403
-    assert non_owner_response.json()["error_code"] == "NOT_ENOUGH_PERMISSIONS"
+    assert non_owner_response.status_code == 404
+    assert non_owner_response.json()["error_code"] == "EXAM_NOT_FOUND"
 
     admin_response = client.put(
         f"/exams/{exam_id}",
@@ -92,10 +91,6 @@ def test_exam_update_authorization_matrix(
     assert admin_response.status_code == 200
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="SEC-002: bulk question assignment does not enforce exam ownership",
-)
 def test_non_owner_teacher_cannot_bulk_assign_questions(client, db, sample_exam):
     non_owner = create_teacher(client, db)
     response = client.post(
@@ -104,14 +99,10 @@ def test_non_owner_teacher_cannot_bulk_assign_questions(client, db, sample_exam)
         headers=non_owner["headers"],
     )
 
-    assert response.status_code == 403
-    assert response.json()["error_code"] == "NOT_ENOUGH_PERMISSIONS"
+    assert response.status_code == 404
+    assert response.json()["error_code"] == "EXAM_NOT_FOUND"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="SEC-002: material detail does not scope access by uploader/admin",
-)
 def test_non_owner_teacher_cannot_read_material(client, db, test_teacher):
     owner = db.scalar(select(User).where(User.email == test_teacher["email"]))
     material = StudyMaterial(
@@ -131,5 +122,5 @@ def test_non_owner_teacher_cannot_read_material(client, db, test_teacher):
         headers=non_owner["headers"],
     )
 
-    assert response.status_code == 403
-    assert response.json()["error_code"] == "NOT_ENOUGH_PERMISSIONS"
+    assert response.status_code == 404
+    assert response.json()["error_code"] == "MATERIAL_NOT_FOUND"

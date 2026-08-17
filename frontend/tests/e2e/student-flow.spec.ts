@@ -66,14 +66,24 @@ test('Student can take an exam and view the result', {
   const score = await studentPage.getFinalScore();
   expect(score).toBeDefined();
 
-  // Clean up: Delete the exam as admin
+  // Submitted educational records are retained. Prove the destructive guard
+  // instead of treating a closed confirmation modal as successful cleanup.
+  // The guarded E2E runner drops the entire isolated database after the suite.
   const adminCleanupContext = await browser.newContext({ storageState: 'playwright/.auth/admin.json' });
   const cleanupPage = await adminCleanupContext.newPage();
   const cleanupDashboard = new AdminDashboardPage(cleanupPage);
   await cleanupDashboard.gotoExams();
+  const blockedDelete = cleanupPage.waitForResponse(
+    response => response.request().method() === 'DELETE'
+      && response.url().includes('/api/proxy/exams/'),
+  );
   await cleanupDashboard.deleteExam(examTitle);
-  await cleanupDashboard.gotoTopics();
-  await cleanupDashboard.deleteTopic(topicTitle);
+  const deleteResponse = await blockedDelete;
+  expect(deleteResponse.status()).toBe(409);
+  expect(await deleteResponse.json()).toMatchObject({
+    error_code: 'EXAM_DELETE_BLOCKED_BY_RETAINED_RECORDS',
+  });
+  await cleanupDashboard.expectExamVisible(examTitle);
   await adminCleanupContext.close();
   
   await studentContext.close();

@@ -1,4 +1,5 @@
 from uuid import uuid4
+from types import SimpleNamespace
 
 import pytest
 from fastapi import BackgroundTasks
@@ -41,7 +42,7 @@ def test_failed_material_commit_rolls_back_and_removes_stored_file():
     with pytest.raises(RuntimeError, match="simulated database failure"):
         MaterialService.upload_material(
             db=database,
-            current_user_id=uuid4(),
+            current_user=SimpleNamespace(id=uuid4(), role="teacher"),
             filename="lesson.txt",
             content_type="text/plain",
             content=b"content",

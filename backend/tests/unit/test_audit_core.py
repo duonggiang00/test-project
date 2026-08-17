@@ -248,3 +248,84 @@ def test_audit_service_propagates_flush_failure_without_committing():
 
     assert session.flush_calls == 1
     assert session.commit_calls == 0
+
+
+def test_admin_override_policy_accepts_only_narrow_safe_metadata():
+    session = FakeSession()
+    owner_id = uuid.uuid4()
+    event = build_event(
+        actor=AuditActor(
+            actor_type="user",
+            user_id=uuid.uuid4(),
+            role="admin",
+        ),
+        action="admin.override",
+        entity=AuditEntity(
+            type="exam",
+            id=str(uuid.uuid4()),
+            owner_id=owner_id,
+        ),
+        changes={},
+        metadata={
+            "permission": "update_owned_content",
+            "operation": "update",
+        },
+    )
+
+    record = AuditService.record(session, event)
+
+    assert record.owner_id == owner_id
+    assert record.action == "admin.override"
+    assert record.event_metadata == event.metadata
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {
+            "actor": AuditActor(
+                actor_type="user",
+                user_id=uuid.uuid4(),
+                role="teacher",
+            )
+        },
+        {"metadata": {"operation": "update"}},
+        {
+            "metadata": {
+                "permission": "update_owned_content",
+                "operation": "arbitrary_operation",
+            }
+        },
+        {"changes": {"content": {"before": None, "after": "canary"}}},
+    ],
+)
+def test_admin_override_policy_fails_closed(overrides):
+    event_values = {
+        "actor": AuditActor(
+            actor_type="user",
+            user_id=uuid.uuid4(),
+            role="admin",
+        ),
+        "action": "admin.override",
+        "entity": AuditEntity(
+            type="topic",
+            id=str(uuid.uuid4()),
+            owner_id=None,
+        ),
+        "changes": {},
+        "metadata": {
+            "permission": "delete_owned_content",
+            "operation": "delete",
+        },
+    }
+    event_values.update(overrides)
+    session = FakeSession()
+
+    with pytest.raises(
+        ValueError,
+        match="action-specific schema|outside its allowlist",
+    ) as raised:
+        AuditService.record(session, build_event(**event_values))
+
+    assert "canary" not in str(raised.value).casefold()
+    assert session.added == []

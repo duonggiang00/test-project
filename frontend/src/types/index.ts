@@ -81,7 +81,7 @@ export interface Exam {
   duration_minutes: number;
   is_published: boolean;
   topic_id?: string | null;
-  creator_id?: string;
+  creator_id?: string | null;
   created_at?: string;
   questions?: Question[];
 }

@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session, Query
+from sqlalchemy import exists, or_, select
+from sqlalchemy.orm import Session
 from fastapi import UploadFile
 from uuid import UUID
 import os
@@ -8,25 +9,58 @@ from app.core.exceptions import AppException
 from app.models.user import User
 from app.schemas.user import UserUpdate, PasswordUpdate
 from app.core.security import get_password_hash, verify_password
+from app.models.exam import Exam, Question
+from app.models.flashcard import FlashcardProgress
+from app.models.material import StudyMaterial
+from app.models.submission import Submission
+from app.models.topic import Topic
+from app.core.permissions import Permission, require_permission
 
 class UserService:
     @staticmethod
-    def get_all_users_query(db: Session) -> Query:
-        return db.query(User)
+    def get_all_users_query(db: Session):
+        return select(User).order_by(User.created_at.desc(), User.id)
 
     @staticmethod
     def get_user_by_id(db: Session, user_id: UUID) -> User:
-        user = db.query(User).filter(User.id == user_id).first()
+        user = db.scalar(select(User).where(User.id == user_id))
         if not user:
             raise AppException(status_code=404, error_code="USER_NOT_FOUND")
         return user
 
     @staticmethod
-    def update_user_role(db: Session, user_id: UUID, new_role: str) -> User:
+    def _get_user_for_update(db: Session, user_id: UUID) -> User:
+        user = db.scalar(
+            select(User).where(User.id == user_id).with_for_update()
+        )
+        if user is None:
+            raise AppException(status_code=404, error_code="USER_NOT_FOUND")
+        return user
+
+    @staticmethod
+    def update_user_role(
+        db: Session,
+        user_id: UUID,
+        new_role: str,
+        actor: User,
+    ) -> User:
         if new_role not in ["student", "teacher", "admin"]:
             raise AppException(status_code=400, error_code="INVALID_ROLE")
-            
-        user = UserService.get_user_by_id(db, user_id)
+
+        if new_role == "admin":
+            require_permission(actor, Permission.ADMIN_OVERRIDE)
+
+        user = UserService._get_user_for_update(db, user_id)
+        if user.role == "admin":
+            require_permission(actor, Permission.ADMIN_OVERRIDE)
+        if new_role == "student" and UserService._has_owned_or_retained_data(
+            db,
+            user.id,
+        ):
+            raise AppException(
+                status_code=409,
+                error_code="USER_ROLE_CHANGE_BLOCKED_BY_OWNED_DATA",
+            )
         
         user.role = new_role
         db.commit()
@@ -35,11 +69,47 @@ class UserService:
 
     @staticmethod
     def delete_user(db: Session, user_id: UUID) -> dict:
-        user = UserService.get_user_by_id(db, user_id)
+        user = UserService._get_user_for_update(db, user_id)
+        if UserService._has_owned_or_retained_data(db, user.id):
+            raise AppException(
+                status_code=409,
+                error_code="USER_DELETE_BLOCKED_BY_RETAINED_DATA",
+            )
         
         db.delete(user)
         db.commit()
         return {"message": "User deleted successfully"}
+
+    @staticmethod
+    def _has_owned_or_retained_data(db: Session, user_id: UUID) -> bool:
+        return bool(
+            db.scalar(
+                select(
+                    or_(
+                        exists(select(Topic.id).where(Topic.owner_id == user_id)),
+                        exists(select(Exam.id).where(Exam.creator_id == user_id)),
+                        exists(
+                            select(Question.id).where(Question.owner_id == user_id)
+                        ),
+                        exists(
+                            select(StudyMaterial.id).where(
+                                StudyMaterial.uploader_id == user_id
+                            )
+                        ),
+                        exists(
+                            select(Submission.id).where(
+                                Submission.student_id == user_id
+                            )
+                        ),
+                        exists(
+                            select(FlashcardProgress.id).where(
+                                FlashcardProgress.student_id == user_id
+                            )
+                        ),
+                    )
+                )
+            )
+        )
 
     @staticmethod
     def update_profile(db: Session, current_user: User, user_update: UserUpdate) -> User:

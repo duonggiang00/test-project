@@ -1,5 +1,8 @@
 import api from "../lib/api";
 import {
+  createExam,
+  createQuestion,
+  createTopic,
   deleteMaterial,
   generateMaterialFlashcards,
   generateMaterialQuestions,
@@ -9,6 +12,7 @@ import {
   saveGeneratedQuestions,
   saveGeneratedTopicBrief,
   uploadMaterial,
+  updateStudentRole,
 } from "./apiService";
 
 jest.mock("../lib/api", () => ({
@@ -54,6 +58,31 @@ describe("AI workspace transport services", () => {
     expect(config).toEqual({
       headers: { "Content-Type": "multipart/form-data" },
     });
+  });
+
+  test("uses canonical no-trailing-slash create and role contracts", async () => {
+    mockedPost.mockResolvedValue({ data: { id: "created" } } as never);
+    jest.mocked(api.put).mockResolvedValue({ data: { role: "teacher" } } as never);
+
+    await createTopic({ name: "Topic" });
+    await createExam({ title: "Exam", duration_minutes: 30 });
+    await createQuestion({ content: "Question", points: 1 });
+    await updateStudentRole("user-1", "teacher");
+
+    expect(mockedPost).toHaveBeenNthCalledWith(1, "/topics", {
+      name: "Topic",
+    });
+    expect(mockedPost).toHaveBeenNthCalledWith(2, "/exams", {
+      title: "Exam",
+      duration_minutes: 30,
+    });
+    expect(mockedPost).toHaveBeenNthCalledWith(3, "/questions", {
+      content: "Question",
+      points: 1,
+    });
+    expect(api.put).toHaveBeenCalledWith(
+      "/admin/users/user-1/role?new_role=teacher",
+    );
   });
 
   test("serializes delete flags into the material endpoint", async () => {

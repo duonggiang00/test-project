@@ -1,6 +1,13 @@
+import { resolve } from 'node:path';
+
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = 'http://127.0.0.1:3000';
+const host = '127.0.0.1';
+const port = process.env.MOCKED_E2E_PORT ?? '3100';
+const baseURL = `http://${host}:${port}`;
+const nextCli = resolve(process.cwd(), 'node_modules/next/dist/bin/next');
+const webServerCommand = `${JSON.stringify(process.execPath)} ${JSON.stringify(nextCli)} dev --hostname ${host} --port ${port}`;
+
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: /admin-flow\.spec\.ts/,
@@ -29,8 +36,9 @@ export default defineConfig({
     { name: 'mobile-chrome', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: 'npm run dev -- --hostname 127.0.0.1',
+    command: webServerCommand,
+    env: { NEXT_DIST_DIR: '.next-e2e-mocked' },
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
 });

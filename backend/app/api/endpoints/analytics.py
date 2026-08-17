@@ -21,7 +21,7 @@ def get_analytics_overview(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return AnalyticsService.get_overview(db)
+    return AnalyticsService.get_overview(db, current_user)
 
 @router.get("/score-stats", response_model=ScoreStatsResponse)
 def get_score_stats(
@@ -30,7 +30,12 @@ def get_score_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return AnalyticsService.get_score_stats(db, exam_id, topic_id)
+    return AnalyticsService.get_score_stats(
+        db,
+        current_user,
+        exam_id,
+        topic_id,
+    )
 
 @router.get("/completion-status", response_model=CompletionStatusResponse)
 def get_completion_status(
@@ -38,11 +43,11 @@ def get_completion_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return AnalyticsService.get_completion_status(db, exam_id)
+    return AnalyticsService.get_completion_status(db, current_user, exam_id)
 
 @router.get("/topic-performance", response_model=List[TopicPerformanceResponse])
 def get_topic_performance(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return AnalyticsService.get_topic_performance(db)
+    return AnalyticsService.get_topic_performance(db, current_user)

@@ -9,7 +9,12 @@ class FlashcardDeck(Base):
     __tablename__ = "flashcard_decks"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    topic_id = Column(UUID(as_uuid=True), ForeignKey("topics.id", ondelete="CASCADE"), nullable=False)
+    topic_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("topics.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     material_id = Column(UUID(as_uuid=True), ForeignKey("study_materials.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
@@ -23,7 +28,12 @@ class Flashcard(Base):
     __tablename__ = "flashcards"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    deck_id = Column(UUID(as_uuid=True), ForeignKey("flashcard_decks.id", ondelete="CASCADE"), nullable=False)
+    deck_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("flashcard_decks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     front_content = Column(Text, nullable=False)
     back_content = Column(Text, nullable=False)
     order_index = Column(Integer, default=0)

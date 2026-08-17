@@ -36,7 +36,11 @@ app.include_router(ai_studio.router, prefix="/ai", tags=["ai"])
 
 from app.core.file_storage import material_file_storage
 material_file_storage.ensure_root()
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount(
+    "/uploads/avatars",
+    StaticFiles(directory="uploads/avatars", check_dir=False),
+    name="avatars",
+)
 
 from fastapi_pagination import add_pagination
 

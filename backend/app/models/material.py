@@ -9,7 +9,11 @@ class StudyMaterial(Base):
     __tablename__ = "study_materials"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    uploader_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    uploader_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
     title = Column(String(255), nullable=False)
     file_type = Column(String(10), nullable=False)
     file_path = Column(String(500), nullable=False)

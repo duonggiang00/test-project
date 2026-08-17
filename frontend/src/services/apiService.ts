@@ -16,7 +16,7 @@ export interface UpdateTopicPayload {
 }
 
 export const createTopic = async (payload: CreateTopicPayload) => {
-  const res = await api.post("/topics/", payload);
+  const res = await api.post("/topics", payload);
   return res.data;
 };
 
@@ -50,7 +50,7 @@ export interface UpdateExamPayload {
 }
 
 export const createExam = async (payload: CreateExamPayload) => {
-  const res = await api.post("/exams/", payload);
+  const res = await api.post("/exams", payload);
   return res.data;
 };
 
@@ -97,7 +97,7 @@ export interface UpdateQuestionPayload {
 }
 
 export const createQuestion = async (payload: CreateQuestionPayload) => {
-  const res = await api.post("/questions/", payload);
+  const res = await api.post("/questions", payload);
   return res.data;
 };
 
@@ -115,7 +115,9 @@ export const deleteQuestion = async (questionId: string) => {
 // 4. STUDENTS / USER MANAGEMENT MUTATIONS
 // ==========================================
 export const updateStudentRole = async (userId: string, newRole: string) => {
-  const res = await api.put(`/admin/users/${userId}/role`, { role: newRole });
+  const res = await api.put(
+    `/admin/users/${userId}/role?new_role=${encodeURIComponent(newRole)}`,
+  );
   return res.data;
 };
 
@@ -229,7 +231,7 @@ export interface AiChatTransportMessage {
 
 export const openAiChatStream = async (
   messages: AiChatTransportMessage[],
-  materialId: string | null,
+  materialId: string,
 ): Promise<Response> =>
   fetch("/api/proxy/ai/chat", {
     method: "POST",

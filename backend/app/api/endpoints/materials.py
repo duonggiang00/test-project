@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks, Form
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
@@ -27,7 +28,7 @@ def get_all_materials(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return paginate(db, MaterialService.get_all_materials(db))
+    return paginate(db, MaterialService.get_all_materials(db, current_user))
 
 @router.post("/upload", response_model=MaterialResponse)
 def upload_material(
@@ -40,7 +41,7 @@ def upload_material(
     content = file.file.read(MAX_FILE_SIZE_BYTES + 1)
     return MaterialService.upload_material(
         db=db,
-        current_user_id=current_user.id,
+        current_user=current_user,
         filename=file.filename or "",
         content_type=file.content_type,
         content=content,
@@ -54,7 +55,34 @@ def get_ai_questions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return MaterialService.get_ai_questions(db=db, material_id=material_id)
+    return MaterialService.get_ai_questions(
+        db=db,
+        material_id=material_id,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/{material_id}/download",
+    response_class=FileResponse,
+    responses={
+        200: {
+            "content": {"application/octet-stream": {}},
+            "description": "Material file download",
+        }
+    },
+)
+def download_material(
+    material_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher),
+):
+    path, filename = MaterialService.get_material_download(
+        db,
+        material_id,
+        current_user,
+    )
+    return FileResponse(path=path, filename=filename)
 
 @router.get("/{material_id}", response_model=MaterialDetailResponse)
 def get_material_detail(
@@ -62,7 +90,11 @@ def get_material_detail(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return MaterialService.get_material_detail(db=db, material_id=material_id)
+    return MaterialService.get_material_detail(
+        db=db,
+        material_id=material_id,
+        current_user=current_user,
+    )
 
 @router.delete("/{material_id}")
 def delete_material(
@@ -75,6 +107,7 @@ def delete_material(
     result = MaterialService.delete_material(
         db=db,
         material_id=material_id,
+        current_user=current_user,
         cascade=cascade,
         keep_assets=keep_assets
     )
@@ -96,7 +129,12 @@ def generate_questions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return MaterialService.generate_questions(db=db, material_id=material_id, request=request)
+    return MaterialService.generate_questions(
+        db=db,
+        material_id=material_id,
+        request=request,
+        current_user=current_user,
+    )
 
 @router.post("/{material_id}/save-questions")
 def save_questions(
@@ -105,7 +143,12 @@ def save_questions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return MaterialService.save_questions(db=db, material_id=material_id, request=request)
+    return MaterialService.save_questions(
+        db=db,
+        material_id=material_id,
+        request=request,
+        current_user=current_user,
+    )
 
 @router.post("/{material_id}/generate-flashcards")
 def generate_flashcards(
@@ -114,7 +157,12 @@ def generate_flashcards(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return MaterialService.generate_flashcards(db=db, material_id=material_id, request=request)
+    return MaterialService.generate_flashcards(
+        db=db,
+        material_id=material_id,
+        request=request,
+        current_user=current_user,
+    )
 
 @router.post("/{material_id}/save-flashcards")
 def save_flashcards_endpoint(
@@ -123,7 +171,12 @@ def save_flashcards_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return MaterialService.save_flashcards(db=db, material_id=material_id, request=request)
+    return MaterialService.save_flashcards(
+        db=db,
+        material_id=material_id,
+        request=request,
+        current_user=current_user,
+    )
 
 @router.post("/{material_id}/generate-topic-brief")
 def generate_topic_brief(
@@ -131,7 +184,11 @@ def generate_topic_brief(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return MaterialService.generate_topic_brief(db=db, material_id=material_id)
+    return MaterialService.generate_topic_brief(
+        db=db,
+        material_id=material_id,
+        current_user=current_user,
+    )
 
 @router.post("/{material_id}/save-topic-brief")
 def save_topic_brief_endpoint(
@@ -140,4 +197,9 @@ def save_topic_brief_endpoint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_teacher)
 ):
-    return MaterialService.save_topic_brief(db=db, material_id=material_id, request=request)
+    return MaterialService.save_topic_brief(
+        db=db,
+        material_id=material_id,
+        request=request,
+        current_user=current_user,
+    )

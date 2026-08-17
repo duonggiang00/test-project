@@ -49,10 +49,50 @@ function normalizePath(path) {
   return path.split(sep).join("/").replace(/^[A-Za-z]:/u, (drive) => drive.toLowerCase());
 }
 
-function changedRanges(baseSha) {
+function isCoverageSourceFile(file) {
+  if (file.startsWith("backend/app/")) return file.endsWith(".py");
+  if (!file.startsWith("frontend/src/")) return false;
+  return /\.(?:ts|tsx)$/u.test(file)
+    && !/\.(?:test|spec)\.(?:ts|tsx)$/u.test(file)
+    && !file.endsWith(".d.ts");
+}
+
+function addUntrackedRanges(ranges) {
   const output = execFileSync(
     "git",
-    ["diff", "--unified=0", `${baseSha}...HEAD`, "--", "backend/app", "frontend/src"],
+    [
+      "ls-files",
+      "--others",
+      "--exclude-standard",
+      "-z",
+      "--",
+      "backend/app",
+      "frontend/src",
+    ],
+    { cwd: workspaceRoot, encoding: "utf8" },
+  );
+  for (const file of output.split("\0").filter(Boolean)) {
+    const normalizedFile = normalizePath(file);
+    const source = readFileSync(resolve(workspaceRoot, file), "utf8");
+    const lineCount = source.length === 0 ? 0 : source.split(/\r?\n/u).length;
+    if (lineCount > 0) ranges.set(normalizedFile, [[1, lineCount]]);
+  }
+}
+
+function changedRanges(baseSha) {
+  const revisionArguments = baseSha === "WORKTREE"
+    ? ["HEAD"]
+    : [`${baseSha}...HEAD`];
+  const output = execFileSync(
+    "git",
+    [
+      "diff",
+      "--unified=0",
+      ...revisionArguments,
+      "--",
+      "backend/app",
+      "frontend/src",
+    ],
     { cwd: workspaceRoot, encoding: "utf8" },
   );
   const ranges = new Map();
@@ -69,6 +109,7 @@ function changedRanges(baseSha) {
     const count = match[2] === undefined ? 1 : Number(match[2]);
     if (count > 0) ranges.get(file).push([start, start + count - 1]);
   }
+  if (baseSha === "WORKTREE") addUntrackedRanges(ranges);
   return ranges;
 }
 
@@ -80,12 +121,14 @@ function changedCoverage(baseSha) {
   const ranges = changedRanges(baseSha);
   const backend = readJson(backendReportPath, "Backend coverage report");
   const frontend = readJson(frontendDetailPath, "Frontend detailed coverage report");
+  const representedFiles = new Set();
   let covered = 0;
   let total = 0;
 
   for (const [reportPath, entry] of Object.entries(backend.files)) {
     const absolute = resolve(workspaceRoot, "backend", reportPath);
     const file = normalizePath(relative(workspaceRoot, absolute));
+    representedFiles.add(file);
     const fileRanges = ranges.get(file);
     if (!fileRanges) continue;
     const missing = new Set(entry.missing_lines);
@@ -102,6 +145,7 @@ function changedCoverage(baseSha) {
 
   for (const [reportPath, entry] of Object.entries(frontend)) {
     const file = normalizePath(relative(workspaceRoot, reportPath));
+    representedFiles.add(file);
     const fileRanges = ranges.get(file);
     if (!fileRanges) continue;
     const lineStates = new Map();
@@ -115,6 +159,16 @@ function changedCoverage(baseSha) {
       total += 1;
       if (isCovered) covered += 1;
     }
+  }
+
+  const missingFiles = [...ranges.keys()]
+    .filter(isCoverageSourceFile)
+    .filter((file) => !representedFiles.has(file))
+    .sort();
+  if (missingFiles.length > 0) {
+    throw new Error(
+      `Changed source files are missing from coverage reports: ${missingFiles.join(", ")}`,
+    );
   }
 
   return { covered, total, percent: percent(covered, total) };
