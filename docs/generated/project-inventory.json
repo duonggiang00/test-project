@@ -2,23 +2,23 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "c69621a45c8b2943f934ef88df94de59dca8d527",
-    "source_commit_timestamp": "2026-08-06T09:17:27+07:00",
-    "source_tree_sha256": "0db06e38041d6e5009e01cbff802ed9baec73233f20996f2edb7e61a79cfdf3e",
-    "relevant_file_count": 257,
+    "source_commit": "1713f77d1307c40e7c00c3955a00b3c3d4b25515",
+    "source_commit_timestamp": "2026-08-09T11:21:00+07:00",
+    "source_tree_sha256": "588a9d18880968d3989591eea66d382c3ef69480bcbf7849c1a884ac606db93a",
+    "relevant_file_count": 305,
     "alembic_heads": [
-      "b57c9a14d2e8"
+      "a83c1d7e9f02"
     ]
   },
   "summary": {
     "sqlalchemy_models": 14,
     "pydantic_schemas": 71,
-    "fastapi_routes": 62,
+    "fastapi_routes": 63,
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 92,
-    "frontend_test_calls": 47
+    "backend_test_functions": 145,
+    "frontend_test_calls": 64
   },
   "backend": {
     "models": [
@@ -567,6 +567,16 @@
           },
           {
             "foreign_keys": [
+              "users.id"
+            ],
+            "name": "owner_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
               "exams.id"
             ],
             "name": "exam_id",
@@ -674,6 +684,13 @@
             "secondary": null,
             "target": "Option",
             "uselist": true
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "owner",
+            "secondary": null,
+            "target": "User",
+            "uselist": false
           },
           {
             "direction": "MANYTOONE",
@@ -954,6 +971,16 @@
             "unique": false
           },
           {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "owner_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
             "foreign_keys": [],
             "name": "name",
             "nullable": false,
@@ -1033,6 +1060,13 @@
             "secondary": null,
             "target": "StudyMaterial",
             "uselist": true
+          },
+          {
+            "direction": "MANYTOONE",
+            "name": "owner",
+            "secondary": null,
+            "target": "User",
+            "uselist": false
           },
           {
             "direction": "MANYTOONE",
@@ -1645,7 +1679,7 @@
           {
             "name": "creator_id",
             "required": true,
-            "type": "UUID"
+            "type": "Optional"
           },
           {
             "name": "created_at",
@@ -1696,7 +1730,7 @@
           {
             "name": "creator_id",
             "required": true,
-            "type": "UUID"
+            "type": "Optional"
           },
           {
             "name": "created_at",
@@ -2280,11 +2314,6 @@
             "type": "str"
           },
           {
-            "name": "file_path",
-            "required": false,
-            "type": "Optional"
-          },
-          {
             "name": "created_at",
             "required": true,
             "type": "datetime"
@@ -2319,11 +2348,6 @@
             "name": "ai_status",
             "required": true,
             "type": "str"
-          },
-          {
-            "name": "file_path",
-            "required": false,
-            "type": "Optional"
           },
           {
             "name": "created_at",
@@ -3291,8 +3315,8 @@
       },
       {
         "dependencies": [
-          "app.api.deps.get_current_active_admin",
           "app.api.deps.get_current_user",
+          "app.api.deps.get_current_user_manager",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer",
           "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
@@ -3323,8 +3347,8 @@
       },
       {
         "dependencies": [
-          "app.api.deps.get_current_active_admin",
           "app.api.deps.get_current_user",
+          "app.api.deps.get_current_user_manager",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
@@ -3338,8 +3362,8 @@
       },
       {
         "dependencies": [
-          "app.api.deps.get_current_active_admin",
           "app.api.deps.get_current_user",
+          "app.api.deps.get_current_user_manager",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
@@ -3552,7 +3576,10 @@
       },
       {
         "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
           "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer",
           "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
           "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
         ],
@@ -3716,7 +3743,7 @@
       },
       {
         "dependencies": [
-          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_active_student",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
@@ -3731,7 +3758,7 @@
       },
       {
         "dependencies": [
-          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_active_student",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
@@ -3867,6 +3894,21 @@
         "name": "get_material_detail",
         "path": "/materials/{material_id}",
         "response_model": "MaterialDetailResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.materials.download_material",
+        "methods": [
+          "GET"
+        ],
+        "name": "download_material",
+        "path": "/materials/{material_id}/download",
+        "response_model": "None"
       },
       {
         "dependencies": [
@@ -4052,6 +4094,7 @@
       },
       {
         "dependencies": [
+          "app.api.deps.get_current_active_student",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer",
@@ -4068,6 +4111,7 @@
       },
       {
         "dependencies": [
+          "app.api.deps.get_current_active_student",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
@@ -4082,6 +4126,7 @@
       },
       {
         "dependencies": [
+          "app.api.deps.get_current_active_student",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
@@ -4096,6 +4141,7 @@
       },
       {
         "dependencies": [
+          "app.api.deps.get_current_active_student",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
@@ -4110,7 +4156,9 @@
       },
       {
         "dependencies": [
+          "app.api.deps.get_current_user",
           "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer",
           "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
           "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
         ],
@@ -4154,7 +4202,9 @@
       },
       {
         "dependencies": [
-          "app.db.session.get_db"
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
         "endpoint": "app.api.endpoints.topics.get_topic",
         "methods": [
@@ -4181,6 +4231,7 @@
       },
       {
         "dependencies": [
+          "app.api.deps.get_current_active_student",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
@@ -4653,15 +4704,41 @@
         "tier": "integration"
       },
       {
+        "path": "tests/test_admin_override_audit.py",
+        "tests": [
+          {
+            "line": 14,
+            "markers": [],
+            "name": "test_admin_cross_owner_update_is_audited_without_owner_transfer"
+          },
+          {
+            "line": 58,
+            "markers": [],
+            "name": "test_audit_failure_rolls_back_admin_business_mutation"
+          },
+          {
+            "line": 91,
+            "markers": [],
+            "name": "test_owner_and_denied_mutations_do_not_emit_admin_override"
+          },
+          {
+            "line": 139,
+            "markers": [],
+            "name": "test_background_admin_override_keeps_originating_request_id"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
         "path": "tests/test_ai_studio.py",
         "tests": [
           {
-            "line": 7,
+            "line": 8,
             "markers": [],
             "name": "test_process_document"
           },
           {
-            "line": 33,
+            "line": 34,
             "markers": [],
             "name": "test_chat_prompt_injection"
           }
@@ -4736,6 +4813,104 @@
         "tier": "integration"
       },
       {
+        "path": "tests/test_authorization_concurrency.py",
+        "tests": [
+          {
+            "line": 32,
+            "markers": [],
+            "name": "test_authenticated_content_write_serializes_against_role_demotion"
+          },
+          {
+            "line": 88,
+            "markers": [],
+            "name": "test_material_cascade_serializes_concurrent_flashcard_review"
+          },
+          {
+            "line": 194,
+            "markers": [],
+            "name": "test_background_admin_override_serializes_against_demotion"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_authorization_idor.py",
+        "tests": [
+          {
+            "line": 116,
+            "markers": [],
+            "name": "test_management_lists_are_authenticated_and_owner_scoped"
+          },
+          {
+            "line": 175,
+            "markers": [],
+            "name": "test_cross_owner_and_missing_details_are_indistinguishable"
+          },
+          {
+            "line": 239,
+            "markers": [],
+            "name": "test_bulk_assignment_is_same_owner_all_or_nothing"
+          },
+          {
+            "line": 298,
+            "markers": [],
+            "name": "test_legacy_null_owned_roots_are_admin_only"
+          },
+          {
+            "line": 391,
+            "markers": [],
+            "name": "test_student_empty_deck_topic_does_not_reveal_existence"
+          },
+          {
+            "line": 418,
+            "markers": [],
+            "name": "test_teacher_system_compatibility_does_not_grant_user_purge"
+          },
+          {
+            "line": 443,
+            "markers": [],
+            "name": "test_teacher_and_admin_cannot_use_student_self_service_routes"
+          },
+          {
+            "line": 454,
+            "markers": [],
+            "name": "test_ai_chat_context_is_limited_to_the_authorized_material"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_authorization_query_budget.py",
+        "tests": [
+          {
+            "line": 10,
+            "markers": [],
+            "name": "test_question_list_and_bulk_authorization_have_bounded_queries"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_demo_data_loader.py",
+        "tests": [
+          {
+            "line": 50,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_demo_dataset_lifecycle_and_api_contracts"
+          },
+          {
+            "line": 210,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_demo_dataset_rolls_back_mid_apply"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
         "path": "tests/test_exams.py",
         "tests": [
           {
@@ -4796,17 +4971,17 @@
         "path": "tests/test_materials.py",
         "tests": [
           {
-            "line": 4,
+            "line": 1,
             "markers": [],
             "name": "test_upload_material"
           },
           {
-            "line": 22,
+            "line": 32,
             "markers": [],
             "name": "test_get_materials"
           },
           {
-            "line": 30,
+            "line": 40,
             "markers": [],
             "name": "test_get_material_questions"
           }
@@ -4817,23 +4992,61 @@
         "path": "tests/test_ownership.py",
         "tests": [
           {
-            "line": 48,
+            "line": 47,
             "markers": [],
             "name": "test_exam_update_authorization_matrix"
           },
           {
-            "line": 99,
-            "markers": [
-              "xfail"
-            ],
+            "line": 94,
+            "markers": [],
             "name": "test_non_owner_teacher_cannot_bulk_assign_questions"
           },
           {
-            "line": 115,
-            "markers": [
-              "xfail"
-            ],
+            "line": 106,
+            "markers": [],
             "name": "test_non_owner_teacher_cannot_read_material"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_ownership_matrix_extended.py",
+        "tests": [
+          {
+            "line": 18,
+            "markers": [],
+            "name": "test_history_and_analytics_are_owner_scoped"
+          },
+          {
+            "line": 124,
+            "markers": [],
+            "name": "test_flashcard_management_and_learning_visibility_matrix"
+          },
+          {
+            "line": 209,
+            "markers": [],
+            "name": "test_material_and_question_lists_do_not_cross_owner_boundary"
+          },
+          {
+            "line": 260,
+            "markers": [],
+            "name": "test_cross_resource_links_require_one_owner_and_leave_no_partial_write"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_retained_record_guards.py",
+        "tests": [
+          {
+            "line": 20,
+            "markers": [],
+            "name": "test_exam_question_mutations_are_blocked_after_submission"
+          },
+          {
+            "line": 117,
+            "markers": [],
+            "name": "test_user_topic_and_material_destructive_guards"
           }
         ],
         "tier": "integration"
@@ -4905,6 +5118,81 @@
             "line": 243,
             "markers": [],
             "name": "test_audit_service_propagates_flush_failure_without_committing"
+          },
+          {
+            "line": 253,
+            "markers": [],
+            "name": "test_admin_override_policy_accepts_only_narrow_safe_metadata"
+          },
+          {
+            "line": 302,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_admin_override_policy_fails_closed"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_authorization_policy.py",
+        "tests": [
+          {
+            "line": 38,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_named_permission_matrix"
+          },
+          {
+            "line": 46,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_teacher_owner_scope_is_actor_id"
+          },
+          {
+            "line": 58,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_admin_owner_scope_is_explicit_override"
+          },
+          {
+            "line": 70,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_owned_resource_decision_denies_cross_owner_and_legacy_null_to_teacher"
+          },
+          {
+            "line": 85,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_admin_override_audit_is_required_only_for_non_self_owner"
+          },
+          {
+            "line": 104,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_require_permission_uses_canonical_role_denial"
+          },
+          {
+            "line": 115,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_student_self_service_rejects_admin_even_if_admin_has_named_permission"
+          },
+          {
+            "line": 126,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_admin_override_transaction_helper_rejects_denied_actor"
           }
         ],
         "tier": "unit"
@@ -4969,6 +5257,97 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_demo_data_fixture.py",
+        "tests": [
+          {
+            "line": 39,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_standard_fixture_has_required_inventory"
+          },
+          {
+            "line": 52,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_stable_uuid_is_deterministic_and_entity_scoped"
+          },
+          {
+            "line": 60,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_content_hash_detects_changed_fixture_file"
+          },
+          {
+            "line": 69,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_duplicate_key_is_rejected"
+          },
+          {
+            "line": 78,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_missing_teacher_owner_is_rejected"
+          },
+          {
+            "line": 90,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_missing_foreign_key_reference_is_rejected"
+          },
+          {
+            "line": 99,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_single_choice_without_correct_option_is_rejected"
+          },
+          {
+            "line": 113,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_invalid_fill_in_blank_answer_contract_is_rejected"
+          },
+          {
+            "line": 127,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_cross_subject_exam_question_is_rejected"
+          },
+          {
+            "line": 141,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_missing_material_file_is_rejected"
+          },
+          {
+            "line": 163,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_database_guard_rejects_unsafe_targets"
+          },
+          {
+            "line": 169,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_database_guard_accepts_local_development_and_test"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_file_upload.py",
         "tests": [
           {
@@ -5012,7 +5391,7 @@
         "path": "tests/unit/test_material_storage_service.py",
         "tests": [
           {
-            "line": 37,
+            "line": 38,
             "markers": [],
             "name": "test_failed_material_commit_rolls_back_and_removes_stored_file"
           }
@@ -5023,92 +5402,137 @@
         "path": "tests/unit/test_migration_roundtrip.py",
         "tests": [
           {
-            "line": 30,
+            "line": 38,
             "markers": [],
             "name": "test_import_does_not_mutate_existing_environment_mode"
           },
           {
-            "line": 52,
+            "line": 60,
             "markers": [],
             "name": "test_accepts_exact_head_and_base_schema_states"
           },
           {
-            "line": 73,
+            "line": 81,
+            "markers": [],
+            "name": "test_accepts_exact_question_type_schema_at_head_and_base"
+          },
+          {
+            "line": 113,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_missing_reordered_or_stray_question_type_labels"
+          },
+          {
+            "line": 135,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_incorrect_question_type_column_contract"
+          },
+          {
+            "line": 144,
             "markers": [],
             "name": "test_rejects_mismatched_head_revision"
           },
           {
-            "line": 95,
+            "line": 166,
             "markers": [
               "parametrize"
             ],
             "name": "test_rejects_missing_or_stray_base_schema_objects"
           },
           {
-            "line": 136,
+            "line": 207,
             "markers": [
               "parametrize"
             ],
             "name": "test_rejects_missing_append_only_database_objects"
           },
           {
-            "line": 153,
+            "line": 224,
             "markers": [],
             "name": "test_rejects_incorrect_append_only_trigger_definition"
           },
           {
-            "line": 173,
+            "line": 244,
             "markers": [],
             "name": "test_accepts_exact_audit_schema_at_head_and_absence_at_base"
           },
           {
-            "line": 201,
+            "line": 272,
             "markers": [
               "parametrize"
             ],
             "name": "test_rejects_incomplete_audit_schema"
           },
           {
-            "line": 230,
+            "line": 301,
             "markers": [
               "parametrize"
             ],
             "name": "test_rejects_incorrect_audit_column_contract"
           },
           {
-            "line": 251,
+            "line": 322,
             "markers": [],
             "name": "test_rejects_incomplete_audit_constraint_set"
           },
           {
-            "line": 289,
+            "line": 360,
             "markers": [],
             "name": "test_rejects_incorrect_audit_constraint_properties_and_definition"
           },
           {
-            "line": 359,
+            "line": 430,
             "markers": [
               "parametrize"
             ],
             "name": "test_rejects_incorrect_audit_index_definition"
           },
           {
-            "line": 380,
+            "line": 451,
             "markers": [],
             "name": "test_rejects_weakened_audit_check_constraint"
           },
           {
-            "line": 404,
+            "line": 475,
             "markers": [],
             "name": "test_rejects_case_changed_audit_check_literal"
           },
           {
-            "line": 427,
+            "line": 498,
+            "markers": [],
+            "name": "test_accepts_exact_ownership_schema_at_head_and_absence_at_base"
+          },
+          {
+            "line": 523,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_incorrect_ownership_column_definition"
+          },
+          {
+            "line": 548,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_incorrect_ownership_foreign_key"
+          },
+          {
+            "line": 584,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_rejects_incorrect_ownership_index"
+          },
+          {
+            "line": 613,
             "markers": [],
             "name": "test_rejects_multiple_or_signature_mismatched_heads"
           },
           {
-            "line": 438,
+            "line": 624,
             "markers": [],
             "name": "test_cleanup_runs_when_schema_assertion_fails"
           }
@@ -5148,7 +5572,7 @@
       {
         "path": "frontend/src/app/api/proxy/[...path]/route.test.ts",
         "tier": "unit",
-        "test_count": 3
+        "test_count": 4
       },
       {
         "path": "frontend/src/hooks/useExams.cache.test.tsx",
@@ -5178,17 +5602,27 @@
       {
         "path": "frontend/src/services/apiService.test.ts",
         "tier": "unit",
-        "test_count": 6
+        "test_count": 7
+      },
+      {
+        "path": "frontend/src/types/index.test.ts",
+        "tier": "unit",
+        "test_count": 1
       },
       {
         "path": "frontend/tests/component/ai-workspace-errors.test.tsx",
         "tier": "component",
-        "test_count": 3
+        "test_count": 4
       },
       {
         "path": "frontend/tests/component/auth-error-localization.test.tsx",
         "tier": "component",
         "test_count": 2
+      },
+      {
+        "path": "frontend/tests/component/auth-forms.test.tsx",
+        "tier": "component",
+        "test_count": 5
       },
       {
         "path": "frontend/tests/component/button.states.test.tsx",
@@ -5211,6 +5645,11 @@
         "test_count": 2
       },
       {
+        "path": "frontend/tests/component/playstudy-branding.test.tsx",
+        "tier": "component",
+        "test_count": 4
+      },
+      {
         "path": "frontend/tests/component/profile-error-localization.test.tsx",
         "tier": "component",
         "test_count": 2
@@ -5228,7 +5667,7 @@
       {
         "path": "frontend/tests/e2e/admin-flow.spec.ts",
         "tier": "e2e",
-        "test_count": 1
+        "test_count": 5
       },
       {
         "path": "frontend/tests/e2e/student-flow.spec.ts",

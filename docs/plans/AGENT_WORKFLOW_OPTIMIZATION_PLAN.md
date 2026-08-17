@@ -175,7 +175,7 @@ Goal: Establish fast feedback and meaningful coverage across risk boundaries.
 | TEST-001 | Measure backend and frontend coverage baselines | DONE | CI-002, CI-003 | Reproducible full-source runs record backend 72.52% (1,639/2,260) and frontend 0.75% (81/10,685) line coverage |
 | TEST-002 | Prevent coverage regression and target ~80% on new/changed code | DONE | TEST-001 | Local/CI checker forbids baseline drops and enforces an 80% executable changed-line target when a base SHA is available |
 | TEST-003 | Separate backend unit, contract, and PostgreSQL integration suites | DONE | CI-003 | Marker collection partitions 41 tests into 14 unit, 3 contract, and 24 integration cases; contract suite passes independently |
-| TEST-004 | Add ownership and tenant-isolation negative-test matrix | BLOCKED | TEST-003, GOV-002 | Exam update covers all five actors, but strict expected failures confirm missing non-owner enforcement for bulk assignment and material detail; fixes require approved SEC-001/002 work |
+| TEST-004 | Add ownership and tenant-isolation negative-test matrix | DONE | TEST-003, GOV-002 | PostgreSQL matrices cover anonymous, student, owner/non-owner teacher, admin override, legacy-null, IDOR equivalence, cross-resource links, retained records, audit atomicity, concurrency, and query ceilings |
 | TEST-005 | Expand query-budget tests for important list/detail endpoints | DONE | TEST-003 | PostgreSQL regression compares exam detail with 2 vs 10 nested questions; both stay within four queries and the larger result does not add queries |
 | TEST-006 | Separate frontend unit, component, mocked E2E, and real E2E suites | DONE | CI-005, CI-006 | Unit, component, mocked four-browser, and guarded real-backend suites have explicit commands; all four tiers pass independently |
 | TEST-007 | Add hydration, cache-mutation, and BFF-only tests | DONE | TEST-006 | Five frontend unit suites pass 13 tests including Zustand no-token hydration, SWR non-revalidating cache mutation, and BFF cookie/path/host/redirect contracts |
@@ -218,12 +218,12 @@ All tasks in this milestone require approved change contracts and independent re
 
 | ID | Task | Status | Depends on | Acceptance evidence |
 |---|---|---|---|---|
-| SEC-001 | Implement named permission-policy layer | TODO | GOV-002, TEST-004 | Current admin/teacher parity maps through policies, not scattered role checks |
-| SEC-002 | Define and apply ownership fields and filters to sensitive resources | TODO | SEC-001 | Non-owner teacher access is rejected by backend |
+| SEC-001 | Implement named permission-policy layer | DONE | GOV-002, TEST-004 | Typed policies centralize compatibility grants, owner decisions, admin override, and fail-closed audit commits |
+| SEC-002 | Define and apply ownership fields and filters to sensitive resources | DONE | SEC-001 | Explicit/derived ownership, scoped queries, legacy-null quarantine, same-owner links, and tenant-safe retrieval pass PostgreSQL tests |
 | SEC-003 | Implement access/refresh token lifecycle and rotation | TODO | GOV-001, TEST-003 | Rotation, expiry, and replay cases pass |
 | SEC-004 | Implement revocation and logout semantics | TODO | SEC-003 | Single/all-session behavior is tested and audited |
 | SEC-005 | Implement CSRF protections for cookie-authenticated mutations | TODO | SEC-003 | Cross-site mutation tests fail safely |
-| SEC-006 | Add IDOR and cross-tenant regression suite | TODO | SEC-002–005 | Identifier probing cannot cross ownership boundaries |
+| SEC-006 | Add IDOR and cross-tenant regression suite | REVIEW | SEC-002–005 | Ownership/IDOR suite passes; final status awaits SEC-003–005 and resolution of Admin versus student-self-service matrix semantics |
 | SEC-007 | Verify canonical role redirects and frontend UX guards | TODO | SEC-001, TEST-006 | `/dashboard`, `/student/home`, and `/login` behavior passes |
 
 Exit criteria:
@@ -265,7 +265,7 @@ Goal: Ensure AI output is reviewable, tenant-safe, measurable, and regression-te
 | AI-002 | Implement generation and approval state machine | TODO | DATA-001 | No generated content can bypass `awaiting_review` |
 | AI-003 | Implement prompt versioning and AI audit metadata | TODO | AI-001, DATA-001 | Prompt/model/tokens/cost/latency/context are traceable |
 | AI-004 | Add redaction and access controls for sensitive AI logs | TODO | AI-003, SEC-002 | Sensitive content is protected and tested |
-| AI-005 | Enforce tenant-safe retrieval | TODO | SEC-002, TEST-004 | Cross-owner documents never enter retrieval context |
+| AI-005 | Enforce tenant-safe retrieval | DONE | SEC-002, TEST-004 | AI chat/process/background generation require one authorized material and cross-owner/missing probes never invoke the provider or enter retrieval context |
 | AI-006 | Build the first admin-approved golden dataset | TODO | AI-001 | 30–50 reviewed cases cover critical AI use cases |
 | AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | TODO | AI-006 | Repeatable evaluation report is produced |
 | AI-008 | Add prompt/model regression thresholds to CI | TODO | AI-007 | Material metric regressions block the governed change |
@@ -353,6 +353,9 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-06 | CI-004 | Completed | Owner approved the narrow later-revision FK-name amendment; full PostgreSQL round trip, exact head/base schema assertions, import-environment regression coverage, single-head signature check, 40-unit fast suite, model/inventory gates, and final `_test` absence all pass |
 | 2026-08-09 | DATA-001 | Completed | Added canonical correlated errors and BFF localization, privacy-allowlisted append-only audit core, exact audit schema/trigger verification, and hardened AI/UI error paths. Final fast passed in 94.6s; backend coverage is 77.50%, frontend 28.59%, changed executable coverage 83.84%; PostgreSQL integration passed 32 with two approved ownership XFAIL; migration round trip and real E2E 3/3 passed; migration, security, frontend, and completion reviews found no P1/P2. See `../handoffs/DATA-001.md`. |
 | 2026-08-09 | DATA-006 | Completed | Recorded the owner-approved MVP retention policy in the canonical specification: no submission/grade purge, 30-day restricted raw AI payload retention, parent-lifetime redacted AI metadata, inherited chunk lifecycle, and no automatic audit-event purge. |
+| 2026-08-09 | SEC-001/002, TEST-004, AI-005 | Completed | Added typed named permissions, explicit/derived teacher ownership, legacy-null quarantine, same-owner link enforcement, tenant-safe AI retrieval, atomic admin-override audit, retained-record/concurrency guards, and broad PostgreSQL negative matrices. Exact migration round trip, full backend/frontend gates, changed-code coverage, and independent reviews pass. |
+| 2026-08-09 | SEC-006 | Review | Ownership/IDOR cases pass, but the approved matrix allows Admin student-submission actions while live self-service endpoints deliberately require a Student actor. An explicit on-behalf-of target/audit contract or matrix amendment is still required; SEC-003–005 also remain dependencies. |
+| 2026-08-09 | DATA-009 | Partial | Pulled forward the separately approved access-contract slice: material storage is no longer anonymous or physically exposed, and owner/admin download is enforced. Soft-delete, restoration, 30-day lifecycle, and purge remain under DATA-003–005. |
 
 ## 17. Known program risks
 
@@ -366,5 +369,5 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | CI workflow has not executed on GitHub | `origin` is configured but currently has no heads; CI-002/003 remain in REVIEW until the initial push/PR runs, and remote protection work still needs authenticated GitHub CLI access |
 | Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
 | Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
-| Current code may not yet satisfy target ownership separation | Preserve current behavior through policies, then harden under Milestone 7 |
+| Admin student-submission permissions are ambiguous | Keep self-service routes student-only until an approved on-behalf-of target/audit contract or permission-matrix amendment resolves SEC-006 |
 | Post-MVP submission/grade retention remains undecided | The approved MVP policy forbids permanent purge; require a later educational-record ADR and explicit owner approval before changing it |

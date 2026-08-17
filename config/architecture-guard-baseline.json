@@ -2,50 +2,86 @@
   "schema_version": 1,
   "policy": "Existing fingerprints may be removed; every new fingerprint fails.",
   "summary": {
+    "backend.query-in-loop": 6,
     "backend.raw-error-message": 6,
     "backend.router-layer-import": 22,
-    "backend.session-query": 82,
-    "contract.frontend-trailing-slash": 3,
+    "backend.session-query": 4,
     "design.non-monochrome-literal": 2,
-    "design.non-monochrome-token": 120,
-    "frontend.component-data-fetch": 11,
+    "design.non-monochrome-token": 118,
+    "frontend.component-data-fetch": 2,
     "frontend.token-local-storage": 1
   },
   "violations": [
     {
+      "rule": "backend.query-in-loop",
+      "file": "backend/app/demo_data/loader.py",
+      "line": 1067,
+      "snippet": "result = self.session.execute(delete(model).where(model.id.in_(ids)))"
+    },
+    {
+      "rule": "backend.query-in-loop",
+      "file": "backend/app/demo_data/loader.py",
+      "line": 140,
+      "snippet": "account = self.session.scalar(select(User).where(User.email == email))"
+    },
+    {
+      "rule": "backend.query-in-loop",
+      "file": "backend/app/demo_data/loader.py",
+      "line": 166,
+      "snippet": "account = self.session.scalar(select(User).where(User.email == email))"
+    },
+    {
+      "rule": "backend.query-in-loop",
+      "file": "backend/app/demo_data/loader.py",
+      "line": 309,
+      "snippet": "existing_email = self.session.scalar(select(User).where(User.email == item.email))"
+    },
+    {
+      "rule": "backend.query-in-loop",
+      "file": "backend/app/demo_data/loader.py",
+      "line": 619,
+      "snippet": "count = self.session.scalar("
+    },
+    {
+      "rule": "backend.query-in-loop",
+      "file": "backend/app/demo_data/loader.py",
+      "line": 949,
+      "snippet": "student = self.session.scalar(select(User).where(User.email == student_item.email))"
+    },
+    {
       "rule": "backend.raw-error-message",
       "file": "backend/app/services/material_service.py",
-      "line": 218,
+      "line": 501,
       "snippet": "raise AppException(status_code=500, error_code=\"AI_PARSE_ERROR\", message=f\"Failed to parse AI response as JSON: {str(e)}\")"
     },
     {
       "rule": "backend.raw-error-message",
       "file": "backend/app/services/material_service.py",
-      "line": 220,
+      "line": 503,
       "snippet": "raise AppException(status_code=500, error_code=\"AI_GENERATION_FAILED\", message=str(e))"
     },
     {
       "rule": "backend.raw-error-message",
       "file": "backend/app/services/material_service.py",
-      "line": 333,
+      "line": 657,
       "snippet": "raise AppException(status_code=500, error_code=\"AI_PARSE_ERROR\", message=str(e))"
     },
     {
       "rule": "backend.raw-error-message",
       "file": "backend/app/services/material_service.py",
-      "line": 335,
+      "line": 659,
       "snippet": "raise AppException(status_code=500, error_code=\"AI_GENERATION_FAILED\", message=str(e))"
     },
     {
       "rule": "backend.raw-error-message",
       "file": "backend/app/services/material_service.py",
-      "line": 429,
+      "line": 794,
       "snippet": "raise AppException(status_code=500, error_code=\"AI_PARSE_ERROR\", message=str(e))"
     },
     {
       "rule": "backend.raw-error-message",
       "file": "backend/app/services/material_service.py",
-      "line": 431,
+      "line": 796,
       "snippet": "raise AppException(status_code=500, error_code=\"AI_GENERATION_FAILED\", message=str(e))"
     },
     {
@@ -171,7 +207,7 @@
     {
       "rule": "backend.router-layer-import",
       "file": "backend/app/api/endpoints/topics.py",
-      "line": 14,
+      "line": 18,
       "snippet": "from app.models.user import User"
     },
     {
@@ -179,108 +215,6 @@
       "file": "backend/app/api/endpoints/topics.py",
       "line": 9,
       "snippet": "from app.db.session import get_db"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/api/deps.py",
-      "line": 30,
-      "snippet": "user = db.query(User).filter(User.id == token_data.user_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/ai_service.py",
-      "line": 102,
-      "snippet": "material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/ai_service.py",
-      "line": 103,
-      "snippet": "topic = db.query(Topic).filter(Topic.id == topic_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/ai_service.py",
-      "line": 15,
-      "snippet": "material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/ai_studio_service.py",
-      "line": 24,
-      "snippet": "material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/ai_studio_service.py",
-      "line": 65,
-      "snippet": "chunks = db.query(DocumentChunk).filter("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/ai_studio_service.py",
-      "line": 69,
-      "snippet": "chunks = db.query(DocumentChunk).order_by(DocumentChunk.id.desc()).limit(3).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 117,
-      "snippet": "topics = db.query(Topic).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 121,
-      "snippet": "db.query(Submission, Exam.topic_id)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 15,
-      "snippet": "total_students = db.query(User).filter(User.role == \"student\").count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 16,
-      "snippet": "total_exams = db.query(Exam).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 17,
-      "snippet": "total_questions = db.query(Question).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 18,
-      "snippet": "total_topics = db.query(Topic).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 19,
-      "snippet": "total_submissions = db.query(Submission).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 21,
-      "snippet": "completed_submissions = db.query(Submission).filter(Submission.status == \"submitted\").all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 41,
-      "snippet": "query = db.query(Submission).filter(Submission.status == \"submitted\")"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/analytics_service.py",
-      "line": 97,
-      "snippet": "query = db.query(Submission)"
     },
     {
       "rule": "backend.session-query",
@@ -297,398 +231,14 @@
     {
       "rule": "backend.session-query",
       "file": "backend/app/services/auth_service.py",
-      "line": 47,
+      "line": 48,
       "snippet": "user = db.query(User).filter(User.email == req.email).first()"
     },
     {
       "rule": "backend.session-query",
       "file": "backend/app/services/auth_service.py",
-      "line": 66,
+      "line": 67,
       "snippet": "user = db.query(User).filter(User.email == email).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/exam_service.py",
-      "line": 110,
-      "snippet": "fetched_q = db.query(Question).options(selectinload(Question.options)).filter(Question.id == question.id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/exam_service.py",
-      "line": 115,
-      "snippet": "exam = db.query(Exam).filter(Exam.id == exam_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/exam_service.py",
-      "line": 119,
-      "snippet": "questions = db.query(Question).filter(Question.id.in_(question_in.question_ids)).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/exam_service.py",
-      "line": 13,
-      "snippet": "query = db.query(Exam)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/exam_service.py",
-      "line": 38,
-      "snippet": "exam = db.query(Exam).filter(Exam.id == exam_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/exam_service.py",
-      "line": 56,
-      "snippet": "exam = db.query(Exam).filter(Exam.id == exam_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/exam_service.py",
-      "line": 68,
-      "snippet": "exam = db.query(Exam).options("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/exam_service.py",
-      "line": 81,
-      "snippet": "exam = db.query(Exam).filter(Exam.id == exam_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/flashcard_service.py",
-      "line": 13,
-      "snippet": "topic = db.query(Topic).filter(Topic.id == topic_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/flashcard_service.py",
-      "line": 32,
-      "snippet": "return db.query(FlashcardDeck).filter(FlashcardDeck.topic_id == topic_id).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/flashcard_service.py",
-      "line": 36,
-      "snippet": "deck = db.query(FlashcardDeck).filter(FlashcardDeck.id == deck_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/flashcard_service.py",
-      "line": 53,
-      "snippet": "cards = db.query(Flashcard).filter(Flashcard.deck_id == deck_id).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/flashcard_service.py",
-      "line": 59,
-      "snippet": "progresses = db.query(FlashcardProgress).filter("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/flashcard_service.py",
-      "line": 82,
-      "snippet": "prog = db.query(FlashcardProgress).filter("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/history_service.py",
-      "line": 20,
-      "snippet": "query = db.query(Submission).options("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/history_service.py",
-      "line": 40,
-      "snippet": "submission = db.query(Submission).options("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/history_service.py",
-      "line": 49,
-      "snippet": "questions = db.query(Question).filter(Question.exam_id == submission.exam_id).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 113,
-      "snippet": "db.query(Question).filter(Question.material_id == material_id).delete(synchronize_session=False)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 114,
-      "snippet": "db.query(FlashcardDeck).filter(FlashcardDeck.material_id == material_id).delete(synchronize_session=False)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 115,
-      "snippet": "db.query(TopicBrief).filter(TopicBrief.material_id == material_id).delete(synchronize_session=False)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 132,
-      "snippet": "chunks = db.query(DocumentChunk).filter(DocumentChunk.material_id == material_id).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 224,
-      "snippet": "material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 273,
-      "snippet": "chunks = db.query(DocumentChunk).filter(DocumentChunk.material_id == material_id).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 339,
-      "snippet": "material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 345,
-      "snippet": "default_topic = db.query(Topic).filter(Topic.name == \"AI Workspace Drafts\").first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 378,
-      "snippet": "chunks = db.query(DocumentChunk).filter(DocumentChunk.material_id == material_id).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 38,
-      "snippet": "return db.query(StudyMaterial)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 435,
-      "snippet": "material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 441,
-      "snippet": "default_topic = db.query(Topic).filter(Topic.name == \"AI Workspace Drafts\").first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 71,
-      "snippet": "return db.query(Question).options(selectinload(Question.options)).filter(Question.material_id == material_id).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 75,
-      "snippet": "material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 79,
-      "snippet": "chunks = db.query(DocumentChunk).filter(DocumentChunk.material_id == material_id).all()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 93,
-      "snippet": "material = db.query(StudyMaterial).filter(StudyMaterial.id == material_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 97,
-      "snippet": "q_count = db.query(Question).filter(Question.material_id == material_id).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 98,
-      "snippet": "f_count = db.query(FlashcardDeck).filter(FlashcardDeck.material_id == material_id).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/material_service.py",
-      "line": 99,
-      "snippet": "b_count = db.query(TopicBrief).filter(TopicBrief.material_id == material_id).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/question_service.py",
-      "line": 12,
-      "snippet": "query = db.query(Question).options(selectinload(Question.options))"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/question_service.py",
-      "line": 45,
-      "snippet": "fetched_q = db.query(Question).options(selectinload(Question.options)).filter(Question.id == question.id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/question_service.py",
-      "line": 50,
-      "snippet": "question = db.query(Question).options(selectinload(Question.options)).filter(Question.id == question_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/question_service.py",
-      "line": 57,
-      "snippet": "question = db.query(Question).options(selectinload(Question.options)).filter(Question.id == question_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/question_service.py",
-      "line": 75,
-      "snippet": "db.query(Option).filter(Option.question_id == question.id).delete()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/question_service.py",
-      "line": 80,
-      "snippet": "fetched_q = db.query(Question).options(selectinload(Question.options)).filter(Question.id == question.id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/question_service.py",
-      "line": 85,
-      "snippet": "question = db.query(Question).filter(Question.id == question_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/student_service.py",
-      "line": 138,
-      "snippet": "exam = db.query(Exam).options("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/student_service.py",
-      "line": 145,
-      "snippet": "submission = db.query(Submission).options("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/student_service.py",
-      "line": 15,
-      "snippet": "query = db.query(Exam).filter(Exam.is_published == True)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/student_service.py",
-      "line": 22,
-      "snippet": "submissions = db.query(Submission).filter("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/student_service.py",
-      "line": 44,
-      "snippet": "exam = db.query(Exam).options("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/student_service.py",
-      "line": 50,
-      "snippet": "existing_sub = db.query(Submission).filter("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/student_service.py",
-      "line": 70,
-      "snippet": "exam = db.query(Exam).options(selectinload(Exam.questions).selectinload(Question.options)).filter(Exam.id == exam_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/student_service.py",
-      "line": 74,
-      "snippet": "submission = db.query(Submission).filter("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/topic_service.py",
-      "line": 14,
-      "snippet": "query = db.query(Topic)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/topic_service.py",
-      "line": 34,
-      "snippet": "topic = db.query(Topic).filter(Topic.id == topic_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/topic_service.py",
-      "line": 41,
-      "snippet": "topic = db.query(Topic).filter(Topic.id == topic_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/topic_service.py",
-      "line": 58,
-      "snippet": "topic = db.query(Topic).filter(Topic.id == topic_id).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/topic_service.py",
-      "line": 68,
-      "snippet": "total_exams = db.query(Exam).filter(Exam.topic_id == topic_id).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/topic_service.py",
-      "line": 69,
-      "snippet": "completed_exams = db.query(Exam).join(Submission).filter("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/topic_service.py",
-      "line": 76,
-      "snippet": "total_decks = db.query(FlashcardDeck).filter(FlashcardDeck.topic_id == topic_id).count()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/topic_service.py",
-      "line": 78,
-      "snippet": "completed_decks = db.query(FlashcardDeck).join(Flashcard).join(FlashcardProgress).filter("
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/user_service.py",
-      "line": 15,
-      "snippet": "return db.query(User)"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/user_service.py",
-      "line": 19,
-      "snippet": "user = db.query(User).filter(User.id == user_id).first()"
-    },
-    {
-      "rule": "contract.frontend-trailing-slash",
-      "file": "frontend/src/services/apiService.ts",
-      "line": 100,
-      "snippet": "const res = await api.post(\"/questions/\", payload);"
-    },
-    {
-      "rule": "contract.frontend-trailing-slash",
-      "file": "frontend/src/services/apiService.ts",
-      "line": 19,
-      "snippet": "const res = await api.post(\"/topics/\", payload);"
-    },
-    {
-      "rule": "contract.frontend-trailing-slash",
-      "file": "frontend/src/services/apiService.ts",
-      "line": 53,
-      "snippet": "const res = await api.post(\"/exams/\", payload);"
     },
     {
       "rule": "design.non-monochrome-literal",
@@ -705,85 +255,85 @@
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 305,
+      "line": 331,
       "snippet": "<label className=\"font-mono text-sm font-bold uppercase text-black\">Chủ đề <span className=\"text-red-500\">*</span></label>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 318,
+      "line": 344,
       "snippet": "<div className=\"border-4 border-dashed border-black p-6 flex flex-col items-center justify-center bg-white hover:bg-gray-100 transition-none group text-center shadow-[4px_4px_0_0_rgba(0,0,0,1)] relative\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 335,
+      "line": 361,
       "snippet": "<div className=\"flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-4\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 428,
+      "line": 454,
       "snippet": "<div className=\"flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-4\">"
-    },
-    {
-      "rule": "design.non-monochrome-token",
-      "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 457,
-      "snippet": "className=\"flex-1 p-2 border-4 border-black font-mono focus:outline-none disabled:bg-gray-200\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
       "line": 492,
+      "snippet": "className=\"flex-1 p-2 border-4 border-black font-mono focus:outline-none disabled:bg-gray-200\""
+    },
+    {
+      "rule": "design.non-monochrome-token",
+      "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
+      "line": 527,
       "snippet": "className=\"flex-1 border-4 border-black bg-white text-black font-mono font-bold uppercase p-2 hover:bg-gray-100 transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)]\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/exams/[id]/page.tsx",
-      "line": 285,
+      "line": 286,
       "snippet": "className=\"rounded-none border-t-4 border-l-4 border-r-4 border-black bg-gray-200 data-[state=active]:bg-white data-[state=active]:text-black font-mono font-bold uppercase py-3 px-6 -mb-1 flex-1 sm:flex-none data-[state=active]:border-b-white z-10\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/exams/[id]/page.tsx",
-      "line": 291,
+      "line": 292,
       "snippet": "className=\"rounded-none border-t-4 border-r-4 border-black border-l-0 sm:border-l-4 bg-gray-200 data-[state=active]:bg-white data-[state=active]:text-black font-mono font-bold uppercase py-3 px-6 -mb-1 flex-1 sm:flex-none data-[state=active]:border-b-white z-10\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/exams/[id]/page.tsx",
-      "line": 567,
+      "line": 568,
       "snippet": "<div key={i} className={`flex items-start gap-4 p-4 border-4 ${opt.is_correct ? 'border-black bg-gray-50' : 'border-dashed border-black bg-white'}`}>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/exams/[id]/page.tsx",
-      "line": 607,
+      "line": 608,
       "snippet": "className=\"px-8 py-3 border-4 border-black bg-white font-bold uppercase tracking-widest font-mono hover:bg-gray-100 transition-colors disabled:opacity-50\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/exams/page.tsx",
-      "line": 163,
+      "line": 164,
       "snippet": "<TableRow className=\"border-b-4 border-black hover:bg-transparent bg-gray-50\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/exams/page.tsx",
-      "line": 188,
+      "line": 189,
       "snippet": "<TableRow key={exam.id} data-testid={`exam-row-${exam.title}`} className=\"border-b-4 border-black hover:bg-gray-100 transition-colors\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/exams/page.tsx",
-      "line": 334,
+      "line": 335,
       "snippet": "className=\"px-8 py-3 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-gray-100 text-black\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/exams/page.tsx",
-      "line": 365,
+      "line": 366,
       "snippet": "className=\"px-6 py-2 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-gray-100 text-black\""
     },
     {
@@ -831,25 +381,25 @@
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/questions/page.tsx",
-      "line": 273,
+      "line": 274,
       "snippet": "<span className=\"w-1/2 p-2 border-2 border-black bg-gray-50 break-words\">{pair.left}</span>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/questions/page.tsx",
-      "line": 275,
+      "line": 276,
       "snippet": "<span className=\"w-1/2 p-2 border-2 border-black bg-gray-50 break-words\">{pair.right}</span>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/questions/page.tsx",
-      "line": 428,
+      "line": 429,
       "snippet": "<div key={i} className={`flex items-start gap-4 p-4 border-4 ${opt.is_correct ? 'border-black bg-gray-50' : 'border-dashed border-black bg-white'}`}>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/questions/page.tsx",
-      "line": 471,
+      "line": 472,
       "snippet": "className=\"px-8 py-3 border-4 border-black bg-white font-bold uppercase tracking-widest hover:bg-gray-100 transition-colors disabled:opacity-50\""
     },
     {
@@ -861,61 +411,49 @@
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/topics/[id]/page.tsx",
-      "line": 218,
+      "line": 220,
       "snippet": "<p className=\"text-sm font-mono text-gray-600\">Status: {m.ai_status.toUpperCase()}</p>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/topics/[id]/page.tsx",
-      "line": 341,
+      "line": 372,
       "snippet": "<p className=\"text-sm font-bold mb-4 font-mono border-2 border-black p-2 text-center bg-gray-100\">{exam.duration_minutes} mins</p>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/topics/page.tsx",
-      "line": 145,
+      "line": 146,
       "snippet": "<TableRow key={topic.id} className=\"border-b-4 border-black hover:bg-gray-100 transition-colors\">"
     },
     {
       "rule": "design.non-monochrome-token",
-      "file": "frontend/src/app/(auth)/register/page.tsx",
-      "line": 88,
-      "snippet": "<CardDescription className=\"font-mono text-gray-300 uppercase\">"
-    },
-    {
-      "rule": "design.non-monochrome-token",
-      "file": "frontend/src/app/page.tsx",
-      "line": 14,
-      "snippet": "QuizBuddy <span className=\"text-gray-400\">AI</span>"
-    },
-    {
-      "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/student/exam/[id]/page.tsx",
-      "line": 203,
+      "line": 216,
       "snippet": "<div className={`flex items-center gap-2 lg:gap-3 border-4 border-black px-4 py-2 lg:px-6 lg:py-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white ${timeLeft !== null && timeLeft < 60 ? 'animate-pulse text-red-600 border-red-600' : ''}`}>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/student/exam/[id]/page.tsx",
-      "line": 222,
+      "line": 235,
       "snippet": "<span className=\"border-2 border-black px-3 py-1 text-sm font-mono font-bold uppercase bg-gray-100\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/student/exam/[id]/page.tsx",
-      "line": 238,
+      "line": 251,
       "snippet": "className=\"mx-2 px-3 py-1 border-b-4 border-black border-dashed bg-gray-100 focus:outline-none focus:border-solid focus:bg-yellow-100 w-32 md:w-48 text-center font-bold transition-all\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/student/exam/[id]/page.tsx",
-      "line": 258,
+      "line": 271,
       "snippet": ": 'bg-white hover:bg-gray-50'"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/student/exam/[id]/page.tsx",
-      "line": 286,
+      "line": 299,
       "snippet": ": 'bg-white hover:bg-gray-50'"
     },
     {
@@ -993,7 +531,7 @@
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/student/topics/[id]/decks/[deck_id]/study/page.tsx",
-      "line": 22,
+      "line": 23,
       "snippet": "<p className=\"text-xl font-bold uppercase text-red-600\">ĐÃ XẢY RA LỖI KHI TẢI THẺ.</p>"
     },
     {
@@ -1137,73 +675,73 @@
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/PasswordForm.tsx",
-      "line": 71,
+      "line": 63,
       "snippet": "<div className=\"p-3 border-2 border-black bg-red-100 text-black font-mono font-bold uppercase text-sm\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/PasswordForm.tsx",
-      "line": 76,
+      "line": 68,
       "snippet": "<div className=\"p-3 border-2 border-black bg-green-100 text-black font-mono font-bold uppercase text-sm\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 109,
+      "line": 104,
       "snippet": "<div className=\"mb-4 p-3 border-2 border-black bg-red-100 text-black font-mono font-bold uppercase text-sm\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 117,
+      "line": 112,
       "snippet": "<span className=\"font-mono text-xs text-gray-500 uppercase block mb-1\">Họ và tên</span>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 121,
+      "line": 116,
       "snippet": "<span className=\"font-mono text-xs text-gray-500 uppercase block mb-1\">Email</span>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 125,
+      "line": 120,
       "snippet": "<span className=\"font-mono text-xs text-gray-500 uppercase block mb-1\">Số điện thoại</span>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 129,
+      "line": 124,
       "snippet": "<span className=\"font-mono text-xs text-gray-500 uppercase block mb-1\">Ngày sinh</span>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 134,
+      "line": 129,
       "snippet": "<span className=\"font-mono text-xs text-gray-500 uppercase block mb-1\">Giới thiệu (Bio)</span>"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 135,
+      "line": 130,
       "snippet": "<p className=\"font-mono text-base font-bold text-black border-2 border-black p-3 bg-gray-50 min-h-[80px]\">"
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 159,
+      "line": 154,
       "snippet": "className=\"border-4 border-black p-3 font-mono bg-gray-200 cursor-not-allowed\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 205,
+      "line": 200,
       "snippet": "className=\"px-6 py-3 bg-white text-black font-mono font-bold uppercase border-2 border-black hover:bg-gray-100 transition-all\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student-profile/ProfileForm.tsx",
-      "line": 84,
+      "line": 79,
       "snippet": "<div className=\"w-32 h-32 border-4 border-black bg-gray-100 flex items-center justify-center overflow-hidden relative shadow-[4px_4px_0_0_rgba(0,0,0,1)]\">"
     },
     {
@@ -1269,19 +807,19 @@
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student/StudentHeader.tsx",
-      "line": 30,
+      "line": 28,
       "snippet": "isHome ? \"text-black border-b-4 border-black\" : \"text-gray-400 hover:text-black hover:border-b-4 hover:border-black\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student/StudentHeader.tsx",
-      "line": 39,
+      "line": 37,
       "snippet": "isProfile ? \"text-black border-b-4 border-black\" : \"text-gray-400 hover:text-black hover:border-b-4 hover:border-black\""
     },
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/components/features/student/StudentHeader.tsx",
-      "line": 51,
+      "line": 49,
       "snippet": "<div className=\"w-10 h-10 border-2 border-black bg-gray-100 flex items-center justify-center overflow-hidden relative shadow-[2px_2px_0_0_rgba(0,0,0,1)]\">"
     },
     {
@@ -1424,74 +962,20 @@
     },
     {
       "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/ai-workspace/GenerativePreview.tsx",
-      "line": 45,
-      "snippet": "const res = await fetch(`/api/proxy/materials/${materialId}/save-questions`, {"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/ai-workspace/GenerativePreview.tsx",
-      "line": 53,
-      "snippet": "const res = await fetch(`/api/proxy/materials/${materialId}/save-flashcards`, {"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/ai-workspace/GenerativePreview.tsx",
-      "line": 61,
-      "snippet": "const res = await fetch(`/api/proxy/materials/${materialId}/save-topic-brief`, {"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 131,
-      "snippet": "const res = await fetch(`/api/proxy/materials/${activeMaterial}/generate-questions`, {"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 162,
-      "snippet": "const res = await fetch(`/api/proxy/materials/${activeMaterial}/generate-flashcards`, {"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 193,
-      "snippet": "const res = await fetch(`/api/proxy/materials/${activeMaterial}/generate-topic-brief`, {"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 226,
-      "snippet": "const res = await fetch(\"/api/proxy/ai/chat\", {"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/topics/[id]/page.tsx",
-      "line": 224,
-      "snippet": "const res = await fetch(`/api/proxy/materials/${m.id}`, { method: \"DELETE\" });"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
-      "file": "frontend/src/app/(admin)/topics/[id]/page.tsx",
-      "line": 228,
-      "snippet": "await fetch(`/api/proxy/materials/${m.id}?cascade=true`, { method: \"DELETE\" });"
-    },
-    {
-      "rule": "frontend.component-data-fetch",
       "file": "frontend/src/app/api/auth/login/route.ts",
-      "line": 16,
+      "line": 24,
       "snippet": "const response = await fetch(`${apiUrl}/auth/login`, {"
     },
     {
       "rule": "frontend.component-data-fetch",
       "file": "frontend/src/app/api/proxy/[...path]/route.ts",
-      "line": 30,
+      "line": 34,
       "snippet": "const backendResponse = await fetch(backendRequest);"
     },
     {
       "rule": "frontend.token-local-storage",
       "file": "frontend/src/lib/store.ts",
-      "line": 18,
+      "line": 19,
       "snippet": "localStorage.removeItem('token');"
     }
   ]
