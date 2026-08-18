@@ -196,6 +196,16 @@ class TopicService:
         if topic is None:
             raise AppException(status_code=404, error_code="TOPIC_NOT_FOUND")
 
+        # Blocking on any linked Exam here (regardless of whether that exam
+        # has submissions) transitively protects submission/grade
+        # visibility: a Topic can never be soft-deleted while an Exam still
+        # references it, and that Exam itself cannot be soft-deleted while
+        # it has live Submissions (see exam_service.delete_exam). This is
+        # why AnalyticsService/HistoryService/StudentService.get_exam_result
+        # can safely read through the default soft-delete-filtered Session
+        # (see app/db/soft_delete.py) without a Topic ever vanishing out
+        # from under a retained submission. If this guard is ever relaxed,
+        # re-audit those three read paths for silently vanishing data.
         linked_record_exists = db.scalar(
             select(
                 or_(

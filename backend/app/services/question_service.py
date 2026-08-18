@@ -21,6 +21,15 @@ class QuestionService:
         db: Session,
         question: Question,
     ) -> None:
+        # This guard is the reason AnalyticsService, HistoryService, and
+        # StudentService.get_exam_result can safely read through the
+        # default soft-delete-filtered Session (see app/db/soft_delete.py):
+        # a Question can never be soft-deleted while its parent Exam has
+        # live Submissions or while it has answered SubmissionAnswer rows,
+        # so those services never lose visibility into a retained
+        # submission's answers because a referenced Question vanished. If
+        # this check is ever relaxed, re-audit those three read paths for
+        # silently vanishing submission/grade data.
         if question.exam_id is not None:
             locked_exam_id = db.scalar(
                 select(Exam.id)

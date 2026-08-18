@@ -184,6 +184,17 @@ class ExamService:
         )
         if exam is None:
             raise AppException(status_code=404, error_code="EXAM_NOT_FOUND")
+        # This guard is the reason AnalyticsService, HistoryService, and
+        # StudentService.get_exam_result can safely read Submission rows
+        # through the default soft-delete-filtered Session (see
+        # app/db/soft_delete.py): an Exam can never be soft-deleted while it
+        # still has live Submission rows, so those services never silently
+        # lose visibility into retained submissions/grades because their
+        # parent Exam vanished from default reads. If this check is ever
+        # relaxed (e.g. a future cascade-delete option like
+        # material_service.delete_material's `cascade`/`keep_assets`
+        # flags), re-audit those three read paths for silently vanishing
+        # submission/grade data.
         if db.scalar(
             select(exists(select(Submission.id).where(Submission.exam_id == exam.id)))
         ):

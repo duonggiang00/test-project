@@ -12,6 +12,23 @@ class using the mixin, for every SELECT executed through any `Session`
 instance. Restore/purge code paths (built in later phases) opt back in on a
 per-statement basis with `execution_options(include_deleted=True)`; no other
 mechanism bypasses the filter.
+
+Cross-module dependency: because this filter is global, a soft-deleted
+`Exam`/`Topic`/`Question` silently disappears from every default read --
+including reads that join through it to reach `Submission` rows.
+`AnalyticsService` (get_overview/get_score_stats/get_completion_status/
+get_topic_performance), `HistoryService` (submission history/detail), and
+`StudentService.get_exam_result` all join through or read `Exam`, so they
+would silently lose visibility into retained submissions/grades if an
+`Exam`/`Topic`/`Question` with live `Submission` rows were ever
+soft-deleted -- violating the MVP retention policy
+(`docs/spec/CANONICAL_PROJECT_SPEC.md` 6.3). This is currently prevented
+only incidentally: `exam_service.delete_exam`, `topic_service.delete_topic`,
+and `question_service._raise_if_question_is_retained` each block soft-delete
+while retained records are linked (see the comments at those call sites).
+If any of those guards is ever relaxed -- e.g. a future cascade-delete
+option, mirroring `material_service.delete_material`'s `cascade`/
+`keep_assets` flags -- the three services named above must be re-audited.
 """
 
 from __future__ import annotations
