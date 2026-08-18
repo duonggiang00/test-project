@@ -4,7 +4,7 @@ Status: Active
 Plan owner: Project owner  
 Execution owner: Primary coding agent  
 Created: 2026-08-05  
-Last updated: 2026-08-09
+Last updated: 2026-08-18
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
 
 ## 1. Objective
@@ -240,14 +240,14 @@ Migration tasks require owner approval and downgrade evidence.
 | ID | Task | Status | Depends on | Acceptance evidence |
 |---|---|---|---|---|
 | DATA-001 | Implement canonical audit-event model/service | DONE | GOV-003, CI-004 | Migration round trip and audit schema tests pass |
-| DATA-002 | Instrument admin/teacher, exam, grading, AI, restore, purge, and auth events | TODO | DATA-001 | Required actions produce redacted audit events |
-| DATA-003 | Implement reusable soft-delete fields and query policy | TODO | GOV-002, CI-004 | Default reads exclude deleted rows |
-| DATA-004 | Implement admin/owner restoration policy | TODO | DATA-003, SEC-002 | Authorization and 30-day eligibility tests pass |
-| DATA-005 | Implement 30-day purge service with dry run and audit | TODO | DATA-002–004 | Boundary-time, dry-run, purge, and rollback tests pass |
+| DATA-002 | Instrument admin/teacher, exam, grading, AI, restore, purge, and auth events | DONE | DATA-001 | Exam/topic/question/material/flashcard CRUD, publish/unpublish, grading, restore, and purge actions commit one redacted audit event atomically with their business mutation; `ai.*` events remain separate follow-up work under AI-003 |
+| DATA-003 | Implement reusable soft-delete fields and query policy | DONE | GOV-002, CI-004 | `SoftDeleteMixin` plus a single `do_orm_execute`/`with_loader_criteria` listener exclude deleted rows from every default read for the five governed roots; migration downgrade refuses while any row is soft-deleted |
+| DATA-004 | Implement admin/owner restoration policy | DONE | DATA-003, SEC-002 | Admin/owner-teacher restore within the exact 30-day window passes a five-actor matrix; non-owner/student/anonymous denied; expired window returns a stable 409 |
+| DATA-005 | Implement 30-day purge service with dry run and audit | DONE | DATA-002–004 | Allowlisted to soft-deleted `StudyMaterial` only (User/Exam/Question/Topic/audit_events structurally unreachable); dry-run/apply/reconcile CLI; two-phase file quarantine with a persistent `purge_jobs` ledger for crash-window recovery |
 | DATA-006 | Confirm separate retention for submissions, grades, and sensitive AI logs | DONE | DATA-001 | Owner-approved policy is recorded before permanent purge |
 | DATA-007 | Introduce local storage interface for uploaded files | DONE | GOV-001 | Injected `FileStorage` protocol preserves local behavior with atomic, UUID-named writes and root-confined deletion; fast and PostgreSQL gates pass |
 | DATA-008 | Enforce PDF/DOCX/PPTX/TXT and 50 MB validation | DONE | DATA-007 | 17 focused cases cover extension, MIME, PDF/OOXML signature, UTF-8 text, size, collision, atomic-failure cleanup, DB rollback, and path boundaries; endpoint reads at most 50 MB + 1 byte |
-| DATA-009 | Apply owner/admin authorization and 30-day lifecycle to files | TODO | DATA-003–005, DATA-007 | Cross-owner access and restore/purge tests pass |
+| DATA-009 | Apply owner/admin authorization and 30-day lifecycle to files | DONE | DATA-003–005, DATA-007 | Owner/admin download boundary landed in Batch B; a soft-deleted material's file now survives to its restore or purge instead of being deleted at soft-delete time; full lifecycle (active/soft-deleted/restored/purged) proven cross-owner-indistinguishable at every stage |
 
 Exit criteria:
 
@@ -356,6 +356,12 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-09 | SEC-001/002, TEST-004, AI-005 | Completed | Added typed named permissions, explicit/derived teacher ownership, legacy-null quarantine, same-owner link enforcement, tenant-safe AI retrieval, atomic admin-override audit, retained-record/concurrency guards, and broad PostgreSQL negative matrices. Exact migration round trip, full backend/frontend gates, changed-code coverage, and independent reviews pass. |
 | 2026-08-09 | SEC-006 | Review | Ownership/IDOR cases pass, but the approved matrix allows Admin student-submission actions while live self-service endpoints deliberately require a Student actor. An explicit on-behalf-of target/audit contract or matrix amendment is still required; SEC-003–005 also remain dependencies. |
 | 2026-08-09 | DATA-009 | Partial | Pulled forward the separately approved access-contract slice: material storage is no longer anonymous or physically exposed, and owner/admin download is enforced. Soft-delete, restoration, 30-day lifecycle, and purge remain under DATA-003–005. |
+| 2026-08-18 | DATA-003 | Completed | Added `SoftDeleteMixin`/default-exclusion listener for User/Topic/Exam/Question/StudyMaterial; migration `f9f952e6df1a` (revises `a83c1d7e9f02`); downgrade refuses while any row is soft-deleted; guarded round trip and full PostgreSQL integration (66/66) pass with no regressions. |
+| 2026-08-18 | DATA-004 | Completed | Added owner/admin restore (`POST .../restore`) within the exact 30-day window shared with DATA-005's purge boundary; five-actor matrix and exact-boundary tests pass; every restore commits one `restore.performed` audit event atomically. PostgreSQL integration 86/86. |
+| 2026-08-18 | DATA-002 | Completed | Registered and wired the remaining required audit actions (exam publish/unpublish/CRUD, topic/question/material CRUD, flashcard create, submission grading, user role-change/disable) onto their real call sites via a new `commit_with_audit` helper; `ai.*` events remain DATA-001/AI-003 scope. PostgreSQL integration 99/99. |
+| 2026-08-18 | DATA-005 | Completed | Allowlisted, dry-run-capable purge for soft-deleted `StudyMaterial` only (User/Exam/Question/Topic/audit_events unreachable by construction); two-phase file quarantine; guarded `plan`/`apply`/`reconcile` CLI. PostgreSQL integration 108/108. |
+| 2026-08-18 | DATA-009 | Completed | Closed the remaining lifecycle gap: removed a premature physical file delete at soft-delete time that broke the 30-day recovery window; full active→soft-deleted→restored/purged lifecycle proven cross-owner-indistinguishable throughout. PostgreSQL integration 112/112. |
+| 2026-08-18 | Milestone 8 independent review | Completed | A separate reviewer agent read all five commits in full and ran both verification suites independently; no P1s found. Two P2 gaps closed before sign-off: (1) the submission/grade visibility guarantee through `AnalyticsService`/`HistoryService`/`StudentService.get_exam_result` rested on an undocumented, untested `exam_service`/`topic_service`/`question_service` guard — now documented and positively tested; (2) the change contract's required "recoverable job/receipt" for a crash mid-purge didn't exist — added a `purge_jobs` ledger (migration `1dfa8dca16d5`) and `reconcile` path. Final state: `node scripts/verify.mjs fast` green at every commit; full guarded PostgreSQL integration 115/115; guarded migration round trip clean through head `1dfa8dca16d5`. See `../handoffs/DATA-002-005-009.md`. |
 
 ## 17. Known program risks
 
