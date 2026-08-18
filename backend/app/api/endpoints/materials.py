@@ -122,6 +122,18 @@ def delete_material(
         )
     return result
 
+@router.post("/{material_id}/restore", response_model=MaterialResponse)
+def restore_material(
+    material_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    """
+    Restore a soft-deleted material within the 30-day retention window.
+    (Requires owner or admin authentication)
+    """
+    return MaterialService.restore_material(db, material_id, current_user)
+
 @router.post("/{material_id}/generate-questions")
 def generate_questions(
     material_id: UUID,

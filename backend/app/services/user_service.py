@@ -9,13 +9,14 @@ from app.core.exceptions import AppException
 from app.models.user import User
 from app.schemas.user import UserUpdate, PasswordUpdate
 from app.core.security import get_password_hash, verify_password
-from app.db.soft_delete import soft_delete
+from app.db.soft_delete import is_restorable, soft_delete
 from app.models.exam import Exam, Question
 from app.models.flashcard import FlashcardProgress
 from app.models.material import StudyMaterial
 from app.models.submission import Submission
 from app.models.topic import Topic
 from app.core.permissions import Permission, require_permission
+from app.services.authorization_service import AuthorizationService
 
 class UserService:
     @staticmethod
@@ -80,6 +81,41 @@ class UserService:
         soft_delete(user, actor.id)
         db.commit()
         return {"message": "User deleted successfully"}
+
+    @staticmethod
+    def restore_user(db: Session, user_id: UUID, actor: User) -> User:
+        user = db.scalar(
+            select(User)
+            .where(User.id == user_id, User.deleted_at.is_not(None))
+            .execution_options(include_deleted=True)
+            .with_for_update()
+        )
+        if user is None:
+            raise AppException(status_code=404, error_code="USER_NOT_FOUND")
+
+        if not is_restorable(user.deleted_at):
+            raise AppException(
+                status_code=409,
+                error_code="USER_RESTORE_WINDOW_EXPIRED",
+            )
+
+        deleted_at_before = user.deleted_at
+        user.deleted_at = None
+        user.deleted_by_id = None
+
+        # Users have no owner concept; passing owner_id=None means
+        # evaluate_owned_resource only allows an admin actor here.
+        AuthorizationService.commit_restore(
+            db,
+            actor=actor,
+            permission=Permission.RESTORE_OWNED_CONTENT,
+            entity_type="user",
+            entity_id=user.id,
+            owner_id=None,
+            deleted_at_before=deleted_at_before,
+        )
+        db.refresh(user)
+        return user
 
     @staticmethod
     def _has_owned_or_retained_data(db: Session, user_id: UUID) -> bool:

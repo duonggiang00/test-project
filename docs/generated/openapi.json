@@ -3078,6 +3078,55 @@
         ]
       }
     },
+    "/admin/users/{user_id}/restore": {
+      "post": {
+        "description": "Restore a soft-deleted user within the 30-day retention window.\n(Admin only -- users have no owning-teacher concept)",
+        "operationId": "restore_user_admin_users__user_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Restore User",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/admin/users/{user_id}/role": {
       "put": {
         "operationId": "update_user_role_admin_users__user_id__role_put",
@@ -4132,6 +4181,55 @@
           }
         ],
         "summary": "Add Questions To Exam",
+        "tags": [
+          "exams"
+        ]
+      }
+    },
+    "/exams/{exam_id}/restore": {
+      "post": {
+        "description": "Restore a soft-deleted exam within the 30-day retention window.\n(Requires creator or admin authentication)",
+        "operationId": "restore_exam_exams__exam_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Restore Exam",
         "tags": [
           "exams"
         ]
@@ -5207,6 +5305,55 @@
         ]
       }
     },
+    "/materials/{material_id}/restore": {
+      "post": {
+        "description": "Restore a soft-deleted material within the 30-day retention window.\n(Requires owner or admin authentication)",
+        "operationId": "restore_material_materials__material_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Restore Material",
+        "tags": [
+          "materials"
+        ]
+      }
+    },
     "/materials/{material_id}/save-flashcards": {
       "post": {
         "operationId": "save_flashcards_endpoint_materials__material_id__save_flashcards_post",
@@ -5678,6 +5825,55 @@
           }
         ],
         "summary": "Update Question",
+        "tags": [
+          "questions"
+        ]
+      }
+    },
+    "/questions/{question_id}/restore": {
+      "post": {
+        "description": "Restore a soft-deleted question within the 30-day retention window.\n(Requires owner or admin authentication)",
+        "operationId": "restore_question_questions__question_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "question_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Question Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Restore Question",
         "tags": [
           "questions"
         ]
@@ -6237,6 +6433,55 @@
           }
         ],
         "summary": "Get Topic Progress",
+        "tags": [
+          "topics"
+        ]
+      }
+    },
+    "/topics/{topic_id}/restore": {
+      "post": {
+        "description": "Restore a soft-deleted topic within the 30-day retention window.\n(Requires owner or admin authentication)",
+        "operationId": "restore_topic_topics__topic_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "topic_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Topic Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Restore Topic",
         "tags": [
           "topics"
         ]

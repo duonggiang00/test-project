@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.exceptions import AppException
 from app.core.permissions import Permission, require_permission
-from app.db.soft_delete import soft_delete
+from app.db.soft_delete import is_restorable, soft_delete
 from app.models.exam import Exam, Option, Question
 from app.models.submission import Submission, SubmissionAnswer
 from app.models.topic import Topic
@@ -182,6 +182,46 @@ class ExamService:
             owner_id=exam.creator_id,
             operation="delete",
         )
+
+    @staticmethod
+    def restore_exam(
+        db: Session,
+        exam_id: UUID,
+        current_user: User,
+    ) -> Exam:
+        exam = db.scalar(
+            ExamService._owned_exam_statement(
+                current_user,
+                Permission.RESTORE_OWNED_CONTENT,
+            )
+            .where(Exam.id == exam_id, Exam.deleted_at.is_not(None))
+            .execution_options(include_deleted=True)
+            .with_for_update()
+        )
+        if exam is None:
+            raise AppException(status_code=404, error_code="EXAM_NOT_FOUND")
+
+        if not is_restorable(exam.deleted_at):
+            raise AppException(
+                status_code=409,
+                error_code="EXAM_RESTORE_WINDOW_EXPIRED",
+            )
+
+        deleted_at_before = exam.deleted_at
+        exam.deleted_at = None
+        exam.deleted_by_id = None
+
+        AuthorizationService.commit_restore(
+            db,
+            actor=current_user,
+            permission=Permission.RESTORE_OWNED_CONTENT,
+            entity_type="exam",
+            entity_id=exam.id,
+            owner_id=exam.creator_id,
+            deleted_at_before=deleted_at_before,
+        )
+        db.refresh(exam)
+        return exam
 
     @staticmethod
     def get_exam(

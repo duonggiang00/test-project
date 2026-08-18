@@ -75,6 +75,18 @@ def delete_topic(
     TopicService.delete_topic(db, topic_id, current_user)
     return {"message": "Topic deleted successfully", "id": str(topic_id)}
 
+@router.post("/{topic_id}/restore", response_model=TopicResponse)
+def restore_topic(
+    topic_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    """
+    Restore a soft-deleted topic within the 30-day retention window.
+    (Requires owner or admin authentication)
+    """
+    return TopicService.restore_topic(db, topic_id, current_user)
+
 @router.get("/{topic_id}/progress")
 def get_topic_progress(
     topic_id: UUID,

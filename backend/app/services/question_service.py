@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.exceptions import AppException
 from app.core.permissions import Permission, require_owner_scope, require_permission
-from app.db.soft_delete import soft_delete
+from app.db.soft_delete import is_restorable, soft_delete
 from app.models.exam import Exam, Option, Question
 from app.models.submission import Submission, SubmissionAnswer
 from app.models.topic import Topic
@@ -294,3 +294,54 @@ class QuestionService:
             owner_id=owner_id,
             operation="delete",
         )
+
+    @staticmethod
+    def restore_question(
+        db: Session,
+        question_id: UUID,
+        current_user: User,
+    ) -> Question:
+        question = db.scalar(
+            QuestionService._owned_question_statement(
+                current_user,
+                Permission.RESTORE_OWNED_CONTENT,
+            )
+            .options(
+                selectinload(Question.options),
+                selectinload(Question.exam),
+            )
+            .where(Question.id == question_id, Question.deleted_at.is_not(None))
+            .execution_options(include_deleted=True)
+            .with_for_update()
+        )
+        if question is None:
+            raise AppException(status_code=404, error_code="QUESTION_NOT_FOUND")
+
+        if not is_restorable(question.deleted_at):
+            raise AppException(
+                status_code=409,
+                error_code="QUESTION_RESTORE_WINDOW_EXPIRED",
+            )
+
+        owner_id = QuestionService._effective_owner_id(question)
+        deleted_at_before = question.deleted_at
+        question.deleted_at = None
+        question.deleted_by_id = None
+
+        AuthorizationService.commit_restore(
+            db,
+            actor=current_user,
+            permission=Permission.RESTORE_OWNED_CONTENT,
+            entity_type="question",
+            entity_id=question.id,
+            owner_id=owner_id,
+            deleted_at_before=deleted_at_before,
+        )
+        fetched_question = db.scalar(
+            select(Question)
+            .options(selectinload(Question.options))
+            .where(Question.id == question.id)
+        )
+        if fetched_question is None:
+            raise RuntimeError("Restored question could not be reloaded")
+        return fetched_question

@@ -71,3 +71,15 @@ def delete_question(
 ):
     QuestionService.delete_question(db, question_id, current_user)
     return {"message": "Question deleted successfully", "id": str(question_id)}
+
+@router.post("/{question_id}/restore", response_model=QuestionResponse)
+def restore_question(
+    question_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    """
+    Restore a soft-deleted question within the 30-day retention window.
+    (Requires owner or admin authentication)
+    """
+    return QuestionService.restore_question(db, question_id, current_user)

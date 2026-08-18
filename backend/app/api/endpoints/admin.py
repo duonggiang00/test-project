@@ -50,3 +50,15 @@ def delete_user(
     current_admin: User = Depends(get_current_active_admin)
 ):
     return UserService.delete_user(db, user_id, current_admin)
+
+@router.post("/users/{user_id}/restore", response_model=UserResponse)
+def restore_user(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_active_admin)
+):
+    """
+    Restore a soft-deleted user within the 30-day retention window.
+    (Admin only -- users have no owning-teacher concept)
+    """
+    return UserService.restore_user(db, user_id, current_admin)

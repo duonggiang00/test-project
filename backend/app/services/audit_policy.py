@@ -110,6 +110,28 @@ def _validate_user_create(
         _reject_invalid_action_payload()
 
 
+_RESTORE_ENTITY_TYPES = frozenset(
+    {"exam", "question", "study_material", "topic", "user"}
+)
+
+
+def _validate_restore(
+    changes: dict[str, JsonValue],
+    _metadata: dict[str, JsonValue],
+) -> None:
+    deleted_at = changes.get("deleted_at")
+    if deleted_at is None:
+        return
+    if not isinstance(deleted_at, dict) or set(deleted_at) != {"before", "after"}:
+        _reject_invalid_action_payload()
+    before = deleted_at.get("before")
+    after = deleted_at.get("after")
+    if not isinstance(before, str) or not before:
+        _reject_invalid_action_payload()
+    if after is not None:
+        _reject_invalid_action_payload()
+
+
 _ADMIN_OVERRIDE_OPERATIONS = frozenset(
     {
         "bulk_assign",
@@ -190,6 +212,17 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             change_fields=frozenset({"is_published"}),
             metadata_fields=frozenset({"context_source_ids"}),
             validate_payload=_validate_exam_publish,
+        ),
+        "restore.performed": AuditActionPolicy(
+            entity_types=_RESTORE_ENTITY_TYPES,
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset({"admin", "teacher"}),
+            failure_roles=frozenset({"admin", "teacher"}),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset({"deleted_at"}),
+            change_fields=frozenset({"deleted_at"}),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_restore,
         ),
         "user.create": AuditActionPolicy(
             entity_types=frozenset({"user"}),

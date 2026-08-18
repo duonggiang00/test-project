@@ -28,7 +28,7 @@ from app.core.file_storage import FileStorage, material_file_storage
 from app.core.security_guardrails import validate_file_upload
 from app.core.permissions import Permission, require_owner_scope, require_permission
 from app.core.correlation import get_current_request_id, new_correlation_id
-from app.db.soft_delete import soft_delete
+from app.db.soft_delete import is_restorable, soft_delete
 from app.models.submission import SubmissionAnswer
 from app.models.user import User
 from app.services.authorization_service import AuthorizationService
@@ -396,6 +396,49 @@ class MaterialService:
             storage.delete(file_path)
 
         return {"message": "Material and associated assets deleted successfully" if cascade else "Material deleted successfully"}
+
+    @staticmethod
+    def restore_material(
+        db: Session,
+        material_id: UUID,
+        current_user: User,
+    ) -> StudyMaterial:
+        material = db.scalar(
+            MaterialService._owned_material_statement(
+                current_user,
+                Permission.RESTORE_OWNED_CONTENT,
+            )
+            .where(
+                StudyMaterial.id == material_id,
+                StudyMaterial.deleted_at.is_not(None),
+            )
+            .execution_options(include_deleted=True)
+            .with_for_update()
+        )
+        if material is None:
+            raise AppException(status_code=404, error_code="MATERIAL_NOT_FOUND")
+
+        if not is_restorable(material.deleted_at):
+            raise AppException(
+                status_code=409,
+                error_code="MATERIAL_RESTORE_WINDOW_EXPIRED",
+            )
+
+        deleted_at_before = material.deleted_at
+        material.deleted_at = None
+        material.deleted_by_id = None
+
+        AuthorizationService.commit_restore(
+            db,
+            actor=current_user,
+            permission=Permission.RESTORE_OWNED_CONTENT,
+            entity_type="study_material",
+            entity_id=material.id,
+            owner_id=material.uploader_id,
+            deleted_at_before=deleted_at_before,
+        )
+        db.refresh(material)
+        return material
 
     @staticmethod
     def generate_questions(

@@ -55,6 +55,18 @@ def delete_exam(
     ExamService.delete_exam(db, exam_id, current_user)
     return {"message": "Exam deleted successfully", "id": str(exam_id)}
 
+@router.post("/{exam_id}/restore", response_model=ExamResponse)
+def restore_exam(
+    exam_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    """
+    Restore a soft-deleted exam within the 30-day retention window.
+    (Requires creator or admin authentication)
+    """
+    return ExamService.restore_exam(db, exam_id, current_user)
+
 @router.get("/{exam_id}", response_model=ExamDetailResponse)
 def get_exam(
     exam_id: UUID,

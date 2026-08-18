@@ -16,7 +16,7 @@ mechanism bypasses the filter.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID as UUIDType
 
@@ -28,6 +28,17 @@ from sqlalchemy.orm.session import ORMExecuteState
 from app.db.base import Base
 
 INCLUDE_DELETED_OPTION = "include_deleted"
+
+# Shared 30-day recovery window: restore is eligible only while
+# `deleted_at > now - RESTORE_WINDOW` (DATA-004). Permanent purge (a later
+# phase) uses the complementary `deleted_at <= now - RESTORE_WINDOW` boundary
+# so the two policies never disagree at the exact cutoff.
+RESTORE_WINDOW = timedelta(days=30)
+
+
+def is_restorable(deleted_at: datetime) -> bool:
+    """True while a soft-deleted row is still inside the restore window."""
+    return deleted_at > datetime.now(timezone.utc) - RESTORE_WINDOW
 
 
 class SoftDeleteMixin:

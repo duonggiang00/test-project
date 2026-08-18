@@ -10,7 +10,7 @@ from app.core.permissions import (
     evaluate_owner_scope,
     require_permission,
 )
-from app.db.soft_delete import soft_delete
+from app.db.soft_delete import is_restorable, soft_delete
 from app.models.exam import Exam, Question
 from app.models.flashcard import Flashcard, FlashcardDeck, FlashcardProgress
 from app.models.material import StudyMaterial
@@ -227,6 +227,46 @@ class TopicService:
             owner_id=topic.owner_id,
             operation="delete",
         )
+
+    @staticmethod
+    def restore_topic(
+        db: Session,
+        topic_id: UUID,
+        current_user: User,
+    ) -> Topic:
+        topic = db.scalar(
+            TopicService._owned_topic_statement(
+                current_user,
+                Permission.RESTORE_OWNED_CONTENT,
+            )
+            .where(Topic.id == topic_id, Topic.deleted_at.is_not(None))
+            .execution_options(include_deleted=True)
+            .with_for_update()
+        )
+        if topic is None:
+            raise AppException(status_code=404, error_code="TOPIC_NOT_FOUND")
+
+        if not is_restorable(topic.deleted_at):
+            raise AppException(
+                status_code=409,
+                error_code="TOPIC_RESTORE_WINDOW_EXPIRED",
+            )
+
+        deleted_at_before = topic.deleted_at
+        topic.deleted_at = None
+        topic.deleted_by_id = None
+
+        AuthorizationService.commit_restore(
+            db,
+            actor=current_user,
+            permission=Permission.RESTORE_OWNED_CONTENT,
+            entity_type="topic",
+            entity_id=topic.id,
+            owner_id=topic.owner_id,
+            deleted_at_before=deleted_at_before,
+        )
+        db.refresh(topic)
+        return topic
 
     @staticmethod
     def get_topic_progress(

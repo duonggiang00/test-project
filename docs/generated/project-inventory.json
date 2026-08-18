@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "944635e039693bfc823748ac3508e25e80e86cfb",
-    "source_commit_timestamp": "2026-08-17T16:05:48+07:00",
-    "source_tree_sha256": "79980cecfc71025a8e198b10898677bbbdc9417ad77f296691059d2d14bae6ed",
-    "relevant_file_count": 305,
+    "source_commit": "119217b2c25e59d580192185612955278f1776b4",
+    "source_commit_timestamp": "2026-08-18T09:59:55+07:00",
+    "source_tree_sha256": "c7f3be24c0f12f27db5527d9beaaf7973c88641a06d299b358605562fc30fc1d",
+    "relevant_file_count": 309,
     "alembic_heads": [
       "f9f952e6df1a"
     ]
@@ -13,11 +13,11 @@
   "summary": {
     "sqlalchemy_models": 14,
     "pydantic_schemas": 71,
-    "fastapi_routes": 63,
+    "fastapi_routes": 68,
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 153,
+    "backend_test_functions": 161,
     "frontend_test_calls": 64
   },
   "backend": {
@@ -3452,6 +3452,21 @@
       },
       {
         "dependencies": [
+          "app.api.deps.get_current_active_admin",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.admin.restore_user",
+        "methods": [
+          "POST"
+        ],
+        "name": "restore_user",
+        "path": "/admin/users/{user_id}/restore",
+        "response_model": "UserResponse"
+      },
+      {
+        "dependencies": [
           "app.api.deps.get_current_user",
           "app.api.deps.get_current_user_manager",
           "app.db.session.get_db",
@@ -3778,6 +3793,21 @@
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
+        "endpoint": "app.api.endpoints.exams.restore_exam",
+        "methods": [
+          "POST"
+        ],
+        "name": "restore_exam",
+        "path": "/exams/{exam_id}/restore",
+        "response_model": "ExamResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
         "endpoint": "app.api.endpoints.flashcards.generate_topic_kit_ai",
         "methods": [
           "POST"
@@ -4067,6 +4097,21 @@
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
+        "endpoint": "app.api.endpoints.materials.restore_material",
+        "methods": [
+          "POST"
+        ],
+        "name": "restore_material",
+        "path": "/materials/{material_id}/restore",
+        "response_model": "MaterialResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
         "endpoint": "app.api.endpoints.materials.save_flashcards_endpoint",
         "methods": [
           "POST"
@@ -4180,6 +4225,21 @@
         ],
         "name": "update_question",
         "path": "/questions/{question_id}",
+        "response_model": "QuestionResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.questions.restore_question",
+        "methods": [
+          "POST"
+        ],
+        "name": "restore_question",
+        "path": "/questions/{question_id}/restore",
         "response_model": "QuestionResponse"
       },
       {
@@ -4333,6 +4393,21 @@
         "name": "get_topic_progress",
         "path": "/topics/{topic_id}/progress",
         "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.topics.restore_topic",
+        "methods": [
+          "POST"
+        ],
+        "name": "restore_topic",
+        "path": "/topics/{topic_id}/restore",
+        "response_model": "TopicResponse"
       }
     ]
   },
@@ -5121,6 +5196,60 @@
             "line": 260,
             "markers": [],
             "name": "test_cross_resource_links_require_one_owner_and_leave_no_partial_write"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_restore.py",
+        "tests": [
+          {
+            "line": 106,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_admin_and_owner_restore_within_window"
+          },
+          {
+            "line": 140,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_non_owner_teacher_student_and_anonymous_are_denied"
+          },
+          {
+            "line": 172,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_restore_window_exact_boundary"
+          },
+          {
+            "line": 211,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_restore_active_or_missing_record_is_canonical_not_found"
+          },
+          {
+            "line": 231,
+            "markers": [],
+            "name": "test_successful_restore_emits_exactly_one_audit_event"
+          },
+          {
+            "line": 266,
+            "markers": [],
+            "name": "test_denied_and_expired_restore_attempts_emit_no_audit_event"
+          },
+          {
+            "line": 315,
+            "markers": [],
+            "name": "test_admin_restores_user_within_window_teacher_denied"
+          },
+          {
+            "line": 357,
+            "markers": [],
+            "name": "test_restore_user_window_boundary_and_not_found"
           }
         ],
         "tier": "integration"

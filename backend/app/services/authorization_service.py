@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from datetime import datetime
+from typing import Any, Literal, cast
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -110,6 +111,69 @@ class AuthorizationService:
                 owner_id=owner_id,
                 operation=operation,
                 request_id=request_id,
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+
+    @staticmethod
+    def commit_restore(
+        db: Session,
+        *,
+        actor: Actor,
+        permission: Permission,
+        entity_type: str,
+        entity_id: UUID,
+        owner_id: UUID | None,
+        deleted_at_before: datetime,
+        request_id: str | None = None,
+    ) -> None:
+        """Authorize and audit a soft-delete restore, then commit.
+
+        Mirrors `commit_with_admin_override`'s flush-then-commit shape, but
+        always records one `restore.performed` success event -- restore is
+        audited for both the owning teacher and an admin override, not just
+        for a non-self admin override.
+        """
+        try:
+            decision = evaluate_owned_resource(actor, permission, owner_id)
+            if not decision.allowed:
+                raise AppException(
+                    status_code=403,
+                    error_code="NOT_ENOUGH_PERMISSIONS",
+                )
+            AuditService.record(
+                db,
+                AuditEventCreate(
+                    request_id=(
+                        request_id
+                        or get_current_request_id()
+                        or new_correlation_id()
+                    ),
+                    actor=AuditActor(
+                        actor_type="user",
+                        user_id=actor.id,
+                        role=cast(
+                            Literal["admin", "teacher", "student", "system"],
+                            actor.role,
+                        ),
+                    ),
+                    action="restore.performed",
+                    entity=AuditEntity(
+                        type=entity_type,
+                        id=str(entity_id),
+                        owner_id=owner_id,
+                    ),
+                    outcome="success",
+                    changes={
+                        "deleted_at": {
+                            "before": deleted_at_before.isoformat(),
+                            "after": None,
+                        },
+                    },
+                    metadata={},
+                ),
             )
             db.commit()
         except Exception:
