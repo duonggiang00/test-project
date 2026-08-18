@@ -132,6 +132,18 @@ def _validate_restore(
         _reject_invalid_action_payload()
 
 
+def _validate_purge_event(
+    _changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    deleted_at = metadata.get("deleted_at")
+    if deleted_at is not None and not isinstance(deleted_at, str):
+        _reject_invalid_action_payload()
+    quarantined = metadata.get("quarantined")
+    if quarantined is not None and not isinstance(quarantined, bool):
+        _reject_invalid_action_payload()
+
+
 def _validate_no_extra_payload(
     _changes: dict[str, JsonValue],
     _metadata: dict[str, JsonValue],
@@ -460,6 +472,28 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             change_fields=frozenset({"deleted_at"}),
             metadata_fields=frozenset(),
             validate_payload=_validate_restore,
+        ),
+        "purge.requested": AuditActionPolicy(
+            entity_types=frozenset({"study_material"}),
+            success_roles=frozenset({"admin"}),
+            denied_roles=frozenset({"admin"}),
+            failure_roles=frozenset({"admin"}),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset({"deleted_at"}),
+            validate_payload=_validate_purge_event,
+        ),
+        "purge.completed": AuditActionPolicy(
+            entity_types=frozenset({"study_material"}),
+            success_roles=frozenset({"admin"}),
+            denied_roles=frozenset({"admin"}),
+            failure_roles=frozenset({"admin"}),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset({"deleted_at", "quarantined"}),
+            validate_payload=_validate_purge_event,
         ),
         "user.create": AuditActionPolicy(
             entity_types=frozenset({"user"}),

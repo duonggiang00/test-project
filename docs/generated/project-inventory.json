@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "3d2faae87f2fce0ac13223f8578e949d77cd1dae",
-    "source_commit_timestamp": "2026-08-18T11:59:03+07:00",
-    "source_tree_sha256": "b3ddd2dee55ace7966b8fb82c8895fb0165743b38a1350f0b991a04adc4e3d8f",
-    "relevant_file_count": 310,
+    "source_commit": "32e05b1e37c8d05568762d5052bfaa4f20ca19bd",
+    "source_commit_timestamp": "2026-08-18T13:47:17+07:00",
+    "source_tree_sha256": "2eaf82cc439f71acce5423fc1a60976063fd7f86257b70aed69e8b8ee9bae423",
+    "relevant_file_count": 314,
     "alembic_heads": [
       "f9f952e6df1a"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 180,
+    "backend_test_functions": 195,
     "frontend_test_calls": 64
   },
   "backend": {
@@ -5272,6 +5272,57 @@
         "tier": "integration"
       },
       {
+        "path": "tests/test_purge.py",
+        "tests": [
+          {
+            "line": 84,
+            "markers": [],
+            "name": "test_plan_purge_makes_zero_changes"
+          },
+          {
+            "line": 110,
+            "markers": [],
+            "name": "test_apply_purge_exact_boundary"
+          },
+          {
+            "line": 150,
+            "markers": [],
+            "name": "test_apply_purge_batch_is_idempotent"
+          },
+          {
+            "line": 171,
+            "markers": [],
+            "name": "test_apply_purge_mid_failure_leaves_recoverable_quarantine"
+          },
+          {
+            "line": 219,
+            "markers": [],
+            "name": "test_apply_purge_denies_non_admin"
+          },
+          {
+            "line": 233,
+            "markers": [],
+            "name": "test_material_with_retained_links_is_blocked_not_purged"
+          },
+          {
+            "line": 290,
+            "markers": [],
+            "name": "test_apply_purge_emits_requested_and_completed_audit_events"
+          },
+          {
+            "line": 327,
+            "markers": [],
+            "name": "test_purge_never_touches_other_governed_roots"
+          },
+          {
+            "line": 402,
+            "markers": [],
+            "name": "test_purge_service_source_never_deletes_protected_models"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
         "path": "tests/test_restore.py",
         "tests": [
           {
@@ -5715,6 +5766,42 @@
               "unit"
             ],
             "name": "test_database_guard_accepts_local_development_and_test"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_file_storage_quarantine.py",
+        "tests": [
+          {
+            "line": 8,
+            "markers": [],
+            "name": "test_quarantine_round_trip_restores_exact_original_path"
+          },
+          {
+            "line": 22,
+            "markers": [],
+            "name": "test_finalize_purge_permanently_deletes_quarantined_file"
+          },
+          {
+            "line": 33,
+            "markers": [],
+            "name": "test_quarantine_rejects_path_outside_root"
+          },
+          {
+            "line": 44,
+            "markers": [],
+            "name": "test_restore_from_quarantine_rejects_forged_token"
+          },
+          {
+            "line": 54,
+            "markers": [],
+            "name": "test_quarantine_missing_file_raises_file_not_found"
+          },
+          {
+            "line": 60,
+            "markers": [],
+            "name": "test_finalize_purge_rejects_token_outside_quarantine_namespace"
           }
         ],
         "tier": "unit"
