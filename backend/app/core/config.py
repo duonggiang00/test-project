@@ -28,6 +28,17 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: str = "http://localhost:3000"
     OPENROUTER_API_KEY: str = ""
 
+    # AI provider/model policy (AI-001). `AI_DEFAULT_MODEL` is the fallback
+    # for every use case; each `AI_MODEL_*` field overrides a single use
+    # case without touching the others. All default to the model that was
+    # previously hardcoded, so unset values do not change behavior.
+    AI_PROVIDER: str = "openrouter"
+    AI_DEFAULT_MODEL: str = "meta-llama/llama-3.1-8b-instruct"
+    AI_MODEL_CHAT: str = ""
+    AI_MODEL_QUESTION_GENERATION: str = ""
+    AI_MODEL_FLASHCARD_GENERATION: str = ""
+    AI_MODEL_TOPIC_BRIEF_GENERATION: str = ""
+
     @model_validator(mode="after")
     def validate_database_configuration(self) -> Self:
         if self.DATABASE_URL:

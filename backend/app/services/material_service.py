@@ -1,12 +1,10 @@
 import json
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 from typing import List, Optional
 from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.orm import Session, selectinload
-from openai import OpenAI
 from fastapi import BackgroundTasks
 
 from app.models.material import StudyMaterial
@@ -22,8 +20,16 @@ from app.schemas.material import (
     GenerateFlashcardsRequest, SaveFlashcardsRequest, SaveTopicBriefRequest
 )
 
+from app.ai import default_provider
+from app.ai.json_extraction import extract_json_payload
+from app.ai.model_policy import ModelUseCase, resolve_model_config
+from app.ai.prompts import (
+    flashcard_generation_v1,
+    question_generation_v1,
+    topic_brief_generation_v1,
+)
+from app.ai.provider import AIProvider, AIProviderError, GenerateRequest
 from app.core.exceptions import AppException
-from app.core.config import settings
 from app.core.file_storage import FileStorage, material_file_storage
 from app.core.security_guardrails import validate_file_upload
 from app.core.permissions import Permission, require_owner_scope, require_permission
@@ -32,11 +38,6 @@ from app.db.soft_delete import is_restorable, soft_delete
 from app.models.submission import SubmissionAnswer
 from app.models.user import User
 from app.services.authorization_service import AuthorizationService
-
-ai_client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=getattr(settings, "OPENROUTER_API_KEY", None) or "mock_key",
-)
 
 class MaterialService:
     @staticmethod
@@ -460,6 +461,7 @@ class MaterialService:
         material_id: UUID,
         request: GenerateQuestionsRequest,
         current_user: User,
+        provider: AIProvider = default_provider,
     ):
         require_permission(current_user, Permission.CREATE_CONTENT)
         material = MaterialService.get_owned_material(
@@ -475,84 +477,24 @@ class MaterialService:
 
         context_text = "\n\n".join([f"[Đoạn {i+1}]: {c.content}" for i, c in enumerate(chunks)])
         types_str = ", ".join(request.question_types)
-        
-        system_prompt = f"""Bạn là AI chuyên sinh câu hỏi giáo dục chất lượng cao bằng Tiếng Việt.
-Chỉ sử dụng thông tin từ TÀI LIỆU bên dưới để sinh câu hỏi. KHÔNG bịa đặt.
 
-TÀI LIỆU:
-{context_text}
+        prompt = question_generation_v1.render(
+            context_text=context_text,
+            count=request.count,
+            question_types=types_str,
+            difficulty=request.difficulty,
+        )
+        model_config = resolve_model_config(ModelUseCase.QUESTION_GENERATION)
 
-Sinh {request.count} câu hỏi phân bổ trong các loại sau: {types_str}. Độ khó mong muốn: {request.difficulty}.
-Với mỗi câu hỏi PHẢI bao gồm 'difficulty' (EASY, MEDIUM, hoặc HARD), 'source_reference' (trích dẫn đoạn nào của tài liệu) và 'explanation' (giải thích).
-
-TRẢ VỀ DUY NHẤT MỘT JSON ARRAY HỢP LỆ (KHÔNG có text xung quanh), định dạng như sau:
-[
-  {{
-    "type": "SINGLE_CHOICE",
-    "difficulty": "MEDIUM",
-    "content": "Câu hỏi 1 đáp án...",
-    "points": 1,
-    "source_reference": "...",
-    "explanation": "...",
-    "options": [
-      {{"content": "A", "is_correct": true}},
-      {{"content": "B", "is_correct": false}}
-    ]
-  }},
-  {{
-    "type": "MATCHING",
-    "difficulty": "HARD",
-    "content": "Ghép nối...",
-    "points": 1,
-    "source_reference": "...",
-    "explanation": "...",
-    "options": [],
-    "metadata_json": {{"pairs": [{{"left": "Vế 1", "right": "Vế 2"}}]}}
-  }},
-  {{
-    "type": "FILL_IN_BLANK",
-    "difficulty": "EASY",
-    "content": "Điền khuyết...",
-    "points": 1,
-    "source_reference": "...",
-    "explanation": "...",
-    "options": [],
-    "metadata_json": {{"blanks": [{{"blank_index": 0, "acceptable_answers": ["đáp án 1", "đáp án 2"]}}]}}
-  }}
-]
-"""
         try:
-            response = ai_client.chat.completions.create(
-                model="meta-llama/llama-3.1-8b-instruct",
-                messages=[{"role": "user", "content": system_prompt}],
-                temperature=0.7,
+            result = provider.generate(
+                GenerateRequest(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=model_config.model,
+                    temperature=0.7,
+                )
             )
-            content = response.choices[0].message.content.strip()
-
-            match = re.search(r'```(?:json)?(.*?)```', content, re.DOTALL)
-            if match:
-                content = match.group(1).strip()
-            else:
-                first_brace = content.find('{')
-                first_bracket = content.find('[')
-                start_idx = -1
-                if first_brace != -1 and first_bracket != -1:
-                    start_idx = min(first_brace, first_bracket)
-                elif first_brace != -1:
-                    start_idx = first_brace
-                elif first_bracket != -1:
-                    start_idx = first_bracket
-                    
-                if start_idx != -1:
-                    if content[start_idx] == '{':
-                        end_idx = content.rfind('}')
-                    else:
-                        end_idx = content.rfind(']')
-                    
-                    if end_idx != -1:
-                        content = content[start_idx:end_idx+1]
-
-            questions = json.loads(content)
+            questions = extract_json_payload(result.text)
             AuthorizationService.commit_with_admin_override(
                 db,
                 actor=current_user,
@@ -565,6 +507,8 @@ TRẢ VỀ DUY NHẤT MỘT JSON ARRAY HỢP LỆ (KHÔNG có text xung quanh), 
             return {"questions": questions}
         except json.JSONDecodeError as e:
             raise AppException(status_code=500, error_code="AI_PARSE_ERROR", message=f"Failed to parse AI response as JSON: {str(e)}")
+        except AIProviderError as e:
+            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=e.error_code)
         except Exception as e:
             raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=str(e))
 
@@ -642,6 +586,7 @@ TRẢ VỀ DUY NHẤT MỘT JSON ARRAY HỢP LỆ (KHÔNG có text xung quanh), 
         material_id: UUID,
         request: GenerateFlashcardsRequest,
         current_user: User,
+        provider: AIProvider = default_provider,
     ):
         require_permission(current_user, Permission.CREATE_CONTENT)
         material = MaterialService.get_owned_material(
@@ -656,59 +601,18 @@ TRẢ VỀ DUY NHẤT MỘT JSON ARRAY HỢP LỆ (KHÔNG có text xung quanh), 
             raise AppException(status_code=422, error_code="NO_CHUNKS_FOUND")
 
         context_text = "\n\n".join([c.content for c in chunks])
+        prompt = flashcard_generation_v1.render(context_text=context_text, count=request.count)
+        model_config = resolve_model_config(ModelUseCase.FLASHCARD_GENERATION)
 
-        system_prompt = f"""Bạn là AI chuyên tóm tắt tài liệu giáo dục thành thẻ ghi nhớ (flashcard) Tiếng Việt.
-Chỉ sử dụng thông tin từ TÀI LIỆU bên dưới.
-
-TÀI LIỆU:
-{context_text}
-
-Sinh {request.count} cặp flashcard dưới dạng JSON THUẦN TÚY (không markdown).
-Với mỗi flashcard PHẢI bao gồm 'source_reference' (trích dẫn đoạn nào của tài liệu) và 'explanation' (giải thích thêm hoặc ví dụ mở rộng).
-{{
-  "flashcards": [
-    {{
-      "term": "Thuật ngữ hoặc khái niệm",
-      "definition": "Định nghĩa hoặc giải thích chi tiết",
-      "source_reference": "Trích đoạn từ tài liệu",
-      "explanation": "Giải thích thêm ngữ cảnh hoặc ví dụ"
-    }},
-    ...
-  ]
-}}
-"""
         try:
-            response = ai_client.chat.completions.create(
-                model="meta-llama/llama-3.1-8b-instruct",
-                messages=[{"role": "user", "content": system_prompt}],
-                temperature=0.5,
+            result = provider.generate(
+                GenerateRequest(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=model_config.model,
+                    temperature=0.5,
+                )
             )
-            content = response.choices[0].message.content.strip()
-
-            match = re.search(r'```(?:json)?(.*?)```', content, re.DOTALL)
-            if match:
-                content = match.group(1).strip()
-            else:
-                first_brace = content.find('{')
-                first_bracket = content.find('[')
-                start_idx = -1
-                if first_brace != -1 and first_bracket != -1:
-                    start_idx = min(first_brace, first_bracket)
-                elif first_brace != -1:
-                    start_idx = first_brace
-                elif first_bracket != -1:
-                    start_idx = first_bracket
-                    
-                if start_idx != -1:
-                    if content[start_idx] == '{':
-                        end_idx = content.rfind('}')
-                    else:
-                        end_idx = content.rfind(']')
-                    
-                    if end_idx != -1:
-                        content = content[start_idx:end_idx+1]
-
-            data = json.loads(content)
+            data = extract_json_payload(result.text)
             AuthorizationService.commit_with_admin_override(
                 db,
                 actor=current_user,
@@ -721,6 +625,8 @@ Với mỗi flashcard PHẢI bao gồm 'source_reference' (trích dẫn đoạn 
             return {"flashcards": data.get("flashcards", [])}
         except json.JSONDecodeError as e:
             raise AppException(status_code=500, error_code="AI_PARSE_ERROR", message=str(e))
+        except AIProviderError as e:
+            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=e.error_code)
         except Exception as e:
             raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=str(e))
 
@@ -788,6 +694,7 @@ Với mỗi flashcard PHẢI bao gồm 'source_reference' (trích dẫn đoạn 
         db: Session,
         material_id: UUID,
         current_user: User,
+        provider: AIProvider = default_provider,
     ):
         require_permission(current_user, Permission.CREATE_CONTENT)
         material = MaterialService.get_owned_material(
@@ -802,50 +709,18 @@ Với mỗi flashcard PHẢI bao gồm 'source_reference' (trích dẫn đoạn 
             raise AppException(status_code=422, error_code="NO_CHUNKS_FOUND")
 
         context_text = "\n\n".join([c.content for c in chunks])
+        prompt = topic_brief_generation_v1.render(context_text=context_text)
+        model_config = resolve_model_config(ModelUseCase.TOPIC_BRIEF_GENERATION)
 
-        system_prompt = f"""Bạn là AI chuyên tóm tắt tài liệu giáo dục thành Topic Brief (Dàn ý chủ đề) bằng Tiếng Việt.
-Chỉ sử dụng thông tin từ TÀI LIỆU bên dưới.
-
-TÀI LIỆU:
-{context_text}
-
-Sinh bản tóm tắt topic brief dưới dạng JSON THUẦN TÚY (không markdown).
-{{
-  "content": "Nội dung tóm tắt định dạng markdown..."
-}}
-"""
         try:
-            response = ai_client.chat.completions.create(
-                model="meta-llama/llama-3.1-8b-instruct",
-                messages=[{"role": "user", "content": system_prompt}],
-                temperature=0.5,
+            result = provider.generate(
+                GenerateRequest(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=model_config.model,
+                    temperature=0.5,
+                )
             )
-            content = response.choices[0].message.content.strip()
-
-            match = re.search(r'```(?:json)?(.*?)```', content, re.DOTALL)
-            if match:
-                content = match.group(1).strip()
-            else:
-                first_brace = content.find('{')
-                first_bracket = content.find('[')
-                start_idx = -1
-                if first_brace != -1 and first_bracket != -1:
-                    start_idx = min(first_brace, first_bracket)
-                elif first_brace != -1:
-                    start_idx = first_brace
-                elif first_bracket != -1:
-                    start_idx = first_bracket
-                    
-                if start_idx != -1:
-                    if content[start_idx] == '{':
-                        end_idx = content.rfind('}')
-                    else:
-                        end_idx = content.rfind(']')
-                    
-                    if end_idx != -1:
-                        content = content[start_idx:end_idx+1]
-
-            data = json.loads(content)
+            data = extract_json_payload(result.text)
             AuthorizationService.commit_with_admin_override(
                 db,
                 actor=current_user,
@@ -858,6 +733,8 @@ Sinh bản tóm tắt topic brief dưới dạng JSON THUẦN TÚY (không markd
             return {"content": data.get("content", "")}
         except json.JSONDecodeError as e:
             raise AppException(status_code=500, error_code="AI_PARSE_ERROR", message=str(e))
+        except AIProviderError as e:
+            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=e.error_code)
         except Exception as e:
             raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=str(e))
 

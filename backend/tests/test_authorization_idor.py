@@ -494,22 +494,20 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
     captured = {}
     provider_calls = []
 
-    class EmptyAsyncStream:
-        def __aiter__(self):
-            return self
-
-        async def __anext__(self):
-            raise StopAsyncIteration
-
-    async def fake_create(**kwargs):
-        captured.update(kwargs)
-        provider_calls.append(kwargs)
-        return EmptyAsyncStream()
+    async def fake_stream(request):
+        # AI-001 moved the provider SDK behind `app.ai.provider.AIProvider`;
+        # patching `stream` on the shared default provider object keeps this
+        # canary at the real provider boundary, which is what must never see
+        # cross-owner context.
+        captured["messages"] = request.messages
+        provider_calls.append(request)
+        return
+        yield  # pragma: no cover - makes this an async generator
 
     monkeypatch.setattr(
-        ai_studio_module.client.chat.completions,
-        "create",
-        fake_create,
+        ai_studio_module.default_provider,
+        "stream",
+        fake_stream,
     )
     response = client.post(
         "/ai/chat",

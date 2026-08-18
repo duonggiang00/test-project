@@ -13,7 +13,7 @@ Ruff also runs its syntax/name-error baseline across `backend/app`, `backend/scr
 
 ## Enforced rule families
 
-- Backend: new `Session.query()`, `datetime.utcnow()`, bare `except`, raw exception messages, queries inside loops, request sessions passed to background tasks, and invalid router/model/service imports.
+- Backend: new `Session.query()`, `datetime.utcnow()`, bare `except`, raw exception messages, queries inside loops, request sessions passed to background tasks, invalid router/model/service imports, and `openai` SDK imports outside `app/ai/openrouter_adapter.py`.
 - Frontend: direct backend-origin calls outside BFF handlers, fetching inside UI components, token local storage, server collections in Zustand, reload-based mutation handling, and remote fonts.
 - Contracts: backend decorator and frontend transport trailing slashes.
 - Design: non-black/white Tailwind color tokens and color literals.

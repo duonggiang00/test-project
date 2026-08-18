@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from openai import OpenAI
+
 from app.models.user import User
 
 

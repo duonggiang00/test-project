@@ -76,6 +76,12 @@ function scanBackend(path) {
     if (isImport && relativePath.includes('/services/') && /app\.api\b/u.test(line)) {
       results.push(violation('backend.service-layer-import', path, lineNumber, line));
     }
+
+    const importsProviderSdk = /^\s*(?:from\s+openai(?:\.[\w.]+)?\s+import\b|import\s+openai\b)/u.test(line);
+    const isOpenRouterAdapter = relativePath === 'backend/app/ai/openrouter_adapter.py';
+    if (importsProviderSdk && !isOpenRouterAdapter) {
+      results.push(violation('backend.provider-sdk-import', path, lineNumber, line));
+    }
   });
 
   for (const match of source.matchAll(/\.add_task\(/gu)) {
@@ -216,6 +222,7 @@ try {
       'backend.query-in-loop',
       'backend.request-session-background-task',
       'backend.router-layer-import',
+      'backend.provider-sdk-import',
       'contract.backend-trailing-slash',
       'frontend.bff-bypass',
       'frontend.component-data-fetch',
