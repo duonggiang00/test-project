@@ -182,7 +182,19 @@ def test_material_cascade_serializes_concurrent_flashcard_review(
         assert review.result(timeout=5) == "FLASHCARD_NOT_FOUND"
 
     db.expire_all()
-    assert db.get(StudyMaterial, material_id) is None
+    # StudyMaterial is a governed soft-delete root (DATA-003): the cascade
+    # marks it deleted rather than removing the row, so a default read must
+    # exclude it while the row itself remains present and flagged deleted.
+    assert db.scalar(
+        select(StudyMaterial).where(StudyMaterial.id == material_id)
+    ) is None
+    soft_deleted_material = db.scalar(
+        select(StudyMaterial)
+        .where(StudyMaterial.id == material_id)
+        .execution_options(include_deleted=True)
+    )
+    assert soft_deleted_material is not None
+    assert soft_deleted_material.deleted_at is not None
     assert db.get(Flashcard, card_id) is None
     assert db.scalar(
         select(FlashcardProgress.id).where(

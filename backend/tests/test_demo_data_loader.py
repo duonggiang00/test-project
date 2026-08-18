@@ -20,7 +20,7 @@ from app.models.user import User
 def demo_accounts(db):
     db.execute(text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) PRIMARY KEY)"))
     db.execute(text("DELETE FROM alembic_version"))
-    db.execute(text("INSERT INTO alembic_version (version_num) VALUES ('a83c1d7e9f02')"))
+    db.execute(text("INSERT INTO alembic_version (version_num) VALUES ('f9f952e6df1a')"))
     accounts = {}
     for role, email, name in [
         ("teacher", "other.teacher@example.invalid", "Other Teacher"),

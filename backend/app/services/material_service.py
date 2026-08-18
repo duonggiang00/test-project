@@ -1,9 +1,10 @@
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 from typing import List, Optional
-from sqlalchemy import delete, exists, func, select
+from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.orm import Session, selectinload
 from openai import OpenAI
 from fastapi import BackgroundTasks
@@ -17,7 +18,7 @@ from app.models.topic import Topic
 from app.models.topic_brief import TopicBrief
 
 from app.schemas.material import (
-    MaterialDetailResponse, GenerateQuestionsRequest, SaveQuestionsRequest, 
+    MaterialDetailResponse, GenerateQuestionsRequest, SaveQuestionsRequest,
     GenerateFlashcardsRequest, SaveFlashcardsRequest, SaveTopicBriefRequest
 )
 
@@ -27,6 +28,7 @@ from app.core.file_storage import FileStorage, material_file_storage
 from app.core.security_guardrails import validate_file_upload
 from app.core.permissions import Permission, require_owner_scope, require_permission
 from app.core.correlation import get_current_request_id, new_correlation_id
+from app.db.soft_delete import soft_delete
 from app.models.submission import SubmissionAnswer
 from app.models.user import User
 from app.services.authorization_service import AuthorizationService
@@ -360,7 +362,14 @@ class MaterialService:
                     status_code=409,
                     error_code="MATERIAL_CASCADE_BLOCKED_BY_RETAINED_RECORDS",
                 )
-            db.execute(delete(Question).where(Question.material_id == material.id))
+            db.execute(
+                update(Question)
+                .where(Question.material_id == material.id)
+                .values(
+                    deleted_at=datetime.now(timezone.utc),
+                    deleted_by_id=current_user.id,
+                )
+            )
             db.execute(
                 delete(FlashcardDeck).where(
                     FlashcardDeck.material_id == material.id
@@ -372,7 +381,7 @@ class MaterialService:
 
         file_path = material.file_path
 
-        db.delete(material)
+        soft_delete(material, current_user.id)
         AuthorizationService.commit_with_admin_override(
             db,
             actor=current_user,

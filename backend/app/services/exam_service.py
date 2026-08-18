@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.exceptions import AppException
 from app.core.permissions import Permission, require_permission
+from app.db.soft_delete import soft_delete
 from app.models.exam import Exam, Option, Question
 from app.models.submission import Submission, SubmissionAnswer
 from app.models.topic import Topic
@@ -171,7 +172,7 @@ class ExamService:
                 error_code="EXAM_DELETE_BLOCKED_BY_RETAINED_RECORDS",
             )
 
-        db.delete(exam)
+        soft_delete(exam, current_user.id)
         AuthorizationService.commit_with_admin_override(
             db,
             actor=current_user,

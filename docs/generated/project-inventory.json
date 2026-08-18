@@ -2,12 +2,12 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "1713f77d1307c40e7c00c3955a00b3c3d4b25515",
-    "source_commit_timestamp": "2026-08-09T11:21:00+07:00",
-    "source_tree_sha256": "588a9d18880968d3989591eea66d382c3ef69480bcbf7849c1a884ac606db93a",
+    "source_commit": "944635e039693bfc823748ac3508e25e80e86cfb",
+    "source_commit_timestamp": "2026-08-17T16:05:48+07:00",
+    "source_tree_sha256": "79980cecfc71025a8e198b10898677bbbdc9417ad77f296691059d2d14bae6ed",
     "relevant_file_count": 305,
     "alembic_heads": [
-      "a83c1d7e9f02"
+      "f9f952e6df1a"
     ]
   },
   "summary": {
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 145,
+    "backend_test_functions": 153,
     "frontend_test_calls": 64
   },
   "backend": {
@@ -245,6 +245,24 @@
             "nullable": true,
             "primary_key": false,
             "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "deleted_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "deleted_by_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
             "unique": false
           }
         ],
@@ -660,6 +678,24 @@
             "primary_key": false,
             "type": "DATETIME",
             "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "deleted_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "deleted_by_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
           }
         ],
         "module": "app.models.exam",
@@ -779,6 +815,24 @@
             "nullable": true,
             "primary_key": false,
             "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "deleted_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "deleted_by_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
             "unique": false
           }
         ],
@@ -1029,6 +1083,24 @@
             "primary_key": false,
             "type": "DATETIME",
             "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "deleted_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "deleted_by_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
           }
         ],
         "module": "app.models.topic",
@@ -1256,6 +1328,24 @@
             "nullable": true,
             "primary_key": false,
             "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "deleted_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "deleted_by_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
             "unique": false
           }
         ],
@@ -4826,7 +4916,7 @@
             "name": "test_material_cascade_serializes_concurrent_flashcard_review"
           },
           {
-            "line": 194,
+            "line": 206,
             "markers": [],
             "name": "test_background_admin_override_serializes_against_demotion"
           }
@@ -5047,6 +5137,52 @@
             "line": 117,
             "markers": [],
             "name": "test_user_topic_and_material_destructive_guards"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_soft_delete.py",
+        "tests": [
+          {
+            "line": 19,
+            "markers": [],
+            "name": "test_include_deleted_execution_option_surfaces_soft_deleted_rows"
+          },
+          {
+            "line": 46,
+            "markers": [],
+            "name": "test_delete_topic_soft_deletes_and_hides_from_normal_endpoint"
+          },
+          {
+            "line": 70,
+            "markers": [],
+            "name": "test_delete_exam_soft_deletes_and_hides_from_normal_endpoint"
+          },
+          {
+            "line": 91,
+            "markers": [],
+            "name": "test_delete_question_soft_deletes_and_hides_from_normal_endpoint"
+          },
+          {
+            "line": 118,
+            "markers": [],
+            "name": "test_delete_material_soft_deletes_and_hides_from_normal_endpoint"
+          },
+          {
+            "line": 152,
+            "markers": [],
+            "name": "test_cascade_material_delete_soft_deletes_linked_questions"
+          },
+          {
+            "line": 195,
+            "markers": [],
+            "name": "test_delete_user_soft_deletes_and_hides_from_admin_endpoints"
+          },
+          {
+            "line": 235,
+            "markers": [],
+            "name": "test_student_visibility_raw_selects_exclude_soft_deleted_topic_and_exam"
           }
         ],
         "tier": "integration"

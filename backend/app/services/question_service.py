@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.exceptions import AppException
 from app.core.permissions import Permission, require_owner_scope, require_permission
+from app.db.soft_delete import soft_delete
 from app.models.exam import Exam, Option, Question
 from app.models.submission import Submission, SubmissionAnswer
 from app.models.topic import Topic
@@ -283,7 +284,7 @@ class QuestionService:
         QuestionService._raise_if_question_is_retained(db, question)
 
         owner_id = QuestionService._effective_owner_id(question)
-        db.delete(question)
+        soft_delete(question, current_user.id)
         AuthorizationService.commit_with_admin_override(
             db,
             actor=current_user,

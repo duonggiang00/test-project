@@ -1,10 +1,11 @@
 from sqlalchemy import Column, String, DateTime, Date, Text
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
+from app.db.soft_delete import SoftDeleteMixin
 import uuid
 from sqlalchemy.sql import func
 
-class User(Base):
+class User(SoftDeleteMixin, Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)

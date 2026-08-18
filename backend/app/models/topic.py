@@ -3,9 +3,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.base import Base
+from app.db.soft_delete import SoftDeleteMixin
 import uuid
 
-class Topic(Base):
+class Topic(SoftDeleteMixin, Base):
     __tablename__ = "topics"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)

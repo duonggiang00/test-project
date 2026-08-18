@@ -1,7 +1,7 @@
 {
   "dataset_id": "demo-standard-v1",
   "version": 1,
-  "alembic_head": "a83c1d7e9f02",
+  "alembic_head": "f9f952e6df1a",
   "namespace": "playstudy/demo-standard-v1",
   "teacher_email": "teacher@example.com",
   "interactive_student_email": "student@example.com",
@@ -32,7 +32,7 @@
     "materials/python_control.pdf",
     "materials/python_foundations.txt"
   ],
-  "content_sha256": "8fa2e015f647b53919157603cba337d5b0162871bb0e717707ed147ea587b4dd",
+  "content_sha256": "9cf3c36559389647305d5fffc5645807baf71a1cc7e0193c86e9611ff97c0a9a",
   "expected_counts": {
     "users": 6,
     "topics": 9,

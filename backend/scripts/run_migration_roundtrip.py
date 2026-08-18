@@ -19,6 +19,14 @@ if TYPE_CHECKING:
 
 OWNERSHIP_PREVIOUS_REVISION = "b57c9a14d2e8"
 SINGLE_CHOICE_PREVIOUS_REVISION = "ca82f9a51d44"
+SOFT_DELETE_PREVIOUS_REVISION = "a83c1d7e9f02"
+SOFT_DELETE_TABLES = (
+    "users",
+    "topics",
+    "exams",
+    "questions",
+    "study_materials",
+)
 MIGRATION_STAGES = (
     (
         "upgrade-ownership-previous-head",
@@ -325,6 +333,56 @@ EXPECTED_OWNERSHIP_INDEX_DEFINITIONS = {
         ("ix_topics_owner_id", "topics", "owner_id"),
     )
 }
+EXPECTED_SOFT_DELETE_COLUMN_DEFINITIONS: dict[
+    tuple[str, str], tuple[str, bool, str | None]
+] = {
+    **{
+        (table, "deleted_at"): ("timestamp with time zone", True, None)
+        for table in SOFT_DELETE_TABLES
+    },
+    **{
+        (table, "deleted_by_id"): ("uuid", True, None)
+        for table in SOFT_DELETE_TABLES
+    },
+}
+EXPECTED_SOFT_DELETE_FOREIGN_KEY_DEFINITIONS = {
+    f"{table}_deleted_by_id_fkey": (
+        table,
+        ("deleted_by_id",),
+        "users",
+        ("id",),
+        "n",
+        "a",
+        True,
+        False,
+        False,
+        "FOREIGN KEY (deleted_by_id) REFERENCES users(id) ON DELETE SET NULL",
+    )
+    for table in SOFT_DELETE_TABLES
+}
+EXPECTED_SOFT_DELETE_INDEX_DEFINITIONS: dict[
+    str, tuple[bool, bool, bool, bool, str, str]
+] = {}
+for _table in SOFT_DELETE_TABLES:
+    EXPECTED_SOFT_DELETE_INDEX_DEFINITIONS[f"ix_{_table}_deleted_at"] = (
+        False,
+        False,
+        True,
+        True,
+        "btree",
+        f"CREATE INDEX ix_{_table}_deleted_at ON public.{_table} "
+        "USING btree (deleted_at)",
+    )
+    EXPECTED_SOFT_DELETE_INDEX_DEFINITIONS[f"ix_{_table}_deleted_by_id"] = (
+        False,
+        False,
+        True,
+        True,
+        "btree",
+        f"CREATE INDEX ix_{_table}_deleted_by_id ON public.{_table} "
+        "USING btree (deleted_by_id)",
+    )
+del _table
 DATABASE_SIGNATURE_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "database-model-signature.json"
 )
@@ -734,6 +792,155 @@ def ownership_index_definitions(
     }
 
 
+def soft_delete_column_definitions(
+    cursor: PsycopgCursor,
+) -> dict[tuple[str, str], tuple[str, bool, str | None]]:
+    cursor.execute(
+        """
+        SELECT
+            pg_class.relname,
+            pg_attribute.attname,
+            format_type(pg_attribute.atttypid, pg_attribute.atttypmod),
+            NOT pg_attribute.attnotnull,
+            pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)
+        FROM pg_attribute
+        JOIN pg_class ON pg_class.oid = pg_attribute.attrelid
+        JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+        LEFT JOIN pg_attrdef
+          ON pg_attrdef.adrelid = pg_attribute.attrelid
+         AND pg_attrdef.adnum = pg_attribute.attnum
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_class.relname = ANY(%s)
+          AND pg_attribute.attname IN ('deleted_at', 'deleted_by_id')
+          AND pg_attribute.attnum > 0
+          AND NOT pg_attribute.attisdropped
+        """,
+        (list(SOFT_DELETE_TABLES),),
+    )
+    return {
+        (row[0], row[1]): (row[2], row[3], row[4])
+        for row in cursor.fetchall()
+    }
+
+
+def soft_delete_foreign_key_definitions(
+    cursor: PsycopgCursor,
+) -> dict[
+    str,
+    tuple[
+        str,
+        tuple[str, ...],
+        str,
+        tuple[str, ...],
+        str,
+        str,
+        bool,
+        bool,
+        bool,
+        str,
+    ],
+]:
+    cursor.execute(
+        """
+        SELECT
+            pg_constraint.conname,
+            source_class.relname,
+            ARRAY(
+                SELECT source_attribute.attname
+                FROM unnest(pg_constraint.conkey)
+                     WITH ORDINALITY AS source_key(attnum, position)
+                JOIN pg_attribute AS source_attribute
+                  ON source_attribute.attrelid = pg_constraint.conrelid
+                 AND source_attribute.attnum = source_key.attnum
+                ORDER BY source_key.position
+            ),
+            target_class.relname,
+            ARRAY(
+                SELECT target_attribute.attname
+                FROM unnest(pg_constraint.confkey)
+                     WITH ORDINALITY AS target_key(attnum, position)
+                JOIN pg_attribute AS target_attribute
+                  ON target_attribute.attrelid = pg_constraint.confrelid
+                 AND target_attribute.attnum = target_key.attnum
+                ORDER BY target_key.position
+            ),
+            pg_constraint.confdeltype,
+            pg_constraint.confupdtype,
+            pg_constraint.convalidated,
+            pg_constraint.condeferrable,
+            pg_constraint.condeferred,
+            pg_get_constraintdef(pg_constraint.oid, true)
+        FROM pg_constraint
+        JOIN pg_class AS source_class
+          ON source_class.oid = pg_constraint.conrelid
+        JOIN pg_class AS target_class
+          ON target_class.oid = pg_constraint.confrelid
+        JOIN pg_namespace
+          ON pg_namespace.oid = source_class.relnamespace
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_constraint.contype = 'f'
+          AND source_class.relname = ANY(%s)
+          AND EXISTS (
+              SELECT 1
+              FROM unnest(pg_constraint.conkey) AS source_key(attnum)
+              JOIN pg_attribute AS source_attribute
+                ON source_attribute.attrelid = pg_constraint.conrelid
+               AND source_attribute.attnum = source_key.attnum
+              WHERE source_attribute.attname = 'deleted_by_id'
+          )
+        """,
+        (list(SOFT_DELETE_TABLES),),
+    )
+    return {
+        row[0]: (
+            row[1],
+            tuple(row[2]),
+            row[3],
+            tuple(row[4]),
+            row[5],
+            row[6],
+            row[7],
+            row[8],
+            row[9],
+            row[10],
+        )
+        for row in cursor.fetchall()
+    }
+
+
+def soft_delete_index_definitions(
+    cursor: PsycopgCursor,
+) -> dict[str, tuple[bool, bool, bool, bool, str, str]]:
+    cursor.execute(
+        """
+        SELECT
+            index_class.relname,
+            pg_index.indisunique,
+            pg_index.indisprimary,
+            pg_index.indisvalid,
+            pg_index.indisready,
+            pg_am.amname,
+            pg_get_indexdef(index_class.oid)
+        FROM pg_index
+        JOIN pg_class AS index_class
+          ON index_class.oid = pg_index.indexrelid
+        JOIN pg_class AS table_class
+          ON table_class.oid = pg_index.indrelid
+        JOIN pg_namespace
+          ON pg_namespace.oid = table_class.relnamespace
+        JOIN pg_am
+          ON pg_am.oid = index_class.relam
+        WHERE pg_namespace.nspname = 'public'
+          AND index_class.relname = ANY(%s)
+        """,
+        (list(EXPECTED_SOFT_DELETE_INDEX_DEFINITIONS),),
+    )
+    return {
+        row[0]: (row[1], row[2], row[3], row[4], row[5], row[6])
+        for row in cursor.fetchall()
+    }
+
+
 def normalize_sql(definition: str) -> str:
     return " ".join(definition.split())
 
@@ -899,6 +1106,77 @@ def validate_ownership_schema_state(
         )
 
 
+def validate_soft_delete_schema_state(
+    revision: str,
+    *,
+    column_definitions: dict[
+        tuple[str, str], tuple[str, bool, str | None]
+    ],
+    foreign_key_definitions: dict[
+        str,
+        tuple[
+            str,
+            tuple[str, ...],
+            str,
+            tuple[str, ...],
+            str,
+            str,
+            bool,
+            bool,
+            bool,
+            str,
+        ],
+    ],
+    index_definitions: dict[str, tuple[bool, bool, bool, bool, str, str]],
+) -> None:
+    expected_columns = (
+        EXPECTED_SOFT_DELETE_COLUMN_DEFINITIONS if revision == "head" else {}
+    )
+    expected_foreign_keys = (
+        EXPECTED_SOFT_DELETE_FOREIGN_KEY_DEFINITIONS
+        if revision == "head"
+        else {}
+    )
+    expected_indexes = (
+        EXPECTED_SOFT_DELETE_INDEX_DEFINITIONS if revision == "head" else {}
+    )
+    if column_definitions != expected_columns:
+        raise RuntimeError(
+            f"Unexpected soft-delete column definitions at {revision}: "
+            f"expected={expected_columns!r} actual={column_definitions!r}"
+        )
+
+    normalized_foreign_keys = {
+        name: (*definition[:9], normalize_sql(definition[9]))
+        for name, definition in foreign_key_definitions.items()
+    }
+    normalized_expected_foreign_keys = {
+        name: (*definition[:9], normalize_sql(definition[9]))
+        for name, definition in expected_foreign_keys.items()
+    }
+    if normalized_foreign_keys != normalized_expected_foreign_keys:
+        raise RuntimeError(
+            f"Unexpected soft-delete foreign key definitions at {revision}: "
+            f"expected={normalized_expected_foreign_keys!r} "
+            f"actual={normalized_foreign_keys!r}"
+        )
+
+    normalized_indexes = {
+        name: (*definition[:5], normalize_sql(definition[5]))
+        for name, definition in index_definitions.items()
+    }
+    normalized_expected_indexes = {
+        name: (*definition[:5], normalize_sql(definition[5]))
+        for name, definition in expected_indexes.items()
+    }
+    if normalized_indexes != normalized_expected_indexes:
+        raise RuntimeError(
+            f"Unexpected soft-delete index definitions at {revision}: "
+            f"expected={normalized_expected_indexes!r} "
+            f"actual={normalized_indexes!r}"
+        )
+
+
 def validate_schema_state(
     revision: str,
     *,
@@ -980,6 +1258,9 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
             ownership_columns = ownership_column_definitions(cursor)
             ownership_foreign_keys = ownership_foreign_key_definitions(cursor)
             ownership_indexes = ownership_index_definitions(cursor)
+            soft_delete_columns = soft_delete_column_definitions(cursor)
+            soft_delete_foreign_keys = soft_delete_foreign_key_definitions(cursor)
+            soft_delete_indexes = soft_delete_index_definitions(cursor)
     finally:
         connection.close()
 
@@ -1010,6 +1291,12 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
         foreign_key_definitions=ownership_foreign_keys,
         index_definitions=ownership_indexes,
     )
+    validate_soft_delete_schema_state(
+        revision,
+        column_definitions=soft_delete_columns,
+        foreign_key_definitions=soft_delete_foreign_keys,
+        index_definitions=soft_delete_indexes,
+    )
 
     print(
         "MIGRATION_SCHEMA_ASSERTIONS_PASSED "
@@ -1023,7 +1310,10 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
         f"audit_constraints={len(audit_constraints)} "
         f"ownership_columns={len(ownership_columns)} "
         f"ownership_foreign_keys={len(ownership_foreign_keys)} "
-        f"ownership_indexes={len(ownership_indexes)}",
+        f"ownership_indexes={len(ownership_indexes)} "
+        f"soft_delete_columns={len(soft_delete_columns)} "
+        f"soft_delete_foreign_keys={len(soft_delete_foreign_keys)} "
+        f"soft_delete_indexes={len(soft_delete_indexes)}",
         flush=True,
     )
 
@@ -1343,6 +1633,122 @@ def assert_single_choice_downgrade_guard(
     print("MIGRATION_SINGLE_CHOICE_DOWNGRADE_GUARD_PASSED", flush=True)
 
 
+def seed_soft_delete_downgrade_probe(manager: TestDatabaseManager) -> uuid.UUID:
+    """Insert a soft-deleted topic so the downgrade-refusal path is real."""
+    topic_id = uuid.uuid4()
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO topics (id, name, deleted_at) "
+                "VALUES (%s, %s, now())",
+                (str(topic_id), f"Soft-delete downgrade probe {topic_id}"),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+    print("MIGRATION_SOFT_DELETE_PROBE_SEEDED", flush=True)
+    return topic_id
+
+
+def assert_soft_delete_downgrade_guard(manager: TestDatabaseManager) -> None:
+    probe_topic_id = seed_soft_delete_downgrade_probe(manager)
+
+    rejected = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "downgrade",
+            SOFT_DELETE_PREVIOUS_REVISION,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if rejected.returncode == 0:
+        raise RuntimeError(
+            "Soft-delete column downgrade unexpectedly succeeded while a "
+            "deleted row exists"
+        )
+
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            if current_revisions(cursor) != {expected_head()}:
+                raise RuntimeError(
+                    "Rejected soft-delete downgrade changed the Alembic revision"
+                )
+            columns = soft_delete_column_definitions(cursor)
+    finally:
+        connection.close()
+    if columns != EXPECTED_SOFT_DELETE_COLUMN_DEFINITIONS:
+        raise RuntimeError(
+            "Rejected soft-delete downgrade changed the soft-delete columns"
+        )
+
+    # Clear the probe so a clean downgrade can proceed.
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM topics WHERE id = %s", (str(probe_topic_id),)
+            )
+        connection.commit()
+    finally:
+        connection.close()
+
+    downgraded = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "downgrade",
+            SOFT_DELETE_PREVIOUS_REVISION,
+        ],
+        check=False,
+    )
+    if downgraded.returncode != 0:
+        raise RuntimeError("Clean soft-delete downgrade failed")
+
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            if current_revisions(cursor) != {SOFT_DELETE_PREVIOUS_REVISION}:
+                raise RuntimeError(
+                    "Clean soft-delete downgrade reached the wrong revision"
+                )
+            columns = soft_delete_column_definitions(cursor)
+            if columns:
+                raise RuntimeError(
+                    "Clean soft-delete downgrade left columns behind: "
+                    f"{columns!r}"
+                )
+    finally:
+        connection.close()
+
+    upgraded = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "upgrade",
+            "head",
+        ],
+        check=False,
+    )
+    if upgraded.returncode != 0:
+        raise RuntimeError("Re-upgrade after the soft-delete downgrade failed")
+    assert_schema_state(manager, "head")
+    print("MIGRATION_SOFT_DELETE_DOWNGRADE_GUARD_PASSED", flush=True)
+
+
 def main() -> int:
     manager = build_manager()
     manager.create()
@@ -1406,6 +1812,7 @@ def main() -> int:
                         **expected_pre_migration_questions,
                     },
                 )
+                assert_soft_delete_downgrade_guard(manager)
             print(f"MIGRATION_STAGE_PASSED stage={stage_name}", flush=True)
         return 0
     finally:

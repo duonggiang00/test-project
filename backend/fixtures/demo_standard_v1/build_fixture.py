@@ -23,7 +23,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 ROOT = Path(__file__).resolve().parent
 MATERIALS = ROOT / "materials"
 DATASET_ID = "demo-standard-v1"
-ALEMBIC_HEAD = "a83c1d7e9f02"
+ALEMBIC_HEAD = "f9f952e6df1a"
 NAMESPACE = "playstudy/demo-standard-v1"
 
 

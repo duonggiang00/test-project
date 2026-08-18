@@ -49,4 +49,4 @@ def delete_user(
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_active_admin)
 ):
-    return UserService.delete_user(db, user_id)
+    return UserService.delete_user(db, user_id, current_admin)

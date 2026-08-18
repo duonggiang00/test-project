@@ -2,10 +2,11 @@ from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
+from app.db.soft_delete import SoftDeleteMixin
 import uuid
 from sqlalchemy.sql import func
 
-class StudyMaterial(Base):
+class StudyMaterial(SoftDeleteMixin, Base):
     __tablename__ = "study_materials"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
@@ -22,5 +23,5 @@ class StudyMaterial(Base):
     topic_id = Column(UUID(as_uuid=True), ForeignKey("topics.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    uploader = relationship("User")
+    uploader = relationship("User", foreign_keys=[uploader_id])
     topic = relationship("Topic", back_populates="materials")

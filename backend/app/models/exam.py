@@ -2,11 +2,12 @@ from sqlalchemy import Column, String, Text, Integer, Boolean, DateTime, Foreign
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from app.db.base import Base
+from app.db.soft_delete import SoftDeleteMixin
 import uuid
 from sqlalchemy.sql import func
 from app.models.enums import QuestionType, DifficultyLevel
 
-class Exam(Base):
+class Exam(SoftDeleteMixin, Base):
     __tablename__ = "exams"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
@@ -22,11 +23,11 @@ class Exam(Base):
     is_published = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    creator = relationship("User")
+    creator = relationship("User", foreign_keys=[creator_id])
     topic = relationship("Topic", back_populates="exams")
     questions = relationship("Question", back_populates="exam", cascade="all, delete-orphan")
 
-class Question(Base):
+class Question(SoftDeleteMixin, Base):
     __tablename__ = "questions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)

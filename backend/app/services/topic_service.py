@@ -10,6 +10,7 @@ from app.core.permissions import (
     evaluate_owner_scope,
     require_permission,
 )
+from app.db.soft_delete import soft_delete
 from app.models.exam import Exam, Question
 from app.models.flashcard import Flashcard, FlashcardDeck, FlashcardProgress
 from app.models.material import StudyMaterial
@@ -216,7 +217,7 @@ class TopicService:
                 error_code="TOPIC_DELETE_BLOCKED_BY_LINKED_RECORDS",
             )
 
-        db.delete(topic)
+        soft_delete(topic, current_user.id)
         AuthorizationService.commit_with_admin_override(
             db,
             actor=current_user,

@@ -9,6 +9,7 @@ from app.core.exceptions import AppException
 from app.models.user import User
 from app.schemas.user import UserUpdate, PasswordUpdate
 from app.core.security import get_password_hash, verify_password
+from app.db.soft_delete import soft_delete
 from app.models.exam import Exam, Question
 from app.models.flashcard import FlashcardProgress
 from app.models.material import StudyMaterial
@@ -68,15 +69,15 @@ class UserService:
         return user
 
     @staticmethod
-    def delete_user(db: Session, user_id: UUID) -> dict:
+    def delete_user(db: Session, user_id: UUID, actor: User) -> dict:
         user = UserService._get_user_for_update(db, user_id)
         if UserService._has_owned_or_retained_data(db, user.id):
             raise AppException(
                 status_code=409,
                 error_code="USER_DELETE_BLOCKED_BY_RETAINED_DATA",
             )
-        
-        db.delete(user)
+
+        soft_delete(user, actor.id)
         db.commit()
         return {"message": "User deleted successfully"}
 
