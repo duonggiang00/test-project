@@ -9,6 +9,7 @@ from app.models.document_chunk import DocumentChunk
 from app.models.topic_brief import TopicBrief
 from app.models.audit_event import AuditEvent
 from app.models.purge_job import PurgeJob
+from app.models.ai_generation import AIGenerationJob, AIGradeSuggestion
 
 __all__ = [
     "User",
@@ -21,4 +22,5 @@ __all__ = [
     "TopicBrief",
     "AuditEvent",
     "PurgeJob",
+    "AIGenerationJob", "AIGradeSuggestion",
 ]

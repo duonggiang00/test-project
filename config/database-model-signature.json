@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "sqlalchemy_model_sha256": "18fa269e64dd2934cd144b67828a067195f46c1ddc7c5b5842946ddea9ffbd23",
-  "sqlalchemy_model_count": 15,
+  "sqlalchemy_model_sha256": "ee2d8fad00d38dd88147b0a98a9a08e1486a680c9cc33dc1db95733ab50349fc",
+  "sqlalchemy_model_count": 17,
   "alembic_heads": [
-    "1dfa8dca16d5"
+    "c4e1a70b58d9"
   ]
 }

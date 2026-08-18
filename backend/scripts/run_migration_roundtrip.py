@@ -44,6 +44,8 @@ MIGRATION_STAGES = (
 )
 
 EXPECTED_HEAD_TABLES = {
+    "ai_generation_jobs",
+    "ai_grade_suggestions",
     "audit_events",
     "document_chunks",
     "exams",

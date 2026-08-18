@@ -144,6 +144,55 @@ def _validate_purge_event(
         _reject_invalid_action_payload()
 
 
+_AI_JOB_STATUSES = frozenset(
+    {
+        "requested",
+        "processing",
+        "generated",
+        "awaiting_review",
+        "approved",
+        "rejected",
+        "published",
+        "failed",
+    }
+)
+
+_AI_USE_CASES = frozenset(
+    {
+        "chat",
+        "question_generation",
+        "flashcard_generation",
+        "topic_brief_generation",
+    }
+)
+
+
+def _validate_ai_generation_transition(
+    changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    """Only a `{before, after}` status pair drawn from the canonical states.
+
+    The AI-001-009 change contract puts prompt/provider/token/cost/latency
+    metadata in AI-003's scope and the rendered prompt itself in a separate
+    restricted payload store, so a transition event carries nothing beyond
+    its status change and use case.
+    """
+    status = changes.get("status")
+    if not isinstance(status, dict) or set(status) != {"before", "after"}:
+        _reject_invalid_action_payload()
+    before = status.get("before")
+    after = status.get("after")
+    if before not in _AI_JOB_STATUSES or after not in _AI_JOB_STATUSES:
+        _reject_invalid_action_payload()
+    if before == after:
+        _reject_invalid_action_payload()
+
+    use_case = metadata.get("use_case")
+    if use_case is not None and use_case not in _AI_USE_CASES:
+        _reject_invalid_action_payload()
+
+
 def _validate_no_extra_payload(
     _changes: dict[str, JsonValue],
     _metadata: dict[str, JsonValue],
@@ -495,6 +544,28 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             metadata_fields=frozenset({"deleted_at", "quarantined"}),
             validate_payload=_validate_purge_event,
         ),
+        **{
+            action: AuditActionPolicy(
+                entity_types=frozenset({"ai_generation_job"}),
+                success_roles=frozenset({"admin", "teacher"}),
+                denied_roles=frozenset({"admin", "teacher"}),
+                failure_roles=frozenset({"admin", "teacher"}),
+                owner_requirement="required",
+                required_success_change_fields=frozenset({"status"}),
+                change_fields=frozenset({"status"}),
+                metadata_fields=frozenset({"use_case"}),
+                validate_payload=_validate_ai_generation_transition,
+            )
+            for action in (
+                "ai.generation.processing",
+                "ai.generation.generated",
+                "ai.generation.awaiting_review",
+                "ai.generation.approved",
+                "ai.generation.rejected",
+                "ai.generation.published",
+                "ai.generation.failed",
+            )
+        },
         "user.create": AuditActionPolicy(
             entity_types=frozenset({"user"}),
             success_roles=frozenset({"admin", "system", "teacher"}),
