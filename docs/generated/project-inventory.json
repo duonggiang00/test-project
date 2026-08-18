@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "119217b2c25e59d580192185612955278f1776b4",
-    "source_commit_timestamp": "2026-08-18T09:59:55+07:00",
-    "source_tree_sha256": "c7f3be24c0f12f27db5527d9beaaf7973c88641a06d299b358605562fc30fc1d",
-    "relevant_file_count": 309,
+    "source_commit": "3d2faae87f2fce0ac13223f8578e949d77cd1dae",
+    "source_commit_timestamp": "2026-08-18T11:59:03+07:00",
+    "source_tree_sha256": "b3ddd2dee55ace7966b8fb82c8895fb0165743b38a1350f0b991a04adc4e3d8f",
+    "relevant_file_count": 310,
     "alembic_heads": [
       "f9f952e6df1a"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 161,
+    "backend_test_functions": 180,
     "frontend_test_calls": 64
   },
   "backend": {
@@ -5056,6 +5056,77 @@
         "tier": "integration"
       },
       {
+        "path": "tests/test_data_002_audit_instrumentation.py",
+        "tests": [
+          {
+            "line": 28,
+            "markers": [],
+            "name": "test_topic_create_update_delete_emit_one_audit_event_each"
+          },
+          {
+            "line": 70,
+            "markers": [],
+            "name": "test_exam_create_update_delete_emit_one_audit_event_each"
+          },
+          {
+            "line": 118,
+            "markers": [],
+            "name": "test_exam_publish_and_unpublish_emit_dedicated_audit_events"
+          },
+          {
+            "line": 164,
+            "markers": [],
+            "name": "test_question_create_via_bank_and_via_exam_emit_audit_events"
+          },
+          {
+            "line": 231,
+            "markers": [],
+            "name": "test_material_upload_and_delete_emit_audit_events_with_safe_metadata"
+          },
+          {
+            "line": 266,
+            "markers": [],
+            "name": "test_flashcard_deck_and_card_create_emit_audit_events"
+          },
+          {
+            "line": 303,
+            "markers": [],
+            "name": "test_submission_graded_emits_audit_event"
+          },
+          {
+            "line": 344,
+            "markers": [],
+            "name": "test_user_registration_emits_user_create_event_with_system_actor"
+          },
+          {
+            "line": 371,
+            "markers": [],
+            "name": "test_admin_role_change_and_disable_emit_audit_events"
+          },
+          {
+            "line": 419,
+            "markers": [],
+            "name": "test_topic_create_audit_failure_rolls_back_mutation"
+          },
+          {
+            "line": 448,
+            "markers": [],
+            "name": "test_exam_publish_audit_failure_rolls_back_mutation"
+          },
+          {
+            "line": 492,
+            "markers": [],
+            "name": "test_material_upload_audit_failure_rolls_back_row_and_deletes_stored_file"
+          },
+          {
+            "line": 527,
+            "markers": [],
+            "name": "test_user_role_change_audit_failure_rolls_back_mutation"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
         "path": "tests/test_demo_data_loader.py",
         "tests": [
           {
@@ -5395,6 +5466,42 @@
               "parametrize"
             ],
             "name": "test_admin_override_policy_fails_closed"
+          },
+          {
+            "line": 339,
+            "markers": [],
+            "name": "test_material_upload_policy_accepts_only_narrow_safe_metadata"
+          },
+          {
+            "line": 368,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_material_upload_policy_rejects_unsafe_metadata"
+          },
+          {
+            "line": 392,
+            "markers": [],
+            "name": "test_user_role_change_policy_accepts_a_valid_role_transition"
+          },
+          {
+            "line": 416,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_user_role_change_policy_fails_closed"
+          },
+          {
+            "line": 436,
+            "markers": [],
+            "name": "test_submission_graded_policy_accepts_a_numeric_score_change"
+          },
+          {
+            "line": 461,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_submission_graded_policy_rejects_non_numeric_or_missing_score"
           }
         ],
         "tier": "unit"
@@ -5656,7 +5763,7 @@
         "path": "tests/unit/test_material_storage_service.py",
         "tests": [
           {
-            "line": 38,
+            "line": 46,
             "markers": [],
             "name": "test_failed_material_commit_rolls_back_and_removes_stored_file"
           }

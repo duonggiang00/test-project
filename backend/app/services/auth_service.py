@@ -4,11 +4,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 import os
 import uuid
 
+from app.core.correlation import get_current_request_id, new_correlation_id
 from app.core.exceptions import AppException
 from app.models.user import User
+from app.schemas.audit import AuditActor, AuditEntity, AuditEventCreate
 from app.schemas.user import UserCreate, ForgotPasswordRequest, ResetPasswordRequest
 from app.schemas.token import Token
 from app.core.security import get_password_hash, verify_password, create_access_token, create_reset_token, verify_reset_token
+from app.services.audit_service import AuditService
 
 class AuthService:
     @staticmethod
@@ -27,7 +30,38 @@ class AuthService:
             role="student"
         )
         db.add(new_user)
-        db.commit()
+        db.flush()
+        try:
+            # Self-registration has no authenticated actor yet -- the
+            # system records its own account-creation action, matching
+            # user.create's registered policy (success_roles includes
+            # "system").
+            AuditService.record(
+                db,
+                AuditEventCreate(
+                    request_id=(
+                        get_current_request_id() or new_correlation_id()
+                    ),
+                    actor=AuditActor(
+                        actor_type="system",
+                        user_id=None,
+                        role="system",
+                    ),
+                    action="user.create",
+                    entity=AuditEntity(
+                        type="user",
+                        id=str(new_user.id),
+                        owner_id=None,
+                    ),
+                    outcome="success",
+                    changes={"role": {"before": None, "after": "student"}},
+                    metadata={},
+                ),
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(new_user)
         return new_user
 

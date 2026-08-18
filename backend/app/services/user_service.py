@@ -64,8 +64,17 @@ class UserService:
                 error_code="USER_ROLE_CHANGE_BLOCKED_BY_OWNED_DATA",
             )
         
+        before_role = user.role
         user.role = new_role
-        db.commit()
+        AuthorizationService.commit_with_audit(
+            db,
+            actor=actor,
+            entity_type="user",
+            entity_id=user.id,
+            owner_id=None,
+            action="user.role_change",
+            changes={"role": {"before": before_role, "after": new_role}},
+        )
         db.refresh(user)
         return user
 
@@ -79,7 +88,14 @@ class UserService:
             )
 
         soft_delete(user, actor.id)
-        db.commit()
+        AuthorizationService.commit_with_audit(
+            db,
+            actor=actor,
+            entity_type="user",
+            entity_id=user.id,
+            owner_id=None,
+            action="user.disable",
+        )
         return {"message": "User deleted successfully"}
 
     @staticmethod

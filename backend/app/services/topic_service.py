@@ -110,7 +110,15 @@ class TopicService:
             brief_ai_generated=topic_in.brief_ai_generated,
         )
         db.add(topic)
-        db.commit()
+        db.flush()
+        AuthorizationService.commit_with_audit(
+            db,
+            actor=current_user,
+            entity_type="topic",
+            entity_id=topic.id,
+            owner_id=topic.owner_id,
+            action="topic.create",
+        )
         db.refresh(topic)
         return topic
 
@@ -158,7 +166,7 @@ class TopicService:
         if topic_in.description is not None:
             topic.description = topic_in.description
 
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.UPDATE_OWNED_CONTENT,
@@ -166,6 +174,7 @@ class TopicService:
             entity_id=topic.id,
             owner_id=topic.owner_id,
             operation="update",
+            action="topic.update",
         )
         db.refresh(topic)
         return topic
@@ -218,7 +227,7 @@ class TopicService:
             )
 
         soft_delete(topic, current_user.id)
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.DELETE_OWNED_CONTENT,
@@ -226,6 +235,7 @@ class TopicService:
             entity_id=topic.id,
             owner_id=topic.owner_id,
             operation="delete",
+            action="topic.delete",
         )
 
     @staticmethod

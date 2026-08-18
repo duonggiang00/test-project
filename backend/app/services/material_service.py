@@ -146,7 +146,16 @@ class MaterialService:
                 ai_status="pending"
             )
             db.add(material)
-            db.commit()
+            db.flush()
+            AuthorizationService.commit_with_audit(
+                db,
+                actor=current_user,
+                entity_type="study_material",
+                entity_id=material.id,
+                owner_id=current_user.id,
+                action="material.upload",
+                metadata={"file_type": material.file_type},
+            )
             db.refresh(material)
         except Exception:
             db.rollback()
@@ -382,7 +391,7 @@ class MaterialService:
         file_path = material.file_path
 
         soft_delete(material, current_user.id)
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.DELETE_OWNED_CONTENT,
@@ -390,6 +399,8 @@ class MaterialService:
             entity_id=material.id,
             owner_id=material.uploader_id,
             operation="delete",
+            action="material.delete",
+            metadata={"cascade": cascade},
         )
 
         if file_path:

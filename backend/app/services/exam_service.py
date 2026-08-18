@@ -103,7 +103,15 @@ class ExamService:
             creator_id=current_user.id,
         )
         db.add(exam)
-        db.commit()
+        db.flush()
+        AuthorizationService.commit_with_audit(
+            db,
+            actor=current_user,
+            entity_type="exam",
+            entity_id=exam.id,
+            owner_id=exam.creator_id,
+            action="exam.create",
+        )
         db.refresh(exam)
         return exam
 
@@ -127,7 +135,8 @@ class ExamService:
         ExamService._raise_if_exams_have_submissions(db, {exam.id})
 
         ExamService._require_topic_owner(db, exam_in.topic_id, exam.creator_id)
-        if exam.is_published != exam_in.is_published:
+        was_published = exam.is_published
+        if was_published != exam_in.is_published:
             require_permission(current_user, Permission.PUBLISH_OWNED_CONTENT)
 
         exam.title = exam_in.title
@@ -136,7 +145,16 @@ class ExamService:
         exam.is_published = exam_in.is_published
         exam.topic_id = exam_in.topic_id
 
-        AuthorizationService.commit_with_admin_override(
+        if was_published != exam.is_published:
+            action = "exam.publish" if exam.is_published else "exam.unpublish"
+            changes = {
+                "is_published": {"before": was_published, "after": exam.is_published}
+            }
+        else:
+            action = "exam.update"
+            changes = {}
+
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.UPDATE_OWNED_CONTENT,
@@ -144,6 +162,8 @@ class ExamService:
             entity_id=exam.id,
             owner_id=exam.creator_id,
             operation="update",
+            action=action,
+            changes=changes,
         )
         db.refresh(exam)
         return exam
@@ -173,7 +193,7 @@ class ExamService:
             )
 
         soft_delete(exam, current_user.id)
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.DELETE_OWNED_CONTENT,
@@ -181,6 +201,7 @@ class ExamService:
             entity_id=exam.id,
             owner_id=exam.creator_id,
             operation="delete",
+            action="exam.delete",
         )
 
     @staticmethod
@@ -287,14 +308,17 @@ class ExamService:
                 )
             )
 
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.UPDATE_OWNED_CONTENT,
-            entity_type="exam",
-            entity_id=exam.id,
+            entity_type="question",
+            entity_id=question.id,
             owner_id=exam.creator_id,
+            override_entity_type="exam",
+            override_entity_id=exam.id,
             operation="create_child",
+            action="question.create",
         )
         fetched_question = db.scalar(
             select(Question)

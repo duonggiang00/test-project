@@ -118,6 +118,81 @@ class AuthorizationService:
             raise
 
     @staticmethod
+    def commit_with_audit(
+        db: Session,
+        *,
+        actor: Actor,
+        action: str,
+        entity_type: str,
+        entity_id: UUID,
+        owner_id: UUID | None,
+        permission: Permission | None = None,
+        override_entity_type: str | None = None,
+        override_entity_id: UUID | None = None,
+        operation: str | None = None,
+        changes: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        request_id: str | None = None,
+    ) -> None:
+        """Authorize, record one action-specific success event, and commit.
+
+        DATA-002 counterpart to `commit_with_admin_override`/`commit_restore`:
+        unlike `commit_with_admin_override`'s conditional `admin.override`
+        event, the `action` event here is always recorded on success,
+        regardless of actor. When `permission` is given, this additionally
+        layers the existing conditional `admin.override` check/event (using
+        `override_entity_type`/`override_entity_id` when the audited action
+        targets a child entity of the resource the permission check scopes
+        against, e.g. a question created under an exam) before the
+        action-specific event, mirroring `commit_with_admin_override`'s
+        authorize-then-commit shape. `permission=None` skips the
+        admin-override layer entirely -- appropriate for creates, which are
+        always self-owned and have no owned-permission scope to check.
+        """
+        try:
+            if permission is not None:
+                AuthorizationService.record_admin_override_if_required(
+                    db,
+                    actor=actor,
+                    permission=permission,
+                    entity_type=override_entity_type or entity_type,
+                    entity_id=override_entity_id or entity_id,
+                    owner_id=owner_id,
+                    operation=operation or "update",
+                    request_id=request_id,
+                )
+            resolved_request_id = (
+                request_id or get_current_request_id() or new_correlation_id()
+            )
+            AuditService.record(
+                db,
+                AuditEventCreate(
+                    request_id=resolved_request_id,
+                    actor=AuditActor(
+                        actor_type="user",
+                        user_id=actor.id,
+                        role=cast(
+                            Literal["admin", "teacher", "student", "system"],
+                            actor.role,
+                        ),
+                    ),
+                    action=action,
+                    entity=AuditEntity(
+                        type=entity_type,
+                        id=str(entity_id),
+                        owner_id=owner_id,
+                    ),
+                    outcome="success",
+                    changes=changes or {},
+                    metadata=metadata or {},
+                ),
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+
+    @staticmethod
     def commit_restore(
         db: Session,
         *,

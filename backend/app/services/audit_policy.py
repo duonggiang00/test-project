@@ -132,6 +132,56 @@ def _validate_restore(
         _reject_invalid_action_payload()
 
 
+def _validate_no_extra_payload(
+    _changes: dict[str, JsonValue],
+    _metadata: dict[str, JsonValue],
+) -> None:
+    # `change_fields`/`metadata_fields` are already empty for these actions,
+    # so `validate_safe_mapping`'s allowlist check has already rejected any
+    # provided field before this runs -- nothing further to check here.
+    return None
+
+
+def _validate_material_upload(
+    _changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    file_type = metadata.get("file_type")
+    if file_type is not None and file_type not in {"pdf", "docx", "pptx", "txt"}:
+        _reject_invalid_action_payload()
+
+
+def _validate_material_delete(
+    _changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    cascade = metadata.get("cascade")
+    if cascade is not None and not isinstance(cascade, bool):
+        _reject_invalid_action_payload()
+
+
+def _validate_submission_graded(
+    changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    total_score = changes.get("total_score")
+    if total_score is not None:
+        if not isinstance(total_score, dict) or set(total_score) != {
+            "before",
+            "after",
+        }:
+            _reject_invalid_action_payload()
+        for key in ("before", "after"):
+            value = total_score[key]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                _reject_invalid_action_payload()
+    max_score = metadata.get("max_score")
+    if max_score is not None and (
+        isinstance(max_score, bool) or not isinstance(max_score, (int, float))
+    ):
+        _reject_invalid_action_payload()
+
+
 _ADMIN_OVERRIDE_OPERATIONS = frozenset(
     {
         "bulk_assign",
@@ -212,6 +262,193 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             change_fields=frozenset({"is_published"}),
             metadata_fields=frozenset({"context_source_ids"}),
             validate_payload=_validate_exam_publish,
+        ),
+        "exam.unpublish": AuditActionPolicy(
+            entity_types=frozenset({"exam"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset({"admin", "student", "teacher"}),
+            failure_roles=frozenset({"admin", "teacher"}),
+            owner_requirement="required",
+            required_success_change_fields=frozenset({"is_published"}),
+            change_fields=frozenset({"is_published"}),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_exam_publish,
+        ),
+        "exam.create": AuditActionPolicy(
+            entity_types=frozenset({"exam"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "exam.update": AuditActionPolicy(
+            entity_types=frozenset({"exam"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "exam.delete": AuditActionPolicy(
+            entity_types=frozenset({"exam"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "topic.create": AuditActionPolicy(
+            entity_types=frozenset({"topic"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "topic.update": AuditActionPolicy(
+            entity_types=frozenset({"topic"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "topic.delete": AuditActionPolicy(
+            entity_types=frozenset({"topic"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "question.create": AuditActionPolicy(
+            entity_types=frozenset({"question"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "question.update": AuditActionPolicy(
+            entity_types=frozenset({"question"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "question.delete": AuditActionPolicy(
+            entity_types=frozenset({"question"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "material.upload": AuditActionPolicy(
+            entity_types=frozenset({"study_material"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset({"file_type"}),
+            validate_payload=_validate_material_upload,
+        ),
+        "material.delete": AuditActionPolicy(
+            entity_types=frozenset({"study_material"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset({"cascade"}),
+            validate_payload=_validate_material_delete,
+        ),
+        "flashcard_deck.create": AuditActionPolicy(
+            entity_types=frozenset({"flashcard_deck"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "flashcard.create": AuditActionPolicy(
+            entity_types=frozenset({"flashcard"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="optional",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "submission.graded": AuditActionPolicy(
+            entity_types=frozenset({"submission"}),
+            success_roles=frozenset({"student"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="required",
+            required_success_change_fields=frozenset({"total_score"}),
+            change_fields=frozenset({"total_score"}),
+            metadata_fields=frozenset({"max_score"}),
+            validate_payload=_validate_submission_graded,
+        ),
+        "user.role_change": AuditActionPolicy(
+            entity_types=frozenset({"user"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="forbidden",
+            required_success_change_fields=frozenset({"role"}),
+            change_fields=frozenset({"role"}),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_user_create,
+        ),
+        "user.disable": AuditActionPolicy(
+            entity_types=frozenset({"user"}),
+            success_roles=frozenset({"admin"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="forbidden",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
         ),
         "restore.performed": AuditActionPolicy(
             entity_types=_RESTORE_ENTITY_TYPES,

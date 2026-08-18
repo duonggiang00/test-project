@@ -121,7 +121,7 @@ class FlashcardService:
 
         topic.brief_content = brief_content
         topic.brief_ai_generated = brief_ai_generated
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.UPDATE_OWNED_CONTENT,
@@ -129,6 +129,7 @@ class FlashcardService:
             entity_id=topic.id,
             owner_id=topic.owner_id,
             operation="update",
+            action="topic.update",
         )
         return topic
 
@@ -154,14 +155,17 @@ class FlashcardService:
         new_deck = FlashcardDeck(**deck_data)
         db.add(new_deck)
         db.flush()
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.UPDATE_OWNED_CONTENT,
-            entity_type="topic",
-            entity_id=topic.id,
+            entity_type="flashcard_deck",
+            entity_id=new_deck.id,
             owner_id=topic.owner_id,
+            override_entity_type="topic",
+            override_entity_id=topic.id,
             operation="create_child",
+            action="flashcard_deck.create",
         )
         db.refresh(new_deck)
         return new_deck
@@ -241,14 +245,17 @@ class FlashcardService:
         new_card = Flashcard(**card_data)
         db.add(new_card)
         db.flush()
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.UPDATE_OWNED_CONTENT,
-            entity_type="flashcard_deck",
-            entity_id=deck.id,
+            entity_type="flashcard",
+            entity_id=new_card.id,
             owner_id=deck.topic.owner_id,
+            override_entity_type="flashcard_deck",
+            override_entity_id=deck.id,
             operation="create_child",
+            action="flashcard.create",
         )
         db.refresh(new_card)
         return new_card

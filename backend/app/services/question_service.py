@@ -159,7 +159,14 @@ class QuestionService:
                     is_correct=option_in.is_correct,
                 )
             )
-        db.commit()
+        AuthorizationService.commit_with_audit(
+            db,
+            actor=current_user,
+            entity_type="question",
+            entity_id=question.id,
+            owner_id=current_user.id,
+            action="question.create",
+        )
         fetched_question = db.scalar(
             select(Question)
             .options(selectinload(Question.options))
@@ -246,7 +253,7 @@ class QuestionService:
                     )
                 )
 
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.UPDATE_OWNED_CONTENT,
@@ -254,6 +261,7 @@ class QuestionService:
             entity_id=question.id,
             owner_id=owner_id,
             operation="update",
+            action="question.update",
         )
         fetched_question = db.scalar(
             select(Question)
@@ -285,7 +293,7 @@ class QuestionService:
 
         owner_id = QuestionService._effective_owner_id(question)
         soft_delete(question, current_user.id)
-        AuthorizationService.commit_with_admin_override(
+        AuthorizationService.commit_with_audit(
             db,
             actor=current_user,
             permission=Permission.DELETE_OWNED_CONTENT,
@@ -293,6 +301,7 @@ class QuestionService:
             entity_id=question.id,
             owner_id=owner_id,
             operation="delete",
+            action="question.delete",
         )
 
     @staticmethod

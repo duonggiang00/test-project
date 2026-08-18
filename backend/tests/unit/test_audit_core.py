@@ -329,3 +329,147 @@ def test_admin_override_policy_fails_closed(overrides):
 
     assert "canary" not in str(raised.value).casefold()
     assert session.added == []
+
+
+# ---------------------------------------------------------------------------
+# DATA-002: policy shape/redaction tests for the newly registered actions.
+# ---------------------------------------------------------------------------
+
+
+def test_material_upload_policy_accepts_only_narrow_safe_metadata():
+    session = FakeSession()
+    owner_id = uuid.uuid4()
+    event = build_event(
+        actor=AuditActor(actor_type="user", user_id=uuid.uuid4(), role="teacher"),
+        action="material.upload",
+        entity=AuditEntity(
+            type="study_material",
+            id=str(uuid.uuid4()),
+            owner_id=owner_id,
+        ),
+        changes={},
+        metadata={"file_type": "pdf"},
+    )
+
+    record = AuditService.record(session, event)
+
+    assert record.action == "material.upload"
+    assert record.event_metadata == {"file_type": "pdf"}
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        {"file_type": "exe"},
+        {"file_path": "uploads/materials/canary-secret.txt"},
+        {"original_filename": "canary-secret.txt"},
+    ],
+)
+def test_material_upload_policy_rejects_unsafe_metadata(metadata):
+    session = FakeSession()
+    event = build_event(
+        actor=AuditActor(actor_type="user", user_id=uuid.uuid4(), role="teacher"),
+        action="material.upload",
+        entity=AuditEntity(
+            type="study_material",
+            id=str(uuid.uuid4()),
+            owner_id=uuid.uuid4(),
+        ),
+        changes={},
+        metadata=metadata,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="action-specific schema|outside its allowlist|forbidden",
+    ) as raised:
+        AuditService.record(session, event)
+
+    assert "canary" not in str(raised.value).casefold()
+    assert session.added == []
+
+
+def test_user_role_change_policy_accepts_a_valid_role_transition():
+    session = FakeSession()
+    event = build_event(
+        actor=AuditActor(actor_type="user", user_id=uuid.uuid4(), role="admin"),
+        action="user.role_change",
+        entity=AuditEntity(type="user", id=str(uuid.uuid4()), owner_id=None),
+        changes={"role": {"before": "student", "after": "teacher"}},
+        metadata={},
+    )
+
+    record = AuditService.record(session, event)
+
+    assert record.owner_id is None
+    assert record.changes == {"role": {"before": "student", "after": "teacher"}}
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"entity": AuditEntity(type="user", id=str(uuid.uuid4()), owner_id=uuid.uuid4())},
+        {"changes": {"role": {"before": "student", "after": "superadmin"}}},
+        {"changes": {}},
+    ],
+)
+def test_user_role_change_policy_fails_closed(overrides):
+    event_values = {
+        "actor": AuditActor(actor_type="user", user_id=uuid.uuid4(), role="admin"),
+        "action": "user.role_change",
+        "entity": AuditEntity(type="user", id=str(uuid.uuid4()), owner_id=None),
+        "changes": {"role": {"before": "student", "after": "teacher"}},
+        "metadata": {},
+    }
+    event_values.update(overrides)
+    session = FakeSession()
+
+    with pytest.raises(
+        ValueError,
+        match="action-specific schema|outside its allowlist",
+    ):
+        AuditService.record(session, build_event(**event_values))
+
+    assert session.added == []
+
+
+def test_submission_graded_policy_accepts_a_numeric_score_change():
+    session = FakeSession()
+    owner_id = uuid.uuid4()
+    event = build_event(
+        actor=AuditActor(actor_type="user", user_id=owner_id, role="student"),
+        action="submission.graded",
+        entity=AuditEntity(type="submission", id=str(uuid.uuid4()), owner_id=owner_id),
+        changes={"total_score": {"before": 0.0, "after": 4.5}},
+        metadata={"max_score": 5},
+    )
+
+    record = AuditService.record(session, event)
+
+    assert record.changes == {"total_score": {"before": 0.0, "after": 4.5}}
+    assert record.event_metadata == {"max_score": 5}
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"total_score": {"before": "0", "after": 4.5}},
+        {"total_score": {"before": 0.0, "after": True}},
+        {},
+    ],
+)
+def test_submission_graded_policy_rejects_non_numeric_or_missing_score(changes):
+    session = FakeSession()
+    owner_id = uuid.uuid4()
+    event = build_event(
+        actor=AuditActor(actor_type="user", user_id=owner_id, role="student"),
+        action="submission.graded",
+        entity=AuditEntity(type="submission", id=str(uuid.uuid4()), owner_id=owner_id),
+        changes=changes,
+        metadata={},
+    )
+
+    with pytest.raises(ValueError, match="action-specific schema"):
+        AuditService.record(session, event)
+
+    assert session.added == []

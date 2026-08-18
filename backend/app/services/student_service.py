@@ -4,9 +4,12 @@ from uuid import UUID
 from datetime import datetime, timezone
 from typing import Optional
 
+from app.core.correlation import get_current_request_id, new_correlation_id
 from app.models.exam import Exam, Question
 from app.models.submission import Submission, SubmissionAnswer
+from app.schemas.audit import AuditActor, AuditEntity, AuditEventCreate
 from app.schemas.student import SubmitExamRequest, SubmitExamResponse, StudentExamResultResponse, StudentExamResultAnswer
+from app.services.audit_service import AuditService
 from app.services.grading_service import GradingService
 from app.core.exceptions import AppException
 from app.services.content_visibility import StudentContentVisibility
@@ -138,8 +141,36 @@ class StudentService:
         submission.end_time = now
         submission.total_score = total_score
         submission.status = "submitted"
-        
-        db.commit()
+
+        try:
+            AuditService.record(
+                db,
+                AuditEventCreate(
+                    request_id=(
+                        get_current_request_id() or new_correlation_id()
+                    ),
+                    actor=AuditActor(
+                        actor_type="user",
+                        user_id=current_user_id,
+                        role="student",
+                    ),
+                    action="submission.graded",
+                    entity=AuditEntity(
+                        type="submission",
+                        id=str(submission.id),
+                        owner_id=current_user_id,
+                    ),
+                    outcome="success",
+                    changes={
+                        "total_score": {"before": 0.0, "after": total_score}
+                    },
+                    metadata={"max_score": max_score},
+                ),
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         db.refresh(submission)
         
         return SubmitExamResponse(

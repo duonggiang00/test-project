@@ -23,6 +23,14 @@ class FailingCommitSession:
         self.rollback_called = False
 
     def add(self, instance: object) -> None:
+        # A real Session assigns the primary key's Python-side default
+        # during flush; DATA-002's upload_material now flushes before
+        # building the audit event so it has a real material ID to
+        # reference, so this fake session simulates that ID assignment.
+        if getattr(instance, "id", None) is None:
+            instance.id = uuid4()
+
+    def flush(self) -> None:
         pass
 
     def commit(self) -> None:
