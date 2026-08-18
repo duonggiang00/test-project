@@ -728,6 +728,9 @@ class MaterialService:
     ) -> AIGenerationJob:
         return AIGenerationService.get_job_for_review(db, job_id, current_user)
 
+    # Target status -> the audit vocabulary's name for the decision.
+    _REVIEW_OPERATIONS = {"approved": "approve", "rejected": "reject"}
+
     @staticmethod
     def _review_decision(
         db: Session,
@@ -739,15 +742,24 @@ class MaterialService:
         job = AIGenerationService.get_job_for_review(
             db, job_id, current_user, lock=True
         )
-        AIGenerationService.commit_transition(
-            db,
-            job,
-            target_status,
-            actor=current_user,
-            expected_version=expected_version,
-            override_permission=Permission.APPROVE_OWNED_AI_CONTENT,
-            override_operation=target_status,
-        )
+        try:
+            AIGenerationService.commit_transition(
+                db,
+                job,
+                target_status,
+                actor=current_user,
+                expected_version=expected_version,
+                override_permission=Permission.APPROVE_OWNED_AI_CONTENT,
+                override_operation=MaterialService._REVIEW_OPERATIONS[
+                    target_status
+                ],
+            )
+        except Exception:
+            # Release the row lock taken by `get_job_for_review(lock=True)`
+            # instead of leaving the request's transaction open behind a
+            # refused decision.
+            db.rollback()
+            raise
         return job
 
     @staticmethod
@@ -797,34 +809,53 @@ class MaterialService:
         job = AIGenerationService.get_job_for_review(
             db, job_id, current_user, lock=True
         )
-        # Fail before writing anything when the job has not been approved.
+        # Both guards run before a single row is built. Deferring the version
+        # check to `commit_transition` would leave the rejected publish's rows
+        # pending in the session, where the next commit on that session would
+        # flush them -- a stale reviewer would publish after all.
         AIGenerationService.assert_transition_allowed(job.status, "published")
-
-        material = db.scalar(
-            select(StudyMaterial).where(StudyMaterial.id == job.material_id)
-        )
-        if material is None or material.uploader_id is None:
-            raise AppException(status_code=404, error_code="MATERIAL_NOT_FOUND")
-
-        publisher_name = MaterialService._PUBLISHERS.get(job.use_case)
-        if publisher_name is None:
+        if (
+            request.expected_version is not None
+            and job.version != request.expected_version
+        ):
             raise AppException(
-                status_code=409,
-                error_code="AI_JOB_USE_CASE_NOT_PUBLISHABLE",
+                status_code=409, error_code="AI_JOB_VERSION_CONFLICT"
             )
-        published = getattr(MaterialService, publisher_name)(
-            db, job, material, request
-        )
 
-        AIGenerationService.commit_transition(
-            db,
-            job,
-            "published",
-            actor=current_user,
-            expected_version=request.expected_version,
-            override_permission=Permission.APPROVE_OWNED_AI_CONTENT,
-            override_operation="publish",
-        )
+        try:
+            material = db.scalar(
+                select(StudyMaterial).where(StudyMaterial.id == job.material_id)
+            )
+            if material is None or material.uploader_id is None:
+                raise AppException(
+                    status_code=404, error_code="MATERIAL_NOT_FOUND"
+                )
+
+            publisher_name = MaterialService._PUBLISHERS.get(job.use_case)
+            if publisher_name is None:
+                raise AppException(
+                    status_code=409,
+                    error_code="AI_JOB_USE_CASE_NOT_PUBLISHABLE",
+                )
+            published = getattr(MaterialService, publisher_name)(
+                db, job, material, request
+            )
+
+            AIGenerationService.commit_transition(
+                db,
+                job,
+                "published",
+                actor=current_user,
+                expected_version=request.expected_version,
+                override_permission=Permission.APPROVE_OWNED_AI_CONTENT,
+                override_operation="publish",
+            )
+        except Exception:
+            # Anything that fails after the first `db.add` must take the
+            # whole publish with it: a half-written deck plus a job still
+            # marked `approved` is worse than nothing written at all.
+            db.rollback()
+            raise
         return {"job_id": str(job.id), "status": "published", **published}
 
     @staticmethod

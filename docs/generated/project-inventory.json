@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "def7238b943c59ea68272bd91b3ba3e0d2341f4c",
-    "source_commit_timestamp": "2026-08-19T00:36:54+07:00",
-    "source_tree_sha256": "1f1bb448df7cbb4734f99b77c02fdaaa112b5e210ca090dba207047d23c237af",
-    "relevant_file_count": 337,
+    "source_commit": "f6ba04e69dc8e3c1cfaaa64b4fe3428d473833b0",
+    "source_commit_timestamp": "2026-08-19T01:07:22+07:00",
+    "source_tree_sha256": "295e6fe4755a88e07cf16ad936e647b38c2851c74c527a9a59f915a323a6e41f",
+    "relevant_file_count": 338,
     "alembic_heads": [
       "c4e1a70b58d9"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 242,
+    "backend_test_functions": 258,
     "frontend_test_calls": 64
   },
   "backend": {
@@ -5240,6 +5240,82 @@
         "tier": "integration"
       },
       {
+        "path": "tests/test_ai_generation_review.py",
+        "tests": [
+          {
+            "line": 171,
+            "markers": [],
+            "name": "test_generated_questions_reach_the_live_table_only_after_approve_then_publish"
+          },
+          {
+            "line": 248,
+            "markers": [],
+            "name": "test_publish_is_refused_directly_from_generated"
+          },
+          {
+            "line": 301,
+            "markers": [],
+            "name": "test_reapproving_and_republishing_duplicate_nothing"
+          },
+          {
+            "line": 339,
+            "markers": [],
+            "name": "test_a_stale_reviewer_version_is_refused"
+          },
+          {
+            "line": 375,
+            "markers": [],
+            "name": "test_flashcards_and_topic_brief_publish_through_the_same_gate"
+          },
+          {
+            "line": 437,
+            "markers": [],
+            "name": "test_rejecting_a_job_closes_it_without_writing_anything"
+          },
+          {
+            "line": 456,
+            "markers": [],
+            "name": "test_a_provider_failure_records_the_sanitized_code_and_publishes_nothing"
+          },
+          {
+            "line": 498,
+            "markers": [],
+            "name": "test_review_authorization_across_the_five_actor_kinds"
+          },
+          {
+            "line": 573,
+            "markers": [],
+            "name": "test_an_admin_approving_a_teachers_job_is_recorded_as_the_reviewer"
+          },
+          {
+            "line": 630,
+            "markers": [],
+            "name": "test_uploading_a_material_creates_a_draft_not_questions"
+          },
+          {
+            "line": 679,
+            "markers": [],
+            "name": "test_each_transition_emits_exactly_one_correctly_shaped_event"
+          },
+          {
+            "line": 726,
+            "markers": [],
+            "name": "test_a_refused_transition_emits_no_audit_event"
+          },
+          {
+            "line": 757,
+            "markers": [],
+            "name": "test_a_rolled_back_publish_writes_neither_rows_nor_an_event"
+          },
+          {
+            "line": 806,
+            "markers": [],
+            "name": "test_creating_a_grade_suggestion_changes_no_awarded_points"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
         "path": "tests/test_ai_studio.py",
         "tests": [
           {
@@ -5326,19 +5402,29 @@
         "path": "tests/test_authorization_concurrency.py",
         "tests": [
           {
-            "line": 32,
+            "line": 112,
             "markers": [],
             "name": "test_authenticated_content_write_serializes_against_role_demotion"
           },
           {
-            "line": 88,
+            "line": 168,
             "markers": [],
             "name": "test_material_cascade_serializes_concurrent_flashcard_review"
           },
           {
-            "line": 206,
+            "line": 286,
             "markers": [],
             "name": "test_background_admin_override_serializes_against_demotion"
+          },
+          {
+            "line": 375,
+            "markers": [],
+            "name": "test_concurrent_approvals_of_one_generation_job_leave_a_single_decision"
+          },
+          {
+            "line": 439,
+            "markers": [],
+            "name": "test_concurrent_publishes_of_one_generation_job_write_one_set_of_rows"
           }
         ],
         "tier": "integration"

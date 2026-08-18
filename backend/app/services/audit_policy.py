@@ -245,6 +245,11 @@ def _validate_submission_graded(
 
 _ADMIN_OVERRIDE_OPERATIONS = frozenset(
     {
+        # AI-002 review decisions. `publish` already covered writing the
+        # approved content out; approving and rejecting a draft are distinct
+        # decisions and are named as such rather than folded into `update`.
+        "approve",
+        "reject",
         "bulk_assign",
         "create_child",
         "delete",
@@ -284,6 +289,10 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
         "admin.override": AuditActionPolicy(
             entity_types=frozenset(
                 {
+                    # An admin reviewing another teacher's AI draft is an
+                    # override like any other and must be auditable as one
+                    # (AI-002).
+                    "ai_generation_job",
                     "exam",
                     "flashcard",
                     "flashcard_deck",

@@ -3,20 +3,100 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from threading import Event
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from app.api.deps import get_current_user
 from app.core.exceptions import AppException
 from app.db.session import SessionLocal
+from app.models.ai_generation import AIGenerationJob
 from app.models.audit_event import AuditEvent
+from app.models.exam import Question
 from app.models.flashcard import Flashcard, FlashcardDeck, FlashcardProgress
 from app.models.material import StudyMaterial
 from app.models.topic import Topic
 from app.models.user import User
+from app.services.ai_generation_service import AIGenerationService
 from app.services.ai_service import mock_generate_topic_kit
 from app.services.authorization_service import AuthorizationService
 from app.services.flashcard_service import FlashcardService
 from app.services.material_service import MaterialService
 from app.services.user_service import UserService
+
+AI_DRAFT = {
+    "questions": [
+        {
+            "type": "MULTIPLE_CHOICE",
+            "content": "Which planet is closest to the sun?",
+            "points": 1,
+            "options": [
+                {"content": "Mercury", "is_correct": True},
+                {"content": "Neptune", "is_correct": False},
+            ],
+        },
+        {
+            "type": "MULTIPLE_CHOICE",
+            "content": "How many continents are there?",
+            "points": 1,
+            "options": [
+                {"content": "Seven", "is_correct": True},
+                {"content": "Three", "is_correct": False},
+            ],
+        },
+    ]
+}
+
+
+def _awaiting_review_job(db, owner_id):
+    """An AI generation job parked at `awaiting_review`, fully committed."""
+    material = StudyMaterial(
+        uploader_id=owner_id,
+        title=f"concurrent-review-{uuid.uuid4()}.txt",
+        file_type="txt",
+        file_path=f"uploads/materials/concurrent-review-{uuid.uuid4()}.txt",
+        ai_status="completed",
+    )
+    db.add(material)
+    db.commit()
+    actor = db.get(User, owner_id)
+    assert actor is not None
+
+    job = AIGenerationService.create_job(
+        db,
+        owner_id=owner_id,
+        material_id=material.id,
+        use_case="question_generation",
+    )
+    AIGenerationService.commit_transition(db, job, "processing", actor=actor)
+    AIGenerationService.commit_transition(
+        db, job, "generated", actor=actor, draft_payload=AI_DRAFT
+    )
+    AIGenerationService.commit_transition(db, job, "awaiting_review", actor=actor)
+    return job.id, material.id
+
+
+def _pause_transition_on(monkeypatch, target_status, ready, release):
+    """Hold the first transition to `target_status` open inside its lock.
+
+    `_review_decision`/`publish_generation_job` take the row lock in
+    `get_job_for_review(lock=True)` and only then call `commit_transition`,
+    so pausing at its entry parks the first actor mid-transaction with the
+    lock held -- which is exactly the window a second reviewer would race
+    into.
+    """
+    original = AIGenerationService.commit_transition
+    state = {"paused": False}
+
+    def paused_commit_transition(session, job, status, **kwargs):
+        if status == target_status and not state["paused"]:
+            state["paused"] = True
+            ready.set()
+            if not release.wait(timeout=5):
+                raise RuntimeError("Timed out waiting to release the first actor")
+        return original(session, job, status, **kwargs)
+
+    monkeypatch.setattr(
+        AIGenerationService, "commit_transition", paused_commit_transition
+    )
+    return original
 
 
 class NoopStorage:
@@ -290,3 +370,125 @@ def test_background_admin_override_serializes_against_demotion(
     assert event is not None
     assert event.actor_role == "admin"
     assert event.owner_id == test_teacher["id"]
+
+
+def test_concurrent_approvals_of_one_generation_job_leave_a_single_decision(
+    db,
+    test_teacher,
+    test_admin,
+    monkeypatch,
+):
+    """Two reviewers approving at once: one decision, one reviewer, one event.
+
+    The second approval must not silently overwrite the first reviewer's
+    identity -- `reviewer_id` is the record of who signed off, so a
+    last-writer-wins race would misattribute the decision.
+    """
+    job_id, material_id = _awaiting_review_job(db, test_teacher["id"])
+
+    first_locked = Event()
+    release_first = Event()
+    _pause_transition_on(monkeypatch, "approved", first_locked, release_first)
+
+    def approve_as(user_id) -> str:
+        with SessionLocal() as session:
+            actor = session.get(User, user_id)
+            assert actor is not None
+            try:
+                MaterialService.approve_generation_job(session, job_id, actor)
+            except AppException as exc:
+                session.rollback()
+                return exc.error_code
+            return "approved"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        winner = executor.submit(approve_as, test_teacher["id"])
+        assert first_locked.wait(timeout=5)
+        loser = executor.submit(approve_as, test_admin["id"])
+        try:
+            # Blocked on the row lock the first approval holds.
+            assert_future_is_blocked(loser)
+        finally:
+            release_first.set()
+        assert winner.result(timeout=5) == "approved"
+        # Once the lock lifts, the second reviewer re-reads an `approved`
+        # row, and approved -> approved is not in the allowlist.
+        assert loser.result(timeout=5) == "AI_JOB_INVALID_TRANSITION"
+
+    db.expire_all()
+    job = db.get(AIGenerationJob, job_id)
+    assert job.status == "approved"
+    assert job.reviewer_id == test_teacher["id"]
+    # requested -> processing -> generated -> awaiting_review -> approved.
+    assert job.version == 5
+
+    approvals = db.scalar(
+        select(func.count(AuditEvent.event_id)).where(
+            AuditEvent.entity_type == "ai_generation_job",
+            AuditEvent.entity_id == str(job_id),
+            AuditEvent.action == "ai.generation.approved",
+        )
+    )
+    assert approvals == 1
+    # The losing approval published nothing on its way to being refused.
+    assert db.scalar(
+        select(func.count(Question.id)).where(Question.material_id == material_id)
+    ) == 0
+
+
+def test_concurrent_publishes_of_one_generation_job_write_one_set_of_rows(
+    db,
+    test_teacher,
+    test_admin,
+    monkeypatch,
+):
+    """The double-publish race: two publishers, one set of questions."""
+    job_id, material_id = _awaiting_review_job(db, test_teacher["id"])
+    actor = db.get(User, test_teacher["id"])
+    MaterialService.approve_generation_job(db, job_id, actor)
+
+    first_locked = Event()
+    release_first = Event()
+    _pause_transition_on(monkeypatch, "published", first_locked, release_first)
+
+    def publish_as(user_id) -> str:
+        with SessionLocal() as session:
+            publisher = session.get(User, user_id)
+            assert publisher is not None
+            try:
+                MaterialService.publish_generation_job(
+                    session, job_id, publisher
+                )
+            except AppException as exc:
+                session.rollback()
+                return exc.error_code
+            return "published"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        winner = executor.submit(publish_as, test_teacher["id"])
+        assert first_locked.wait(timeout=5)
+        loser = executor.submit(publish_as, test_admin["id"])
+        try:
+            assert_future_is_blocked(loser)
+        finally:
+            release_first.set()
+        assert winner.result(timeout=5) == "published"
+        assert loser.result(timeout=5) == "AI_JOB_INVALID_TRANSITION"
+
+    db.expire_all()
+    # The decisive assertion: the draft holds two questions, and exactly two
+    # questions exist. A second publish would have made four.
+    assert db.scalar(
+        select(func.count(Question.id)).where(Question.material_id == material_id)
+    ) == 2
+    job = db.get(AIGenerationJob, job_id)
+    assert job.status == "published"
+    assert job.published_at is not None
+    published_events = db.scalar(
+        select(func.count(AuditEvent.event_id)).where(
+            AuditEvent.entity_type == "ai_generation_job",
+            AuditEvent.entity_id == str(job_id),
+            AuditEvent.action == "ai.generation.published",
+        )
+    )
+    assert published_events == 1
