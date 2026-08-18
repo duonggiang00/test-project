@@ -34,7 +34,11 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppException
 from app.core.permissions import Permission
-from app.models.ai_generation import AIGenerationJob, AIGradeSuggestion
+from app.models.ai_generation import (
+    AI_JOB_STATUSES,
+    AIGenerationJob,
+    AIGradeSuggestion,
+)
 from app.models.user import User
 from app.services.authorization_service import AuthorizationService
 
@@ -122,6 +126,35 @@ class AIGenerationService:
         return job
 
     @staticmethod
+    def list_jobs_statement(
+        current_user: User,
+        *,
+        status: str | None = None,
+        material_id: UUID | None = None,
+    ):
+        """Owner-scoped review queue, newest first.
+
+        Scoping happens in SQL rather than after the fetch so another
+        teacher's jobs never appear in a page count, matching
+        `scope_owned_statement`'s treatment of every other owned list.
+        """
+        if status is not None and status not in AI_JOB_STATUSES:
+            raise AppException(status_code=422, error_code="AI_JOB_INVALID_STATUS")
+        statement = AuthorizationService.scope_owned_statement(
+            select(AIGenerationJob),
+            current_user,
+            Permission.APPROVE_OWNED_AI_CONTENT,
+            AIGenerationJob.owner_id,
+        )
+        if status is not None:
+            statement = statement.where(AIGenerationJob.status == status)
+        if material_id is not None:
+            statement = statement.where(AIGenerationJob.material_id == material_id)
+        return statement.order_by(
+            AIGenerationJob.created_at.desc(), AIGenerationJob.id
+        )
+
+    @staticmethod
     def assert_transition_allowed(current_status: str, target_status: str) -> None:
         if (current_status, target_status) not in ALLOWED_TRANSITIONS:
             raise AppException(
@@ -189,8 +222,22 @@ class AIGenerationService:
         expected_version: int | None = None,
         draft_payload: Any | None = None,
         failure_code: str | None = None,
+        override_permission: Permission | None = None,
+        override_entity_type: str | None = None,
+        override_entity_id: UUID | None = None,
+        override_operation: str | None = None,
+        request_id: str | None = None,
     ) -> AIGenerationJob:
-        """Transition and commit atomically with exactly one audit event."""
+        """Transition and commit atomically with exactly one audit event.
+
+        The `override_*` arguments are passed straight through to
+        `commit_with_audit`'s conditional `admin.override` layer, so a
+        non-owning admin driving a transition still produces the same
+        `admin.override` event the rest of the codebase records. They are
+        optional because the owning teacher's own transitions need no
+        override event, and the background generation worker acts as the
+        material's own uploader.
+        """
         previous_status = job.status
         AIGenerationService.transition(
             db,
@@ -208,8 +255,13 @@ class AIGenerationService:
             entity_type="ai_generation_job",
             entity_id=job.id,
             owner_id=job.owner_id,
+            permission=override_permission,
+            override_entity_type=override_entity_type,
+            override_entity_id=override_entity_id,
+            operation=override_operation,
             changes={"status": {"before": previous_status, "after": target_status}},
             metadata={"use_case": job.use_case},
+            request_id=request_id,
         )
         return job
 

@@ -11,9 +11,8 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.material import (
     MaterialResponse, MaterialDetailResponse,
-    GenerateQuestionsRequest, SaveQuestionsRequest,
-    GenerateFlashcardsRequest, SaveFlashcardsRequest,
-    SaveTopicBriefRequest
+    GenerateQuestionsRequest,
+    GenerateFlashcardsRequest,
 )
 from app.schemas.question import QuestionResponse
 from app.api.deps import get_current_active_teacher
@@ -148,20 +147,6 @@ def generate_questions(
         current_user=current_user,
     )
 
-@router.post("/{material_id}/save-questions")
-def save_questions(
-    material_id: UUID,
-    request: SaveQuestionsRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_teacher)
-):
-    return MaterialService.save_questions(
-        db=db,
-        material_id=material_id,
-        request=request,
-        current_user=current_user,
-    )
-
 @router.post("/{material_id}/generate-flashcards")
 def generate_flashcards(
     material_id: UUID,
@@ -170,20 +155,6 @@ def generate_flashcards(
     current_user: User = Depends(get_current_active_teacher)
 ):
     return MaterialService.generate_flashcards(
-        db=db,
-        material_id=material_id,
-        request=request,
-        current_user=current_user,
-    )
-
-@router.post("/{material_id}/save-flashcards")
-def save_flashcards_endpoint(
-    material_id: UUID,
-    request: SaveFlashcardsRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_teacher)
-):
-    return MaterialService.save_flashcards(
         db=db,
         material_id=material_id,
         request=request,
@@ -199,19 +170,5 @@ def generate_topic_brief(
     return MaterialService.generate_topic_brief(
         db=db,
         material_id=material_id,
-        current_user=current_user,
-    )
-
-@router.post("/{material_id}/save-topic-brief")
-def save_topic_brief_endpoint(
-    material_id: UUID,
-    request: SaveTopicBriefRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_teacher)
-):
-    return MaterialService.save_topic_brief(
-        db=db,
-        material_id=material_id,
-        request=request,
         current_user=current_user,
     )

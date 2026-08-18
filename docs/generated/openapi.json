@@ -1,6 +1,109 @@
 {
   "components": {
     "schemas": {
+      "AIGenerationJobResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "draft_payload": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draft Payload"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Code"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "owner_id": {
+            "format": "uuid",
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "reviewer_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "use_case": {
+            "title": "Use Case",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "owner_id",
+          "material_id",
+          "use_case",
+          "status",
+          "version",
+          "created_at"
+        ],
+        "title": "AIGenerationJobResponse",
+        "type": "object"
+      },
       "AnalyticsOverviewResponse": {
         "properties": {
           "completion_rate": {
@@ -768,46 +871,6 @@
         "title": "FlashcardReviewSubmit",
         "type": "object"
       },
-      "FlashcardSchema": {
-        "properties": {
-          "definition": {
-            "title": "Definition",
-            "type": "string"
-          },
-          "explanation": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Explanation"
-          },
-          "source_reference": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source Reference"
-          },
-          "term": {
-            "title": "Term",
-            "type": "string"
-          }
-        },
-        "required": [
-          "term",
-          "definition"
-        ],
-        "title": "FlashcardSchema",
-        "type": "object"
-      },
       "ForgotPasswordRequest": {
         "properties": {
           "email": {
@@ -1012,22 +1075,44 @@
         "title": "OptionResponse",
         "type": "object"
       },
-      "OptionSchema": {
+      "Page_AIGenerationJobResponse_": {
         "properties": {
-          "content": {
-            "title": "Content",
-            "type": "string"
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AIGenerationJobResponse"
+            },
+            "title": "Items",
+            "type": "array"
           },
-          "is_correct": {
-            "title": "Is Correct",
-            "type": "boolean"
+          "page": {
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "pages": {
+            "minimum": 0,
+            "title": "Pages",
+            "type": "integer"
+          },
+          "size": {
+            "minimum": 1,
+            "title": "Size",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
           }
         },
         "required": [
-          "content",
-          "is_correct"
+          "items",
+          "total",
+          "page",
+          "size",
+          "pages"
         ],
-        "title": "OptionSchema",
+        "title": "Page[AIGenerationJobResponse]",
         "type": "object"
       },
       "Page_ExamResponse_": {
@@ -1362,6 +1447,45 @@
         "title": "ProcessDocumentResponse",
         "type": "object"
       },
+      "PublishJobRequest": {
+        "properties": {
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "topic_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic Id"
+          }
+        },
+        "title": "PublishJobRequest",
+        "type": "object"
+      },
       "QuestionBase": {
         "properties": {
           "content": {
@@ -1508,76 +1632,6 @@
         "title": "QuestionResponse",
         "type": "object"
       },
-      "QuestionSchema": {
-        "properties": {
-          "content": {
-            "title": "Content",
-            "type": "string"
-          },
-          "difficulty": {
-            "default": "MEDIUM",
-            "title": "Difficulty",
-            "type": "string"
-          },
-          "explanation": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Explanation"
-          },
-          "metadata_json": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metadata Json"
-          },
-          "options": {
-            "default": [],
-            "items": {
-              "$ref": "#/components/schemas/OptionSchema"
-            },
-            "title": "Options",
-            "type": "array"
-          },
-          "points": {
-            "default": 1,
-            "title": "Points",
-            "type": "integer"
-          },
-          "source_reference": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source Reference"
-          },
-          "type": {
-            "title": "Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "content"
-        ],
-        "title": "QuestionSchema",
-        "type": "object"
-      },
       "QuestionType": {
         "enum": [
           "SINGLE_CHOICE",
@@ -1694,81 +1748,22 @@
         "title": "ResetPasswordRequest",
         "type": "object"
       },
-      "SaveFlashcardsRequest": {
+      "ReviewDecisionRequest": {
+        "description": "Optional optimistic-concurrency guard for approve/reject/publish.\n\nA reviewer acting from a stale list gets `AI_JOB_VERSION_CONFLICT`\ninstead of silently overwriting a decision another reviewer already\nmade. Omitting it falls back to the row lock plus the transition\nallowlist, which already refuse a second decision.",
         "properties": {
-          "flashcards": {
-            "items": {
-              "$ref": "#/components/schemas/FlashcardSchema"
-            },
-            "title": "Flashcards",
-            "type": "array"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          },
-          "topic_id": {
+          "expected_version": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Topic Id"
+            "title": "Expected Version"
           }
         },
-        "required": [
-          "title",
-          "flashcards"
-        ],
-        "title": "SaveFlashcardsRequest",
-        "type": "object"
-      },
-      "SaveQuestionsRequest": {
-        "properties": {
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/QuestionSchema"
-            },
-            "title": "Questions",
-            "type": "array"
-          }
-        },
-        "required": [
-          "questions"
-        ],
-        "title": "SaveQuestionsRequest",
-        "type": "object"
-      },
-      "SaveTopicBriefRequest": {
-        "properties": {
-          "content": {
-            "title": "Content",
-            "type": "string"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          },
-          "topic_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Topic Id"
-          }
-        },
-        "required": [
-          "title",
-          "content"
-        ],
-        "title": "SaveTopicBriefRequest",
+        "title": "ReviewDecisionRequest",
         "type": "object"
       },
       "ScoreDistributionBucket": {
@@ -3223,6 +3218,345 @@
           }
         ],
         "summary": "Chat",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/ai/generation-jobs": {
+      "get": {
+        "operationId": "list_generation_jobs_ai_generation_jobs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Id"
+            }
+          },
+          {
+            "description": "Page number",
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "description": "Page number",
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Page size",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AIGenerationJobResponse_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Generation Jobs",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/ai/generation-jobs/{job_id}": {
+      "get": {
+        "operationId": "get_generation_job_ai_generation_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIGenerationJobResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Generation Job",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/ai/generation-jobs/{job_id}/approve": {
+      "post": {
+        "operationId": "approve_generation_job_ai_generation_jobs__job_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewDecisionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIGenerationJobResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Approve Generation Job",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/ai/generation-jobs/{job_id}/publish": {
+      "post": {
+        "operationId": "publish_generation_job_ai_generation_jobs__job_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PublishJobRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Publish Generation Job",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/ai/generation-jobs/{job_id}/reject": {
+      "post": {
+        "operationId": "reject_generation_job_ai_generation_jobs__job_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewDecisionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIGenerationJobResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Reject Generation Job",
         "tags": [
           "ai"
         ]
@@ -5349,174 +5683,6 @@
           }
         ],
         "summary": "Restore Material",
-        "tags": [
-          "materials"
-        ]
-      }
-    },
-    "/materials/{material_id}/save-flashcards": {
-      "post": {
-        "operationId": "save_flashcards_endpoint_materials__material_id__save_flashcards_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "material_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Material Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveFlashcardsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "summary": "Save Flashcards Endpoint",
-        "tags": [
-          "materials"
-        ]
-      }
-    },
-    "/materials/{material_id}/save-questions": {
-      "post": {
-        "operationId": "save_questions_materials__material_id__save_questions_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "material_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Material Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveQuestionsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "summary": "Save Questions",
-        "tags": [
-          "materials"
-        ]
-      }
-    },
-    "/materials/{material_id}/save-topic-brief": {
-      "post": {
-        "operationId": "save_topic_brief_endpoint_materials__material_id__save_topic_brief_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "material_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Material Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveTopicBriefRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "summary": "Save Topic Brief Endpoint",
         "tags": [
           "materials"
         ]

@@ -3,10 +3,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 from typing import List, Optional
+from pydantic import ValidationError
 from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.orm import Session, selectinload
 from fastapi import BackgroundTasks
 
+from app.models.ai_generation import AIGenerationJob
 from app.models.material import StudyMaterial
 from app.models.document_chunk import DocumentChunk
 from app.models.exam import Question, Option
@@ -15,9 +17,14 @@ from app.models.enums import QuestionType, DifficultyLevel
 from app.models.topic import Topic
 from app.models.topic_brief import TopicBrief
 
+from app.schemas.ai_generation import (
+    FlashcardDraft,
+    PublishJobRequest,
+    QuestionDraft,
+)
 from app.schemas.material import (
-    MaterialDetailResponse, GenerateQuestionsRequest, SaveQuestionsRequest,
-    GenerateFlashcardsRequest, SaveFlashcardsRequest, SaveTopicBriefRequest
+    MaterialDetailResponse, GenerateQuestionsRequest,
+    GenerateFlashcardsRequest,
 )
 
 from app.ai import default_provider
@@ -37,6 +44,7 @@ from app.core.correlation import get_current_request_id, new_correlation_id
 from app.db.soft_delete import is_restorable, soft_delete
 from app.models.submission import SubmissionAnswer
 from app.models.user import User
+from app.services.ai_generation_service import AIGenerationService
 from app.services.authorization_service import AuthorizationService
 
 class MaterialService:
@@ -455,6 +463,153 @@ class MaterialService:
         db.refresh(material)
         return material
 
+    # ------------------------------------------------------------------
+    # AI generation (AI-002)
+    #
+    # Every `generate_*` below produces a *reviewable draft*, never live
+    # content. The single path from a draft into `Question`/`Flashcard`/
+    # `TopicBrief` is `publish_job`, which the ALLOWED_TRANSITIONS allowlist
+    # only reaches from `approved`. The former `save_*` methods -- which
+    # wrote those tables directly from a request body with no recorded
+    # reviewer -- are gone precisely because they were a second path.
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _generation_context(
+        db: Session,
+        material_id: UUID,
+        current_user: User,
+    ) -> tuple[StudyMaterial, List[DocumentChunk]]:
+        """Authorize, load the material, and fetch its prompt context."""
+        require_permission(current_user, Permission.CREATE_CONTENT)
+        material = MaterialService.get_owned_material(
+            db,
+            material_id,
+            current_user,
+        )
+        if material.uploader_id is None:
+            raise AppException(status_code=409, error_code="CONTENT_OWNER_REQUIRED")
+        chunks = db.scalars(
+            select(DocumentChunk).where(DocumentChunk.material_id == material.id)
+        ).all()
+        if not chunks:
+            raise AppException(status_code=422, error_code="NO_CHUNKS_FOUND")
+        return material, chunks
+
+    @staticmethod
+    def _run_generation_job(
+        db: Session,
+        material: StudyMaterial,
+        current_user: User,
+        *,
+        use_case: str,
+        prompt: str,
+        model_use_case: ModelUseCase,
+        temperature: float,
+        provider: AIProvider,
+        build_draft,
+    ) -> AIGenerationJob:
+        """Drive `requested -> processing -> generated -> awaiting_review`.
+
+        The provider round trip deliberately sits *between* two committed
+        transactions rather than inside one, per the AI-001-009 change
+        contract: "Provider calls occur outside long database transactions;
+        request/completion transitions use separate atomic transactions."
+        A slow or hanging model therefore never holds a row lock or an idle
+        transaction open, and a crash mid-call leaves a durable `processing`
+        job rather than a silently vanished request.
+        """
+        job = AIGenerationService.create_job(
+            db,
+            owner_id=material.uploader_id,
+            material_id=material.id,
+            use_case=use_case,
+        )
+        AIGenerationService.commit_transition(
+            db,
+            job,
+            "processing",
+            actor=current_user,
+            override_permission=Permission.READ_OWNED_CONTENT,
+            override_entity_type="study_material",
+            override_entity_id=material.id,
+            override_operation="generate",
+        )
+
+        model_config = resolve_model_config(model_use_case)
+        try:
+            result = provider.generate(
+                GenerateRequest(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=model_config.model,
+                    temperature=temperature,
+                )
+            )
+            draft = build_draft(extract_json_payload(result.text))
+        except json.JSONDecodeError as exc:
+            MaterialService._fail_generation_job(
+                db, job, current_user, "AI_PARSE_ERROR"
+            )
+            raise AppException(
+                status_code=500, error_code="AI_PARSE_ERROR"
+            ) from exc
+        except AIProviderError as exc:
+            # `AIProviderError.error_code` is already sanitized by the
+            # provider layer, so it is safe to persist verbatim.
+            MaterialService._fail_generation_job(
+                db, job, current_user, exc.error_code
+            )
+            raise AppException(
+                status_code=500, error_code="AI_GENERATION_FAILED"
+            ) from exc
+        except Exception as exc:
+            MaterialService._fail_generation_job(
+                db, job, current_user, "AI_GENERATION_FAILED"
+            )
+            raise AppException(
+                status_code=500, error_code="AI_GENERATION_FAILED"
+            ) from exc
+
+        AIGenerationService.commit_transition(
+            db,
+            job,
+            "generated",
+            actor=current_user,
+            draft_payload=draft,
+        )
+        AIGenerationService.commit_transition(
+            db,
+            job,
+            "awaiting_review",
+            actor=current_user,
+        )
+        return job
+
+    @staticmethod
+    def _fail_generation_job(
+        db: Session,
+        job: AIGenerationJob,
+        actor: User,
+        failure_code: str,
+    ) -> None:
+        """Record a terminal `failed` transition for a job that never got a draft."""
+        AIGenerationService.commit_transition(
+            db,
+            job,
+            "failed",
+            actor=actor,
+            failure_code=failure_code[:64],
+        )
+
+    @staticmethod
+    def _draft_response(job: AIGenerationJob, payload_key: str, empty):
+        draft = job.draft_payload or {}
+        return {
+            "job_id": str(job.id),
+            "status": job.status,
+            payload_key: draft.get(payload_key, empty),
+        }
+
     @staticmethod
     def generate_questions(
         db: Session,
@@ -463,122 +618,30 @@ class MaterialService:
         current_user: User,
         provider: AIProvider = default_provider,
     ):
-        require_permission(current_user, Permission.CREATE_CONTENT)
-        material = MaterialService.get_owned_material(
-            db,
-            material_id,
-            current_user,
+        material, chunks = MaterialService._generation_context(
+            db, material_id, current_user
         )
-        chunks = db.scalars(
-            select(DocumentChunk).where(DocumentChunk.material_id == material.id)
-        ).all()
-        if not chunks:
-            raise AppException(status_code=422, error_code="NO_CHUNKS_FOUND", message="No document chunks found.")
-
-        context_text = "\n\n".join([f"[Đoạn {i+1}]: {c.content}" for i, c in enumerate(chunks)])
-        types_str = ", ".join(request.question_types)
-
+        context_text = "\n\n".join(
+            [f"[Đoạn {i+1}]: {c.content}" for i, c in enumerate(chunks)]
+        )
         prompt = question_generation_v1.render(
             context_text=context_text,
             count=request.count,
-            question_types=types_str,
+            question_types=", ".join(request.question_types),
             difficulty=request.difficulty,
         )
-        model_config = resolve_model_config(ModelUseCase.QUESTION_GENERATION)
-
-        try:
-            result = provider.generate(
-                GenerateRequest(
-                    messages=[{"role": "user", "content": prompt}],
-                    model=model_config.model,
-                    temperature=0.7,
-                )
-            )
-            questions = extract_json_payload(result.text)
-            AuthorizationService.commit_with_admin_override(
-                db,
-                actor=current_user,
-                permission=Permission.READ_OWNED_CONTENT,
-                entity_type="study_material",
-                entity_id=material.id,
-                owner_id=material.uploader_id,
-                operation="generate",
-            )
-            return {"questions": questions}
-        except json.JSONDecodeError as e:
-            raise AppException(status_code=500, error_code="AI_PARSE_ERROR", message=f"Failed to parse AI response as JSON: {str(e)}")
-        except AIProviderError as e:
-            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=e.error_code)
-        except Exception as e:
-            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=str(e))
-
-    @staticmethod
-    def save_questions(
-        db: Session,
-        material_id: UUID,
-        request: SaveQuestionsRequest,
-        current_user: User,
-    ):
-        material = MaterialService.get_owned_material(
+        job = MaterialService._run_generation_job(
             db,
-            material_id,
+            material,
             current_user,
-            Permission.APPROVE_OWNED_AI_CONTENT,
+            use_case="question_generation",
+            prompt=prompt,
+            model_use_case=ModelUseCase.QUESTION_GENERATION,
+            temperature=0.7,
+            provider=provider,
+            build_draft=lambda payload: {"questions": payload},
         )
-        if material.uploader_id is None:
-            raise AppException(status_code=409, error_code="CONTENT_OWNER_REQUIRED")
-
-        saved_ids = []
-        for q in request.questions:
-            try:
-                q_type = QuestionType[q.type]
-            except KeyError:
-                q_type = QuestionType.MULTIPLE_CHOICE
-
-            try:
-                q_difficulty = DifficultyLevel[q.difficulty.upper() if q.difficulty else "MEDIUM"]
-            except (KeyError, AttributeError):
-                q_difficulty = DifficultyLevel.MEDIUM
-
-            metadata = q.metadata_json or {}
-            if q.source_reference:
-                metadata["source_reference"] = q.source_reference
-            if q.explanation:
-                metadata["explanation"] = q.explanation
-
-            question = Question(
-                owner_id=material.uploader_id,
-                material_id=material_id,
-                question_type=q_type,
-                difficulty=q_difficulty,
-                content=q.content,
-                points=q.points,
-                is_ai_generated=True,
-                metadata_json=metadata
-            )
-            db.add(question)
-            db.flush()
-
-            for opt in q.options:
-                option = Option(
-                    question_id=question.id,
-                    content=opt.content,
-                    is_correct=opt.is_correct
-                )
-                db.add(option)
-
-            saved_ids.append(str(question.id))
-
-        AuthorizationService.commit_with_admin_override(
-            db,
-            actor=current_user,
-            permission=Permission.APPROVE_OWNED_AI_CONTENT,
-            entity_type="study_material",
-            entity_id=material.id,
-            owner_id=material.uploader_id,
-            operation="create_child",
-        )
-        return {"saved_count": len(saved_ids), "question_ids": saved_ids}
+        return MaterialService._draft_response(job, "questions", [])
 
     @staticmethod
     def generate_flashcards(
@@ -588,106 +651,27 @@ class MaterialService:
         current_user: User,
         provider: AIProvider = default_provider,
     ):
-        require_permission(current_user, Permission.CREATE_CONTENT)
-        material = MaterialService.get_owned_material(
+        material, chunks = MaterialService._generation_context(
+            db, material_id, current_user
+        )
+        prompt = flashcard_generation_v1.render(
+            context_text="\n\n".join([c.content for c in chunks]),
+            count=request.count,
+        )
+        job = MaterialService._run_generation_job(
             db,
-            material_id,
+            material,
             current_user,
+            use_case="flashcard_generation",
+            prompt=prompt,
+            model_use_case=ModelUseCase.FLASHCARD_GENERATION,
+            temperature=0.5,
+            provider=provider,
+            build_draft=lambda payload: {
+                "flashcards": payload.get("flashcards", [])
+            },
         )
-        chunks = db.scalars(
-            select(DocumentChunk).where(DocumentChunk.material_id == material.id)
-        ).all()
-        if not chunks:
-            raise AppException(status_code=422, error_code="NO_CHUNKS_FOUND")
-
-        context_text = "\n\n".join([c.content for c in chunks])
-        prompt = flashcard_generation_v1.render(context_text=context_text, count=request.count)
-        model_config = resolve_model_config(ModelUseCase.FLASHCARD_GENERATION)
-
-        try:
-            result = provider.generate(
-                GenerateRequest(
-                    messages=[{"role": "user", "content": prompt}],
-                    model=model_config.model,
-                    temperature=0.5,
-                )
-            )
-            data = extract_json_payload(result.text)
-            AuthorizationService.commit_with_admin_override(
-                db,
-                actor=current_user,
-                permission=Permission.READ_OWNED_CONTENT,
-                entity_type="study_material",
-                entity_id=material.id,
-                owner_id=material.uploader_id,
-                operation="generate",
-            )
-            return {"flashcards": data.get("flashcards", [])}
-        except json.JSONDecodeError as e:
-            raise AppException(status_code=500, error_code="AI_PARSE_ERROR", message=str(e))
-        except AIProviderError as e:
-            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=e.error_code)
-        except Exception as e:
-            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=str(e))
-
-    @staticmethod
-    def save_flashcards(
-        db: Session,
-        material_id: UUID,
-        request: SaveFlashcardsRequest,
-        current_user: User,
-    ):
-        material = MaterialService.get_owned_material(
-            db,
-            material_id,
-            current_user,
-            Permission.APPROVE_OWNED_AI_CONTENT,
-        )
-        if material.uploader_id is None:
-            raise AppException(status_code=409, error_code="CONTENT_OWNER_REQUIRED")
-
-        topic_id = UUID(request.topic_id) if request.topic_id else material.topic_id
-        if not topic_id:
-            default_topic = MaterialService._get_or_create_default_topic(
-                db,
-                material.uploader_id,
-            )
-            topic_id = default_topic.id
-            material.topic_id = topic_id
-        MaterialService._require_topic_owner(
-            db,
-            topic_id,
-            material.uploader_id,
-        )
-
-        deck = FlashcardDeck(
-            topic_id=topic_id,
-            material_id=material.id,
-            title=request.title,
-            description=f"Tự động sinh từ tài liệu: {material.title}"
-        )
-        db.add(deck)
-        db.flush()
-
-        for i, fc in enumerate(request.flashcards):
-            flashcard = Flashcard(
-                deck_id=deck.id,
-                front_content=fc.term,
-                back_content=fc.definition,
-                order_index=i
-            )
-            db.add(flashcard)
-
-        AuthorizationService.commit_with_admin_override(
-            db,
-            actor=current_user,
-            permission=Permission.APPROVE_OWNED_AI_CONTENT,
-            entity_type="study_material",
-            entity_id=material.id,
-            owner_id=material.uploader_id,
-            operation="create_child",
-        )
-        return {"deck_id": str(deck.id), "saved_count": len(request.flashcards)}
+        return MaterialService._draft_response(job, "flashcards", [])
 
     @staticmethod
     def generate_topic_brief(
@@ -696,64 +680,171 @@ class MaterialService:
         current_user: User,
         provider: AIProvider = default_provider,
     ):
-        require_permission(current_user, Permission.CREATE_CONTENT)
-        material = MaterialService.get_owned_material(
-            db,
-            material_id,
-            current_user,
+        material, chunks = MaterialService._generation_context(
+            db, material_id, current_user
         )
-        chunks = db.scalars(
-            select(DocumentChunk).where(DocumentChunk.material_id == material.id)
-        ).all()
-        if not chunks:
-            raise AppException(status_code=422, error_code="NO_CHUNKS_FOUND")
+        prompt = topic_brief_generation_v1.render(
+            context_text="\n\n".join([c.content for c in chunks])
+        )
+        job = MaterialService._run_generation_job(
+            db,
+            material,
+            current_user,
+            use_case="topic_brief_generation",
+            prompt=prompt,
+            model_use_case=ModelUseCase.TOPIC_BRIEF_GENERATION,
+            temperature=0.5,
+            provider=provider,
+            build_draft=lambda payload: {
+                "content": payload.get("content", ""),
+                "title": payload.get("title"),
+            },
+        )
+        return MaterialService._draft_response(job, "content", "")
 
-        context_text = "\n\n".join([c.content for c in chunks])
-        prompt = topic_brief_generation_v1.render(context_text=context_text)
-        model_config = resolve_model_config(ModelUseCase.TOPIC_BRIEF_GENERATION)
-
-        try:
-            result = provider.generate(
-                GenerateRequest(
-                    messages=[{"role": "user", "content": prompt}],
-                    model=model_config.model,
-                    temperature=0.5,
-                )
-            )
-            data = extract_json_payload(result.text)
-            AuthorizationService.commit_with_admin_override(
-                db,
-                actor=current_user,
-                permission=Permission.READ_OWNED_CONTENT,
-                entity_type="study_material",
-                entity_id=material.id,
-                owner_id=material.uploader_id,
-                operation="generate",
-            )
-            return {"content": data.get("content", "")}
-        except json.JSONDecodeError as e:
-            raise AppException(status_code=500, error_code="AI_PARSE_ERROR", message=str(e))
-        except AIProviderError as e:
-            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=e.error_code)
-        except Exception as e:
-            raise AppException(status_code=500, error_code="AI_GENERATION_FAILED", message=str(e))
+    # ------------------------------------------------------------------
+    # Review decisions (AI-002)
+    # ------------------------------------------------------------------
 
     @staticmethod
-    def save_topic_brief(
+    def list_generation_jobs(
         db: Session,
-        material_id: UUID,
-        request: SaveTopicBriefRequest,
         current_user: User,
+        *,
+        status: str | None = None,
+        material_id: UUID | None = None,
     ):
-        material = MaterialService.get_owned_material(
-            db,
-            material_id,
+        return AIGenerationService.list_jobs_statement(
             current_user,
-            Permission.APPROVE_OWNED_AI_CONTENT,
+            status=status,
+            material_id=material_id,
         )
-        if material.uploader_id is None:
-            raise AppException(status_code=409, error_code="CONTENT_OWNER_REQUIRED")
 
+    @staticmethod
+    def get_generation_job(
+        db: Session,
+        job_id: UUID,
+        current_user: User,
+    ) -> AIGenerationJob:
+        return AIGenerationService.get_job_for_review(db, job_id, current_user)
+
+    @staticmethod
+    def _review_decision(
+        db: Session,
+        job_id: UUID,
+        current_user: User,
+        target_status: str,
+        expected_version: int | None,
+    ) -> AIGenerationJob:
+        job = AIGenerationService.get_job_for_review(
+            db, job_id, current_user, lock=True
+        )
+        AIGenerationService.commit_transition(
+            db,
+            job,
+            target_status,
+            actor=current_user,
+            expected_version=expected_version,
+            override_permission=Permission.APPROVE_OWNED_AI_CONTENT,
+            override_operation=target_status,
+        )
+        return job
+
+    @staticmethod
+    def approve_generation_job(
+        db: Session,
+        job_id: UUID,
+        current_user: User,
+        expected_version: int | None = None,
+    ) -> AIGenerationJob:
+        return MaterialService._review_decision(
+            db, job_id, current_user, "approved", expected_version
+        )
+
+    @staticmethod
+    def reject_generation_job(
+        db: Session,
+        job_id: UUID,
+        current_user: User,
+        expected_version: int | None = None,
+    ) -> AIGenerationJob:
+        return MaterialService._review_decision(
+            db, job_id, current_user, "rejected", expected_version
+        )
+
+    # ------------------------------------------------------------------
+    # Publication (AI-002) -- the only writer of live AI content
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def publish_generation_job(
+        db: Session,
+        job_id: UUID,
+        current_user: User,
+        request: PublishJobRequest | None = None,
+    ):
+        """Write an approved draft into the live tables, once.
+
+        Reachable only from `approved`: the allowlist has no
+        `generated -> published` pair and no `published -> published` pair,
+        so an unreviewed job and an already-published job are both refused
+        with `AI_JOB_INVALID_TRANSITION` -- there is no separate
+        "already published" guard to keep in sync with the state machine.
+        The rows and the `published` transition share one transaction, so a
+        failure part-way through publishes nothing.
+        """
+        request = request or PublishJobRequest()
+        job = AIGenerationService.get_job_for_review(
+            db, job_id, current_user, lock=True
+        )
+        # Fail before writing anything when the job has not been approved.
+        AIGenerationService.assert_transition_allowed(job.status, "published")
+
+        material = db.scalar(
+            select(StudyMaterial).where(StudyMaterial.id == job.material_id)
+        )
+        if material is None or material.uploader_id is None:
+            raise AppException(status_code=404, error_code="MATERIAL_NOT_FOUND")
+
+        publisher_name = MaterialService._PUBLISHERS.get(job.use_case)
+        if publisher_name is None:
+            raise AppException(
+                status_code=409,
+                error_code="AI_JOB_USE_CASE_NOT_PUBLISHABLE",
+            )
+        published = getattr(MaterialService, publisher_name)(
+            db, job, material, request
+        )
+
+        AIGenerationService.commit_transition(
+            db,
+            job,
+            "published",
+            actor=current_user,
+            expected_version=request.expected_version,
+            override_permission=Permission.APPROVE_OWNED_AI_CONTENT,
+            override_operation="publish",
+        )
+        return {"job_id": str(job.id), "status": "published", **published}
+
+    @staticmethod
+    def _validated_drafts(job: AIGenerationJob, key: str, model):
+        raw = (job.draft_payload or {}).get(key) or []
+        if not isinstance(raw, list):
+            raise AppException(status_code=422, error_code="AI_DRAFT_INVALID")
+        try:
+            return [model.model_validate(item) for item in raw]
+        except ValidationError as exc:
+            raise AppException(
+                status_code=422, error_code="AI_DRAFT_INVALID"
+            ) from exc
+
+    @staticmethod
+    def _resolve_publish_topic(
+        db: Session,
+        material: StudyMaterial,
+        request: PublishJobRequest,
+    ) -> UUID:
         topic_id = UUID(request.topic_id) if request.topic_id else material.topic_id
         if not topic_id:
             default_topic = MaterialService._get_or_create_default_topic(
@@ -762,27 +853,119 @@ class MaterialService:
             )
             topic_id = default_topic.id
             material.topic_id = topic_id
-        MaterialService._require_topic_owner(
-            db,
-            topic_id,
-            material.uploader_id,
-        )
+        MaterialService._require_topic_owner(db, topic_id, material.uploader_id)
+        return topic_id
 
+    @staticmethod
+    def _publish_questions(
+        db: Session,
+        job: AIGenerationJob,
+        material: StudyMaterial,
+        request: PublishJobRequest,
+    ):
+        drafts = MaterialService._validated_drafts(
+            job, "questions", QuestionDraft
+        )
+        saved_ids = []
+        for draft in drafts:
+            try:
+                q_type = QuestionType[draft.type]
+            except KeyError:
+                q_type = QuestionType.MULTIPLE_CHOICE
+            try:
+                q_difficulty = DifficultyLevel[
+                    draft.difficulty.upper() if draft.difficulty else "MEDIUM"
+                ]
+            except (KeyError, AttributeError):
+                q_difficulty = DifficultyLevel.MEDIUM
+
+            metadata = dict(draft.metadata_json or {})
+            if draft.source_reference:
+                metadata["source_reference"] = draft.source_reference
+            if draft.explanation:
+                metadata["explanation"] = draft.explanation
+
+            question = Question(
+                owner_id=material.uploader_id,
+                material_id=material.id,
+                question_type=q_type,
+                difficulty=q_difficulty,
+                content=draft.content,
+                points=draft.points,
+                is_ai_generated=True,
+                metadata_json=metadata,
+            )
+            db.add(question)
+            db.flush()
+            for opt in draft.options:
+                db.add(
+                    Option(
+                        question_id=question.id,
+                        content=opt.content,
+                        is_correct=opt.is_correct,
+                    )
+                )
+            saved_ids.append(str(question.id))
+        return {"saved_count": len(saved_ids), "question_ids": saved_ids}
+
+    @staticmethod
+    def _publish_flashcards(
+        db: Session,
+        job: AIGenerationJob,
+        material: StudyMaterial,
+        request: PublishJobRequest,
+    ):
+        drafts = MaterialService._validated_drafts(
+            job, "flashcards", FlashcardDraft
+        )
+        topic_id = MaterialService._resolve_publish_topic(db, material, request)
+        deck = FlashcardDeck(
+            topic_id=topic_id,
+            material_id=material.id,
+            title=request.title or f"Flashcards: {material.title}",
+            description=f"Tự động sinh từ tài liệu: {material.title}",
+        )
+        db.add(deck)
+        db.flush()
+        for index, draft in enumerate(drafts):
+            db.add(
+                Flashcard(
+                    deck_id=deck.id,
+                    front_content=draft.term,
+                    back_content=draft.definition,
+                    order_index=index,
+                )
+            )
+        return {"deck_id": str(deck.id), "saved_count": len(drafts)}
+
+    @staticmethod
+    def _publish_topic_brief(
+        db: Session,
+        job: AIGenerationJob,
+        material: StudyMaterial,
+        request: PublishJobRequest,
+    ):
+        draft = job.draft_payload or {}
+        content = draft.get("content")
+        if not content:
+            raise AppException(status_code=422, error_code="AI_DRAFT_INVALID")
+        topic_id = MaterialService._resolve_publish_topic(db, material, request)
         brief = TopicBrief(
             topic_id=topic_id,
             material_id=material.id,
-            title=request.title,
-            content=request.content,
-            is_ai_generated=True
+            title=request.title or draft.get("title") or material.title,
+            content=content,
+            is_ai_generated=True,
         )
         db.add(brief)
-        AuthorizationService.commit_with_admin_override(
-            db,
-            actor=current_user,
-            permission=Permission.APPROVE_OWNED_AI_CONTENT,
-            entity_type="study_material",
-            entity_id=material.id,
-            owner_id=material.uploader_id,
-            operation="create_child",
-        )
-        return {"brief_id": str(brief.id), "message": "Bản tóm tắt đã được lưu."}
+        db.flush()
+        return {"brief_id": str(brief.id)}
+
+    # use_case -> publisher method name. Stored as names rather than the
+    # functions themselves so the mapping resolves through the normal
+    # descriptor protocol instead of holding raw `staticmethod` objects.
+    _PUBLISHERS = {
+        "question_generation": "_publish_questions",
+        "flashcard_generation": "_publish_flashcards",
+        "topic_brief_generation": "_publish_topic_brief",
+    }

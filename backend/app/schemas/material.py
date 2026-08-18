@@ -30,34 +30,12 @@ class OptionSchema(BaseModel):
     content: str
     is_correct: bool
 
-class QuestionSchema(BaseModel):
-    type: str
-    content: str
-    points: int = 1
-    difficulty: str = "MEDIUM"
-    source_reference: Optional[str] = None
-    explanation: Optional[str] = None
-    options: List[OptionSchema] = []
-    metadata_json: Optional[dict] = None
-
-class SaveQuestionsRequest(BaseModel):
-    questions: List[QuestionSchema]
-
 class GenerateFlashcardsRequest(BaseModel):
     count: int = 10
 
-class FlashcardSchema(BaseModel):
-    term: str
-    definition: str
-    source_reference: Optional[str] = None
-    explanation: Optional[str] = None
-
-class SaveFlashcardsRequest(BaseModel):
-    title: str
-    topic_id: Optional[str] = None
-    flashcards: List[FlashcardSchema]
-
-class SaveTopicBriefRequest(BaseModel):
-    title: str
-    content: str
-    topic_id: Optional[str] = None
+# `SaveQuestionsRequest`/`SaveFlashcardsRequest`/`SaveTopicBriefRequest` and
+# their item schemas are deliberately gone (AI-002). They described a request
+# body that wrote straight into Question/Flashcard/TopicBrief with no recorded
+# reviewer, which CANONICAL_PROJECT_SPEC.md §9.2 forbids. Publication now
+# reads its content from a reviewed `AIGenerationJob.draft_payload`; the draft
+# item schemas live in `app/schemas/ai_generation.py`.

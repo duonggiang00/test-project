@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "3f963577374dc2b50bfe457d30cb20d209201b7d",
-    "source_commit_timestamp": "2026-08-19T00:18:45+07:00",
-    "source_tree_sha256": "4dadcb012d1f0275858941b1bca95824a0f9f9f007279c821c08c84f1391cab6",
-    "relevant_file_count": 335,
+    "source_commit": "def7238b943c59ea68272bd91b3ba3e0d2341f4c",
+    "source_commit_timestamp": "2026-08-19T00:36:54+07:00",
+    "source_tree_sha256": "1f1bb448df7cbb4734f99b77c02fdaaa112b5e210ca090dba207047d23c237af",
+    "relevant_file_count": 337,
     "alembic_heads": [
       "c4e1a70b58d9"
     ]
@@ -13,11 +13,11 @@
   "summary": {
     "sqlalchemy_models": 17,
     "pydantic_schemas": 71,
-    "fastapi_routes": 68,
+    "fastapi_routes": 70,
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 236,
+    "backend_test_functions": 242,
     "frontend_test_calls": 64
   },
   "backend": {
@@ -1651,6 +1651,176 @@
         "module": "app.schemas.ai"
       },
       {
+        "class": "AIGenerationJobResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "owner_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "material_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "use_case",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "status",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "version",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "draft_payload",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "failure_code",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "reviewer_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "created_at",
+            "required": true,
+            "type": "datetime"
+          },
+          {
+            "name": "reviewed_at",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "published_at",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.ai_generation"
+      },
+      {
+        "class": "FlashcardDraft",
+        "fields": [
+          {
+            "name": "term",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "definition",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "source_reference",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "explanation",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.ai_generation"
+      },
+      {
+        "class": "PublishJobRequest",
+        "fields": [
+          {
+            "name": "expected_version",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "title",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "topic_id",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.ai_generation"
+      },
+      {
+        "class": "QuestionDraft",
+        "fields": [
+          {
+            "name": "type",
+            "required": false,
+            "type": "str"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "points",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "source_reference",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "explanation",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "options",
+            "required": false,
+            "type": "list"
+          },
+          {
+            "name": "metadata_json",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.ai_generation"
+      },
+      {
+        "class": "ReviewDecisionRequest",
+        "fields": [
+          {
+            "name": "expected_version",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.ai_generation"
+      },
+      {
         "class": "AnalyticsOverviewResponse",
         "fields": [
           {
@@ -2591,32 +2761,6 @@
         "module": "app.schemas.material"
       },
       {
-        "class": "FlashcardSchema",
-        "fields": [
-          {
-            "name": "term",
-            "required": true,
-            "type": "str"
-          },
-          {
-            "name": "definition",
-            "required": true,
-            "type": "str"
-          },
-          {
-            "name": "source_reference",
-            "required": false,
-            "type": "Optional"
-          },
-          {
-            "name": "explanation",
-            "required": false,
-            "type": "Optional"
-          }
-        ],
-        "module": "app.schemas.material"
-      },
-      {
         "class": "GenerateFlashcardsRequest",
         "fields": [
           {
@@ -2727,105 +2871,6 @@
             "name": "is_correct",
             "required": true,
             "type": "bool"
-          }
-        ],
-        "module": "app.schemas.material"
-      },
-      {
-        "class": "QuestionSchema",
-        "fields": [
-          {
-            "name": "type",
-            "required": true,
-            "type": "str"
-          },
-          {
-            "name": "content",
-            "required": true,
-            "type": "str"
-          },
-          {
-            "name": "points",
-            "required": false,
-            "type": "int"
-          },
-          {
-            "name": "difficulty",
-            "required": false,
-            "type": "str"
-          },
-          {
-            "name": "source_reference",
-            "required": false,
-            "type": "Optional"
-          },
-          {
-            "name": "explanation",
-            "required": false,
-            "type": "Optional"
-          },
-          {
-            "name": "options",
-            "required": false,
-            "type": "List"
-          },
-          {
-            "name": "metadata_json",
-            "required": false,
-            "type": "Optional"
-          }
-        ],
-        "module": "app.schemas.material"
-      },
-      {
-        "class": "SaveFlashcardsRequest",
-        "fields": [
-          {
-            "name": "title",
-            "required": true,
-            "type": "str"
-          },
-          {
-            "name": "topic_id",
-            "required": false,
-            "type": "Optional"
-          },
-          {
-            "name": "flashcards",
-            "required": true,
-            "type": "List"
-          }
-        ],
-        "module": "app.schemas.material"
-      },
-      {
-        "class": "SaveQuestionsRequest",
-        "fields": [
-          {
-            "name": "questions",
-            "required": true,
-            "type": "List"
-          }
-        ],
-        "module": "app.schemas.material"
-      },
-      {
-        "class": "SaveTopicBriefRequest",
-        "fields": [
-          {
-            "name": "title",
-            "required": true,
-            "type": "str"
-          },
-          {
-            "name": "content",
-            "required": true,
-            "type": "str"
-          },
-          {
-            "name": "topic_id",
-            "required": false,
-            "type": "Optional"
           }
         ],
         "module": "app.schemas.material"
@@ -3768,6 +3813,83 @@
           "app.api.deps.get_current_active_teacher",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer",
+          "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
+          "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
+        ],
+        "endpoint": "app.api.endpoints.ai_studio.list_generation_jobs",
+        "methods": [
+          "GET"
+        ],
+        "name": "list_generation_jobs",
+        "path": "/ai/generation-jobs",
+        "response_model": "Page[AIGenerationJobResponse]"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.ai_studio.get_generation_job",
+        "methods": [
+          "GET"
+        ],
+        "name": "get_generation_job",
+        "path": "/ai/generation-jobs/{job_id}",
+        "response_model": "AIGenerationJobResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.ai_studio.approve_generation_job",
+        "methods": [
+          "POST"
+        ],
+        "name": "approve_generation_job",
+        "path": "/ai/generation-jobs/{job_id}/approve",
+        "response_model": "AIGenerationJobResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.ai_studio.publish_generation_job",
+        "methods": [
+          "POST"
+        ],
+        "name": "publish_generation_job",
+        "path": "/ai/generation-jobs/{job_id}/publish",
+        "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.ai_studio.reject_generation_job",
+        "methods": [
+          "POST"
+        ],
+        "name": "reject_generation_job",
+        "path": "/ai/generation-jobs/{job_id}/reject",
+        "response_model": "AIGenerationJobResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
         "endpoint": "app.api.endpoints.ai_studio.process_document",
@@ -4372,51 +4494,6 @@
         "name": "restore_material",
         "path": "/materials/{material_id}/restore",
         "response_model": "MaterialResponse"
-      },
-      {
-        "dependencies": [
-          "app.api.deps.get_current_active_teacher",
-          "app.api.deps.get_current_user",
-          "app.db.session.get_db",
-          "fastapi.security.oauth2.OAuth2PasswordBearer"
-        ],
-        "endpoint": "app.api.endpoints.materials.save_flashcards_endpoint",
-        "methods": [
-          "POST"
-        ],
-        "name": "save_flashcards_endpoint",
-        "path": "/materials/{material_id}/save-flashcards",
-        "response_model": "None"
-      },
-      {
-        "dependencies": [
-          "app.api.deps.get_current_active_teacher",
-          "app.api.deps.get_current_user",
-          "app.db.session.get_db",
-          "fastapi.security.oauth2.OAuth2PasswordBearer"
-        ],
-        "endpoint": "app.api.endpoints.materials.save_questions",
-        "methods": [
-          "POST"
-        ],
-        "name": "save_questions",
-        "path": "/materials/{material_id}/save-questions",
-        "response_model": "None"
-      },
-      {
-        "dependencies": [
-          "app.api.deps.get_current_active_teacher",
-          "app.api.deps.get_current_user",
-          "app.db.session.get_db",
-          "fastapi.security.oauth2.OAuth2PasswordBearer"
-        ],
-        "endpoint": "app.api.endpoints.materials.save_topic_brief_endpoint",
-        "methods": [
-          "POST"
-        ],
-        "name": "save_topic_brief_endpoint",
-        "path": "/materials/{material_id}/save-topic-brief",
-        "response_model": "None"
       },
       {
         "dependencies": [
@@ -5769,6 +5846,58 @@
         "tier": "integration"
       },
       {
+        "path": "tests/unit/test_ai_generation_transitions.py",
+        "tests": [
+          {
+            "line": 33,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_the_allowlist_is_exactly_the_approved_state_machine"
+          },
+          {
+            "line": 53,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_every_legal_transition_is_accepted"
+          },
+          {
+            "line": 61,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_every_other_transition_is_refused"
+          },
+          {
+            "line": 69,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generated_cannot_publish_without_passing_through_review"
+          },
+          {
+            "line": 90,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_no_status_may_transition_to_itself"
+          },
+          {
+            "line": 104,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_terminal_states_have_no_outbound_transitions"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_json_extraction.py",
         "tests": [
           {
@@ -6365,56 +6494,56 @@
         "path": "tests/unit/test_material_ai_generation.py",
         "tests": [
           {
-            "line": 104,
+            "line": 148,
             "markers": [
               "unit"
             ],
-            "name": "test_generate_questions_returns_the_providers_parsed_json"
+            "name": "test_generate_questions_parks_the_providers_parsed_json_in_a_reviewable_job"
           },
           {
-            "line": 126,
+            "line": 190,
             "markers": [
               "unit"
             ],
             "name": "test_generate_questions_strips_a_markdown_fence_identically_to_the_pre_refactor_logic"
           },
           {
-            "line": 143,
+            "line": 207,
             "markers": [
               "unit"
             ],
             "name": "test_generate_questions_maps_a_malformed_json_response_to_ai_parse_error"
           },
           {
-            "line": 163,
+            "line": 234,
             "markers": [
               "unit"
             ],
-            "name": "test_generate_questions_maps_a_provider_failure_to_ai_generation_failed_without_raw_text"
+            "name": "test_generate_questions_records_the_sanitized_provider_error_code_on_the_failed_job"
           },
           {
-            "line": 184,
+            "line": 259,
             "markers": [
               "unit"
             ],
             "name": "test_generate_flashcards_returns_the_providers_parsed_flashcards"
           },
           {
-            "line": 204,
+            "line": 281,
             "markers": [
               "unit"
             ],
             "name": "test_generate_flashcards_maps_a_malformed_json_response_to_ai_parse_error"
           },
           {
-            "line": 222,
+            "line": 299,
             "markers": [
               "unit"
             ],
             "name": "test_generate_topic_brief_returns_the_providers_parsed_content"
           },
           {
-            "line": 239,
+            "line": 318,
             "markers": [
               "unit"
             ],

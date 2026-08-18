@@ -5,12 +5,12 @@ from uuid import UUID
 from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.models.material import StudyMaterial
-from app.models.exam import Question, Option
 from app.models.topic import Topic
 from app.models.flashcard import FlashcardDeck, Flashcard
 from app.models.document_chunk import DocumentChunk
 from app.models.user import User
 from app.core.permissions import Permission, evaluate_owned_resource
+from app.services.ai_generation_service import AIGenerationService
 from app.services.authorization_service import AuthorizationService
 from app.services.material_processing import extract_and_chunk_material
 import os
@@ -57,33 +57,68 @@ def mock_process_document_and_generate_questions(
             db.commit()
             return
             
-        # Mock generating questions
-        q1 = Question(
+        # Mock generating questions.
+        #
+        # This used to `db.add(Question(...))` straight into the live table,
+        # which made an upload an unreviewed publish: two AI-authored
+        # questions appeared under the uploader's account with no approval,
+        # no reviewer, and no way to reject them. The mock *content* is
+        # unchanged; what changed is where it lands. It now becomes an
+        # `AIGenerationJob` draft that stops at `awaiting_review`, so the
+        # only route from here into `Question` is the same explicit publish
+        # every other generation flow goes through.
+        actor = db.get(User, material.uploader_id)
+        if actor is None:
+            material.ai_status = "failed"
+            db.commit()
+            return
+
+        draft_payload = {
+            "questions": [
+                {
+                    "type": "MULTIPLE_CHOICE",
+                    "content": f"What is the main topic of {material.title}?",
+                    "points": 1,
+                    "options": [
+                        {"content": "AI", "is_correct": True},
+                        {"content": "Blockchain", "is_correct": False},
+                    ],
+                },
+                {
+                    "type": "MULTIPLE_CHOICE",
+                    "content": "Which statement is true based on the document?",
+                    "points": 1,
+                    "options": [
+                        {"content": "This is true", "is_correct": True},
+                        {"content": "This is false", "is_correct": False},
+                    ],
+                },
+            ]
+        }
+
+        job = AIGenerationService.create_job(
+            db,
             owner_id=material.uploader_id,
             material_id=material.id,
-            content=f"What is the main topic of {material.title}?",
-            is_ai_generated=True,
-            points=1
+            use_case="question_generation",
         )
-        db.add(q1)
-        db.flush() # get q1.id
-        
-        db.add(Option(question_id=q1.id, content="AI", is_correct=True))
-        db.add(Option(question_id=q1.id, content="Blockchain", is_correct=False))
-        
-        q2 = Question(
-            owner_id=material.uploader_id,
-            material_id=material.id,
-            content="Which statement is true based on the document?",
-            is_ai_generated=True,
-            points=1
+        # Each transition is its own atomic transaction with exactly one
+        # audit event, matching the request-path generation flow.
+        AIGenerationService.commit_transition(
+            db, job, "processing", actor=actor, request_id=request_id
         )
-        db.add(q2)
-        db.flush()
-        
-        db.add(Option(question_id=q2.id, content="This is true", is_correct=True))
-        db.add(Option(question_id=q2.id, content="This is false", is_correct=False))
-        
+        AIGenerationService.commit_transition(
+            db,
+            job,
+            "generated",
+            actor=actor,
+            draft_payload=draft_payload,
+            request_id=request_id,
+        )
+        AIGenerationService.commit_transition(
+            db, job, "awaiting_review", actor=actor, request_id=request_id
+        )
+
         material.ai_status = "completed"
         db.commit()
 
