@@ -26,9 +26,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Literal, cast
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from sqlalchemy import delete, exists, select
+from sqlalchemy import delete, exists, select, update
 from sqlalchemy.orm import Session
 
 from app.core.correlation import get_current_request_id, new_correlation_id
@@ -38,6 +38,7 @@ from app.db.soft_delete import RESTORE_WINDOW
 from app.models.exam import Question
 from app.models.flashcard import FlashcardDeck
 from app.models.material import StudyMaterial
+from app.models.purge_job import PurgeJob
 from app.models.topic_brief import TopicBrief
 from app.schemas.audit import AuditActor, AuditEntity, AuditEventCreate
 from app.services.audit_service import AuditService
@@ -64,6 +65,17 @@ class PurgeReport:
     @property
     def blocked_count(self) -> int:
         return len(self.blocked_ids)
+
+
+@dataclass(frozen=True)
+class ReconcileReport:
+    action: Literal["reconcile"] = "reconcile"
+    entity: str = "purge_job"
+    reconciled_material_ids: tuple[UUID, ...] = ()
+
+    @property
+    def reconciled_count(self) -> int:
+        return len(self.reconciled_material_ids)
 
 
 def _purge_cutoff() -> datetime:
@@ -150,6 +162,25 @@ def _audit_actor(actor: Actor) -> AuditActor:
     )
 
 
+def _mark_purge_job_completed(db: Session, purge_job_id: UUID) -> None:
+    """Mark a ledger row completed, in its own small follow-up transaction.
+
+    Only called after `storage.finalize_purge()` has already succeeded.
+    `audit_events` remains the append-only source of truth for the
+    completed purge; this ledger update is purely an operational recovery
+    aid, so it is fine for it to land in a separate transaction from the
+    quarantine+hard-delete commit above -- if the process dies before this
+    runs, `reconcile_pending_purge_jobs` finds the row still
+    `pending_finalize` and finishes the job.
+    """
+    db.execute(
+        update(PurgeJob)
+        .where(PurgeJob.id == purge_job_id)
+        .values(status="completed", completed_at=datetime.now(timezone.utc))
+    )
+    db.commit()
+
+
 def _attempt_purge_one(
     db: Session,
     actor: Actor,
@@ -163,10 +194,17 @@ def _attempt_purge_one(
     Re-fetches and locks the row immediately before acting (so a concurrent
     restore or purge run can never race with this one), re-verifies the
     30-day boundary and the retained-links check, then performs the
-    quarantine-audit-delete-audit-commit sequence as a single transaction.
-    On any failure before commit, the transaction rolls back and the file
-    (if quarantined) is moved back to its original active path before the
-    exception propagates to the caller.
+    quarantine-audit-delete-audit-ledger-commit sequence as a single
+    transaction. On any failure before commit, the transaction rolls back
+    and the file (if quarantined) is moved back to its original active path
+    before the exception propagates to the caller.
+
+    A `PurgeJob` ledger row (status="pending_finalize") is written in that
+    same transaction whenever a file was quarantined, so a crash between
+    this commit and the `finalize_purge()` call below leaves a durable,
+    recoverable receipt naming exactly which quarantined file still needs
+    to be removed -- see `reconcile_pending_purge_jobs` and
+    `app/models/purge_job.py`.
     """
     material = db.scalar(
         select(StudyMaterial)
@@ -187,6 +225,7 @@ def _attempt_purge_one(
     owner_id = material.uploader_id
     deleted_at_before = material.deleted_at
     quarantine_token: str | None = None
+    purge_job_id: UUID | None = None
 
     try:
         if file_path:
@@ -194,6 +233,17 @@ def _attempt_purge_one(
                 quarantine_token = storage.quarantine(file_path)
             except FileNotFoundError:
                 quarantine_token = None
+
+        if quarantine_token is not None:
+            purge_job_id = uuid4()
+            db.add(
+                PurgeJob(
+                    id=purge_job_id,
+                    material_id=material_id,
+                    quarantine_token=quarantine_token,
+                    status="pending_finalize",
+                )
+            )
 
         AuditService.record(
             db,
@@ -240,6 +290,8 @@ def _attempt_purge_one(
 
     if quarantine_token is not None:
         storage.finalize_purge(quarantine_token)
+        assert purge_job_id is not None
+        _mark_purge_job_completed(db, purge_job_id)
     return "purged"
 
 
@@ -294,3 +346,46 @@ def apply_purge(
         purged_ids=tuple(purged),
         blocked_ids=tuple(blocked),
     )
+
+
+def reconcile_pending_purge_jobs(
+    db: Session,
+    actor: Actor,
+    *,
+    storage: FileStorage = material_file_storage,
+) -> ReconcileReport:
+    """Finish any purge whose `finalize_purge()` call never ran.
+
+    `_attempt_purge_one` commits the quarantine+hard-delete+ledger-insert as
+    one transaction, then calls `storage.finalize_purge()` outside that
+    transaction, then marks the ledger row completed. If the process dies
+    in that window -- or between `finalize_purge()` succeeding and the
+    completion update committing -- the ledger row is left
+    `status="pending_finalize"`: a durable receipt naming exactly which
+    quarantined file still needs to be permanently removed, so it is never
+    silently stranded with no `StudyMaterial` row left for `plan_purge`/
+    `apply_purge` to ever find again.
+
+    Admin-only (`Permission.PURGE_DELETED_DATA`), same as `apply_purge`.
+    Safe to run repeatedly and safe to run with nothing pending:
+    `LocalFileStorage.finalize_purge` unlinks with `missing_ok=True`, so
+    re-finalizing an already-removed file (e.g. because `finalize_purge`
+    itself had already succeeded before the crash) is a no-op, and a run
+    that finds no `pending_finalize` rows does nothing at all.
+    """
+    require_permission(actor, Permission.PURGE_DELETED_DATA)
+
+    pending_jobs = db.scalars(
+        select(PurgeJob)
+        .where(PurgeJob.status == "pending_finalize")
+        .order_by(PurgeJob.created_at, PurgeJob.id)
+        .with_for_update()
+    ).all()
+
+    reconciled: list[UUID] = []
+    for job in pending_jobs:
+        storage.finalize_purge(job.quarantine_token)
+        _mark_purge_job_completed(db, job.id)
+        reconciled.append(job.material_id)
+
+    return ReconcileReport(reconciled_material_ids=tuple(reconciled))

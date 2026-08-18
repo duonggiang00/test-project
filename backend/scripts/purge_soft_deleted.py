@@ -3,7 +3,13 @@
 `plan` runs a read-only dry run and mutates nothing. `apply` requires an
 explicit `--confirm PURGE-<UTC-date>` flag matching today's UTC date (fail
 closed otherwise, exit code 2) before permanently purging eligible rows and
-their quarantined files.
+their quarantined files. `reconcile` finds any `PurgeJob` ledger row left
+`pending_finalize` by a process that died between an `apply` transaction
+committing and its `finalize_purge()` call actually running, and finishes
+those jobs deterministically -- see `purge_service.reconcile_pending_purge_jobs`
+and `app/models/purge_job.py`. It does not require `--confirm`: it never
+decides to purge anything new, it only finishes purges that were already
+committed.
 
 Purge is admin-only (`Permission.PURGE_DELETED_DATA`). This script runs
 outside any authenticated HTTP session, so it establishes its own acting
@@ -27,8 +33,10 @@ from app.models.user import User
 from app.services.purge_service import (
     DEFAULT_PURGE_BATCH_LIMIT,
     PurgeReport,
+    ReconcileReport,
     apply_purge,
     plan_purge,
+    reconcile_pending_purge_jobs,
 )
 
 
@@ -79,6 +87,15 @@ def _print_report(report: PurgeReport) -> None:
         print(f"PURGE_PURGED entity={report.entity} id={material_id}")
 
 
+def _print_reconcile_report(report: ReconcileReport) -> None:
+    print(
+        f"PURGE_RECONCILE entity={report.entity} "
+        f"reconciled={report.reconciled_count}"
+    )
+    for material_id in report.reconciled_material_ids:
+        print(f"PURGE_RECONCILED entity={report.entity} id={material_id}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
@@ -86,7 +103,7 @@ def build_parser() -> argparse.ArgumentParser:
             "past-retention-window study materials"
         )
     )
-    parser.add_argument("action", choices=("plan", "apply"))
+    parser.add_argument("action", choices=("plan", "apply", "reconcile"))
     parser.add_argument(
         "--confirm",
         default=None,
@@ -122,14 +139,19 @@ def main() -> int:
         with SessionLocal() as session:
             if args.action == "plan":
                 report = plan_purge(session, batch_limit=args.batch_limit)
-            else:
+                _print_report(report)
+            elif args.action == "apply":
                 actor = _resolve_actor(session, args.actor_email)
                 report = apply_purge(
                     session,
                     actor,
                     batch_limit=args.batch_limit,
                 )
-        _print_report(report)
+                _print_report(report)
+            else:
+                actor = _resolve_actor(session, args.actor_email)
+                reconcile_report = reconcile_pending_purge_jobs(session, actor)
+                _print_reconcile_report(reconcile_report)
         return 0
     except PurgeCliError as exc:
         print(f"PURGE_ERROR {exc}", file=sys.stderr)

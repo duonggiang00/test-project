@@ -1,6 +1,7 @@
 import inspect
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -13,10 +14,15 @@ from app.models.audit_event import AuditEvent
 from app.models.exam import Exam, Question
 from app.models.flashcard import FlashcardDeck
 from app.models.material import StudyMaterial
+from app.models.purge_job import PurgeJob
 from app.models.topic import Topic
 from app.models.user import User
 from app.services import purge_service
-from app.services.purge_service import apply_purge, plan_purge
+from app.services.purge_service import (
+    apply_purge,
+    plan_purge,
+    reconcile_pending_purge_jobs,
+)
 from tests.test_authorization_idor import create_exam, create_teacher, create_topic
 
 
@@ -214,6 +220,92 @@ def test_apply_purge_mid_failure_leaves_recoverable_quarantine(
         # it doesn't trip up a later test's apply_purge call against a
         # different tmp_path root.
         _hard_delete_materials(db, material.id)
+
+
+def test_purge_job_ledger_survives_crash_before_finalize_and_reconciles(
+    client, db, test_admin, tmp_path, monkeypatch
+):
+    """DATA-005/DATA-009 finding 2: a crash between the commit that hard-
+    deletes the StudyMaterial row and the finalize_purge() call that
+    permanently removes its quarantined file must not strand that file
+    forever. This simulates exactly that crash window, then proves the
+    PurgeJob ledger row left behind is a real recoverable receipt: it names
+    the orphaned quarantine token, reconcile_pending_purge_jobs finds it and
+    finishes the job, and a reconciliation run with nothing pending is a
+    safe no-op.
+    """
+    owner = create_teacher(client, db)
+    storage = _make_storage(tmp_path)
+    admin_actor = _admin_actor(test_admin)
+    material = _create_material(db, storage, owner["id"], content=b"reconcile me")
+    material_id = material.id
+    expired = datetime.now(timezone.utc) - RESTORE_WINDOW - timedelta(days=1)
+    _soft_delete(db, material, expired, owner["id"])
+
+    original_finalize = storage.finalize_purge
+
+    def crashing_finalize(quarantine_token):
+        # Simulates the process dying right after the DB transaction
+        # commits but before finalize_purge actually removes the file --
+        # the real unlink never runs.
+        raise RuntimeError("simulated crash before finalize_purge")
+
+    monkeypatch.setattr(storage, "finalize_purge", crashing_finalize)
+
+    with pytest.raises(
+        RuntimeError, match="simulated crash before finalize_purge"
+    ):
+        apply_purge(db, admin_actor, storage=storage)
+
+    # The database transaction already committed: the material row is
+    # really gone, and a durable pending_finalize ledger row survives the
+    # "crash" naming exactly the quarantined file that needs finishing.
+    assert _get_including_deleted(db, StudyMaterial, material_id) is None
+    job = db.scalar(select(PurgeJob).where(PurgeJob.material_id == material_id))
+    assert job is not None
+    assert job.status == "pending_finalize"
+    assert job.completed_at is None
+    quarantine_token = job.quarantine_token
+
+    # The file is still sitting in quarantine -- our crashing_finalize
+    # raised before doing anything, so the real unlink never ran.
+    assert Path(quarantine_token).is_file()
+
+    monkeypatch.setattr(storage, "finalize_purge", original_finalize)
+
+    reconcile_report = reconcile_pending_purge_jobs(
+        db, admin_actor, storage=storage
+    )
+    assert reconcile_report.reconciled_count == 1
+    assert material_id in reconcile_report.reconciled_material_ids
+
+    assert not Path(quarantine_token).exists()
+    db.expire_all()
+    job = db.scalar(select(PurgeJob).where(PurgeJob.material_id == material_id))
+    assert job is not None
+    assert job.status == "completed"
+    assert job.completed_at is not None
+
+    # Reconciling again with nothing pending is a safe no-op.
+    empty_report = reconcile_pending_purge_jobs(db, admin_actor, storage=storage)
+    assert empty_report.reconciled_count == 0
+    assert empty_report.reconciled_material_ids == ()
+
+
+def test_reconcile_pending_purge_jobs_denies_non_admin(
+    client, db, test_teacher, test_student, tmp_path
+):
+    storage = _make_storage(tmp_path)
+    teacher_actor = SimpleNamespace(id=test_teacher["id"], role="teacher")
+    student_actor = SimpleNamespace(id=test_student["id"], role="student")
+
+    with pytest.raises(AppException) as teacher_exc:
+        reconcile_pending_purge_jobs(db, teacher_actor, storage=storage)
+    assert teacher_exc.value.status_code == 403
+
+    with pytest.raises(AppException) as student_exc:
+        reconcile_pending_purge_jobs(db, student_actor, storage=storage)
+    assert student_exc.value.status_code == 403
 
 
 def test_apply_purge_denies_non_admin(client, db, test_teacher, test_student, tmp_path):

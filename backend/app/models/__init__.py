@@ -8,6 +8,7 @@ from app.models.flashcard import FlashcardDeck, Flashcard, FlashcardProgress
 from app.models.document_chunk import DocumentChunk
 from app.models.topic_brief import TopicBrief
 from app.models.audit_event import AuditEvent
+from app.models.purge_job import PurgeJob
 
 __all__ = [
     "User",
@@ -19,4 +20,5 @@ __all__ = [
     "DocumentChunk",
     "TopicBrief",
     "AuditEvent",
+    "PurgeJob",
 ]

@@ -51,6 +51,7 @@ EXPECTED_HEAD_TABLES = {
     "flashcard_progress",
     "flashcards",
     "options",
+    "purge_jobs",
     "questions",
     "study_materials",
     "submission_answers",

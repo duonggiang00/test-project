@@ -2,22 +2,22 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "5abb6fd1f706fd3c957e8efc0fd115c8a81d8308",
-    "source_commit_timestamp": "2026-08-18T14:53:24+07:00",
-    "source_tree_sha256": "93830b9810d4b89f933f1d5c2151dc92abb505f78295f9dfcf1e0c63a67d479a",
-    "relevant_file_count": 315,
+    "source_commit": "a8201fe07cc193616cdc8ffa84c1532d5180fbaf",
+    "source_commit_timestamp": "2026-08-18T15:44:27+07:00",
+    "source_tree_sha256": "2b2cbf2f3f5a28094910b54ad8e39272b3a8aeb0ff849101568adeea08b1e34d",
+    "relevant_file_count": 317,
     "alembic_heads": [
-      "f9f952e6df1a"
+      "1dfa8dca16d5"
     ]
   },
   "summary": {
-    "sqlalchemy_models": 14,
+    "sqlalchemy_models": 15,
     "pydantic_schemas": 71,
     "fastapi_routes": 68,
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 199,
+    "backend_test_functions": 202,
     "frontend_test_calls": 64
   },
   "backend": {
@@ -571,6 +571,62 @@
           }
         ],
         "table": "options"
+      },
+      {
+        "class": "PurgeJob",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "material_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "quarantine_token",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(1024)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "status",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(20)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": false,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "completed_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.purge_job",
+        "relationships": [],
+        "table": "purge_jobs"
       },
       {
         "class": "Question",
@@ -5301,47 +5357,57 @@
         "path": "tests/test_purge.py",
         "tests": [
           {
-            "line": 84,
+            "line": 90,
             "markers": [],
             "name": "test_plan_purge_makes_zero_changes"
           },
           {
-            "line": 110,
+            "line": 116,
             "markers": [],
             "name": "test_apply_purge_exact_boundary"
           },
           {
-            "line": 150,
+            "line": 156,
             "markers": [],
             "name": "test_apply_purge_batch_is_idempotent"
           },
           {
-            "line": 171,
+            "line": 177,
             "markers": [],
             "name": "test_apply_purge_mid_failure_leaves_recoverable_quarantine"
           },
           {
-            "line": 219,
+            "line": 225,
+            "markers": [],
+            "name": "test_purge_job_ledger_survives_crash_before_finalize_and_reconciles"
+          },
+          {
+            "line": 295,
+            "markers": [],
+            "name": "test_reconcile_pending_purge_jobs_denies_non_admin"
+          },
+          {
+            "line": 311,
             "markers": [],
             "name": "test_apply_purge_denies_non_admin"
           },
           {
-            "line": 233,
+            "line": 325,
             "markers": [],
             "name": "test_material_with_retained_links_is_blocked_not_purged"
           },
           {
-            "line": 290,
+            "line": 382,
             "markers": [],
             "name": "test_apply_purge_emits_requested_and_completed_audit_events"
           },
           {
-            "line": 327,
+            "line": 419,
             "markers": [],
             "name": "test_purge_never_touches_other_governed_roots"
           },
           {
-            "line": 402,
+            "line": 494,
             "markers": [],
             "name": "test_purge_service_source_never_deletes_protected_models"
           }
@@ -5414,6 +5480,11 @@
             "line": 117,
             "markers": [],
             "name": "test_user_topic_and_material_destructive_guards"
+          },
+          {
+            "line": 208,
+            "markers": [],
+            "name": "test_submission_and_grade_data_remains_visible_through_read_paths"
           }
         ],
         "tier": "integration"
