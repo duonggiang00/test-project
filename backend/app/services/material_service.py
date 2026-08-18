@@ -388,8 +388,6 @@ class MaterialService:
                 delete(TopicBrief).where(TopicBrief.material_id == material.id)
             )
 
-        file_path = material.file_path
-
         soft_delete(material, current_user.id)
         AuthorizationService.commit_with_audit(
             db,
@@ -403,9 +401,14 @@ class MaterialService:
             metadata={"cascade": cascade},
         )
 
-        if file_path:
-            storage.delete(file_path)
-
+        # Deliberately does not touch the file in `storage`: this is a soft
+        # delete with a 30-day recovery window (DATA-003/004), so the file
+        # must stay recoverable in active storage until either an owner/admin
+        # restores it (`restore_material`, download works again immediately)
+        # or `purge_service.apply_purge` quarantines and permanently removes
+        # it once the material is past the window. Deleting the file here
+        # would silently break restore -- the metadata row would come back
+        # but the download would 404 forever.
         return {"message": "Material and associated assets deleted successfully" if cascade else "Material deleted successfully"}
 
     @staticmethod

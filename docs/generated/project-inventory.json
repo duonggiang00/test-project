@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "32e05b1e37c8d05568762d5052bfaa4f20ca19bd",
-    "source_commit_timestamp": "2026-08-18T13:47:17+07:00",
-    "source_tree_sha256": "2eaf82cc439f71acce5423fc1a60976063fd7f86257b70aed69e8b8ee9bae423",
-    "relevant_file_count": 314,
+    "source_commit": "5abb6fd1f706fd3c957e8efc0fd115c8a81d8308",
+    "source_commit_timestamp": "2026-08-18T14:53:24+07:00",
+    "source_tree_sha256": "93830b9810d4b89f933f1d5c2151dc92abb505f78295f9dfcf1e0c63a67d479a",
+    "relevant_file_count": 315,
     "alembic_heads": [
       "f9f952e6df1a"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 195,
+    "backend_test_functions": 199,
     "frontend_test_calls": 64
   },
   "backend": {
@@ -5199,6 +5199,32 @@
             "line": 110,
             "markers": [],
             "name": "test_history_endpoints"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_material_download_lifecycle.py",
+        "tests": [
+          {
+            "line": 72,
+            "markers": [],
+            "name": "test_soft_delete_keeps_the_file_recoverable_for_restore"
+          },
+          {
+            "line": 114,
+            "markers": [],
+            "name": "test_http_download_full_cycle_preserves_bytes_and_headers"
+          },
+          {
+            "line": 163,
+            "markers": [],
+            "name": "test_purged_material_download_is_canonical_not_found"
+          },
+          {
+            "line": 204,
+            "markers": [],
+            "name": "test_full_lifecycle_not_found_is_canonical_at_every_stage"
           }
         ],
         "tier": "integration"
