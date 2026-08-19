@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, Boolean, UniqueConstraint
+from sqlalchemy import Column, Integer, Float, String, Text, DateTime, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -48,6 +48,27 @@ class SubmissionAnswer(Base):
     
     is_correct = Column(Boolean)
     points_awarded = Column(Float, default=0.0)
+
+    # GRADE-001 manual-correction trail. `override_reason` is free text a
+    # teacher types, so it lives here rather than in the audit event:
+    # `app.core.safe_payload` rejects any string containing a control
+    # character (a newline is enough), an email, or a path-shaped token, so
+    # routing a typed reason through `audit_events` would turn an ordinary
+    # grade correction into a 500. The audit event keeps only safe scalars
+    # and this row keeps the prose -- the same split AI-003/AI-004 uses for
+    # rendered prompts.
+    override_reason = Column(Text, nullable=True)
+    overridden_at = Column(DateTime(timezone=True), nullable=True)
+    overridden_by_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "users.id",
+            name="submission_answers_overridden_by_id_fkey",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
 
     __table_args__ = (UniqueConstraint('submission_id', 'question_id', name='uq_submission_question'),)
 

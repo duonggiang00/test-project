@@ -942,6 +942,28 @@
         "title": "GenerateTopicKitRequest",
         "type": "object"
       },
+      "GradeOverrideRequest": {
+        "description": "A teacher's correction of one answer's score.\n\n`points_awarded` is bounded server-side against the question's own\n`points`; `is_correct` is deliberately absent because it is derived, and\n`total_score` is absent because it is recomputed from the answers -- a\nclient can neither assert a total nor desynchronise it from its parts.",
+        "properties": {
+          "points_awarded": {
+            "minimum": 0,
+            "title": "Points Awarded",
+            "type": "number"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "points_awarded",
+          "reason"
+        ],
+        "title": "GradeOverrideRequest",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2136,6 +2158,40 @@
               }
             ],
             "title": "Is Correct"
+          },
+          "max_points": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Points"
+          },
+          "overridden_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overridden At"
+          },
+          "override_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Reason"
           },
           "points_awarded": {
             "title": "Points Awarded",
@@ -5157,6 +5213,75 @@
           }
         ],
         "summary": "Get Submission Detail",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/history/submissions/{submission_id}/answers/{question_id}/grade": {
+      "put": {
+        "description": "Correct the score of one answer and recompute the submission total.\n(Requires the exam's owner or an admin)",
+        "operationId": "override_answer_grade_history_submissions__submission_id__answers__question_id__grade_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submission_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Submission Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "question_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Question Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GradeOverrideRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Override Answer Grade",
         "tags": [
           "history"
         ]

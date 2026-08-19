@@ -8,7 +8,11 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.history import SubmissionHistoryItem, SubmissionDetailResponse
+from app.schemas.history import (
+    GradeOverrideRequest,
+    SubmissionHistoryItem,
+    SubmissionDetailResponse,
+)
 from app.api.deps import get_current_active_teacher
 from app.services.history_service import HistoryService
 
@@ -48,5 +52,29 @@ def get_submission_detail(
     return HistoryService.get_submission_detail(
         db=db,
         submission_id=submission_id,
+        current_user=current_user,
+    )
+
+
+@router.put(
+    "/submissions/{submission_id}/answers/{question_id}/grade",
+    response_model=SubmissionDetailResponse,
+)
+def override_answer_grade(
+    submission_id: UUID,
+    question_id: UUID,
+    request: GradeOverrideRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher)
+):
+    """
+    Correct the score of one answer and recompute the submission total.
+    (Requires the exam's owner or an admin)
+    """
+    return HistoryService.override_answer_grade(
+        db=db,
+        submission_id=submission_id,
+        question_id=question_id,
+        request=request,
         current_user=current_user,
     )

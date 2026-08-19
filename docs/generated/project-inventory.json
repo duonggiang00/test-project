@@ -2,22 +2,22 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "15d7b7b861fc838268045a644d4302cb2781f744",
-    "source_commit_timestamp": "2026-08-19T14:45:35+07:00",
-    "source_tree_sha256": "8afa9b2caee3d9773ec84b7f0aa269bc27fb1ecb1d2bfc94964de01ecf4d0923",
-    "relevant_file_count": 349,
+    "source_commit": "79e1f3d50c57789f67535fab3eae7ffaa629ad9c",
+    "source_commit_timestamp": "2026-08-19T15:32:55+07:00",
+    "source_tree_sha256": "cc91008d81cfc151588e1eafe05448c5026de35c385b3241758283ae0092a0d7",
+    "relevant_file_count": 351,
     "alembic_heads": [
-      "e7b21c9d4a83"
+      "b6d4f0a17c53"
     ]
   },
   "summary": {
     "sqlalchemy_models": 18,
-    "pydantic_schemas": 71,
-    "fastapi_routes": 70,
+    "pydantic_schemas": 72,
+    "fastapi_routes": 71,
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 276,
+    "backend_test_functions": 288,
     "frontend_test_calls": 85
   },
   "backend": {
@@ -1324,6 +1324,32 @@
             "nullable": true,
             "primary_key": false,
             "type": "FLOAT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "override_reason",
+            "nullable": true,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "overridden_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "overridden_by_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
             "unique": false
           }
         ],
@@ -2655,6 +2681,22 @@
         "module": "app.schemas.flashcard"
       },
       {
+        "class": "GradeOverrideRequest",
+        "fields": [
+          {
+            "name": "points_awarded",
+            "required": true,
+            "type": "float"
+          },
+          {
+            "name": "reason",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.history"
+      },
+      {
         "class": "SubmissionAnswerDetail",
         "fields": [
           {
@@ -2681,6 +2723,21 @@
             "name": "points_awarded",
             "required": true,
             "type": "float"
+          },
+          {
+            "name": "max_points",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "override_reason",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "overridden_at",
+            "required": false,
+            "type": "Optional"
           }
         ],
         "module": "app.schemas.history"
@@ -4406,6 +4463,21 @@
           "app.api.deps.get_current_active_teacher",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.history.override_answer_grade",
+        "methods": [
+          "PUT"
+        ],
+        "name": "override_answer_grade",
+        "path": "/history/submissions/{submission_id}/answers/{question_id}/grade",
+        "response_model": "SubmissionDetailResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer",
           "fastapi_pagination.api._create_params_dependency.<locals>._pagination_params",
           "fastapi_pagination.api.pagination_ctx.<locals>._page_ctx_dependency"
@@ -5723,6 +5795,97 @@
             "line": 68,
             "markers": [],
             "name": "test_bulk_add_questions"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_grade_override.py",
+        "tests": [
+          {
+            "line": 117,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_owner_correcting_one_answer_recomputes_the_total"
+          },
+          {
+            "line": 150,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_the_submission_status_is_left_alone_so_analytics_still_counts_it"
+          },
+          {
+            "line": 182,
+            "markers": [
+              "integration",
+              "parametrize"
+            ],
+            "name": "test_points_are_bounded_by_the_questions_own_maximum"
+          },
+          {
+            "line": 198,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_a_multiline_reason_with_an_email_is_stored_and_never_audited"
+          },
+          {
+            "line": 237,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_exactly_one_audit_event_is_written_with_safe_scalars_only"
+          },
+          {
+            "line": 274,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_a_refused_override_writes_nothing"
+          },
+          {
+            "line": 300,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_admin_may_correct_and_a_non_owning_teacher_may_not"
+          },
+          {
+            "line": 338,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_a_student_cannot_correct_their_own_grade"
+          },
+          {
+            "line": 354,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_an_anonymous_caller_is_rejected"
+          },
+          {
+            "line": 365,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_a_blank_reason_is_refused"
+          },
+          {
+            "line": 379,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_correcting_an_answer_that_is_not_in_this_submission_is_not_found"
+          },
+          {
+            "line": 395,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_two_reviewers_correcting_different_answers_do_not_clobber_the_total"
           }
         ],
         "tier": "integration"

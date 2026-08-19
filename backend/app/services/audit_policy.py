@@ -410,6 +410,44 @@ def _validate_submission_graded(
         _reject_invalid_action_payload()
 
 
+def _validate_submission_grade_override(
+    changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    """A manual grade correction: numeric before/after pairs and safe ids.
+
+    Note what is *not* here: the teacher's typed reason. `safe_payload`
+    rejects any string carrying a control character, an email, or a
+    path-shaped token, so a reason with a line break would fail the whole
+    write and turn an ordinary correction into a 500. The prose lives on
+    `submission_answers.override_reason`; this event keeps only scalars, the
+    same split AI-003 uses for rendered prompts.
+
+    `bool` is rejected explicitly everywhere a number is expected because
+    `bool` subclasses `int`.
+    """
+    for field in ("points_awarded", "total_score"):
+        change = changes.get(field)
+        if change is None:
+            continue
+        if not isinstance(change, dict) or set(change) != {"before", "after"}:
+            _reject_invalid_action_payload()
+        for key in ("before", "after"):
+            value = change[key]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                _reject_invalid_action_payload()
+
+    question_id = metadata.get("question_id")
+    if question_id is not None and not _is_uuid(question_id):
+        _reject_invalid_action_payload()
+
+    max_score = metadata.get("max_score")
+    if max_score is not None and (
+        isinstance(max_score, bool) or not isinstance(max_score, (int, float))
+    ):
+        _reject_invalid_action_payload()
+
+
 _ADMIN_OVERRIDE_OPERATIONS = frozenset(
     {
         # AI-002 review decisions. `publish` already covered writing the
@@ -664,6 +702,26 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             change_fields=frozenset({"total_score"}),
             metadata_fields=frozenset({"max_score"}),
             validate_payload=_validate_submission_graded,
+        ),
+        # A teacher/admin correcting a stored grade. Distinct from
+        # `submission.graded`, which is the student's own submit and is
+        # locked to `success_roles={"student"}`. The two also disagree on
+        # `owner_id` by necessity: `submission.graded` names the student,
+        # while this action names the exam's creator, because that is the
+        # ownership the grading permission is evaluated against (see
+        # `HistoryService.override_answer_grade`).
+        "submission.grade_override": AuditActionPolicy(
+            entity_types=frozenset({"submission"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset({"admin", "teacher"}),
+            failure_roles=frozenset({"admin", "teacher"}),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(
+                {"points_awarded", "total_score"}
+            ),
+            change_fields=frozenset({"points_awarded", "total_score"}),
+            metadata_fields=frozenset({"question_id", "max_score"}),
+            validate_payload=_validate_submission_grade_override,
         ),
         "user.role_change": AuditActionPolicy(
             entity_types=frozenset({"user"}),
