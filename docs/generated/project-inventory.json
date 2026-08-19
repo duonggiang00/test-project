@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "2afc2c8033f98788407f2010c87ca2a33a041552",
-    "source_commit_timestamp": "2026-08-19T17:49:42+07:00",
-    "source_tree_sha256": "f472d4ff8f964729084e4503f62dab34d21ee6aff30bcc45e92561165a8b42e0",
-    "relevant_file_count": 353,
+    "source_commit": "16d946ec68944d32238c36bc2d729d2be9fefb1a",
+    "source_commit_timestamp": "2026-08-19T17:56:48+07:00",
+    "source_tree_sha256": "07b7d079ff0e45b106b04674ec48aa6b3dd9c026b4de7a90ec834277bfbe2b82",
+    "relevant_file_count": 354,
     "alembic_heads": [
       "b6d4f0a17c53"
     ]
@@ -18,7 +18,7 @@
     "frontend_hooks": 15,
     "frontend_services": 2,
     "backend_test_functions": 288,
-    "frontend_test_calls": 96
+    "frontend_test_calls": 97
   },
   "backend": {
     "models": [
@@ -7299,6 +7299,11 @@
       },
       {
         "path": "frontend/tests/e2e/ai-review-flow.spec.ts",
+        "tier": "e2e",
+        "test_count": 1
+      },
+      {
+        "path": "frontend/tests/e2e/grade-submission-flow.spec.ts",
         "tier": "e2e",
         "test_count": 1
       },
