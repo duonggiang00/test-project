@@ -4,7 +4,7 @@ Status: Active
 Plan owner: Project owner  
 Execution owner: Primary coding agent  
 Created: 2026-08-05  
-Last updated: 2026-08-18
+Last updated: 2026-08-19
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
 
 ## 1. Objective
@@ -261,15 +261,15 @@ Goal: Ensure AI output is reviewable, tenant-safe, measurable, and regression-te
 
 | ID | Task | Status | Depends on | Acceptance evidence |
 |---|---|---|---|---|
-| AI-001 | Introduce provider abstraction and use-case model policy | TODO | GOV-001 | Provider/model can change through configuration |
-| AI-002 | Implement generation and approval state machine | TODO | DATA-001 | No generated content can bypass `awaiting_review` |
-| AI-003 | Implement prompt versioning and AI audit metadata | TODO | AI-001, DATA-001 | Prompt/model/tokens/cost/latency/context are traceable |
-| AI-004 | Add redaction and access controls for sensitive AI logs | TODO | AI-003, SEC-002 | Sensitive content is protected and tested |
+| AI-001 | Introduce provider abstraction and use-case model policy | DONE | GOV-001 | Typed provider protocol with an OpenRouter adapter as the only SDK import site (enforced by a non-baselined architecture rule); `ModelUseCase` resolves provider/model from validated settings; prompts are versioned modules with stable ids |
+| AI-002 | Implement generation and approval state machine | DONE | DATA-001 | `AIGenerationJob` enforces the §9.2 states via an allowlist with no `generated -> published` pair, optimistic `version`, and row locking; the `save-*` direct-write routes were removed and both background workers now park drafts; full-stack including the review UI and the §10.3 review E2E flow |
+| AI-003 | Implement prompt versioning and AI audit metadata | DONE | AI-001, DATA-001 | Every transition and chat call records the §2.4 field set (prompt version, provider/model, tokens, estimated cost, latency, context source ids, reviewer, outcome) atomically with the state change; cost is configuration-derived or an explicit null, never fabricated |
+| AI-004 | Add redaction and access controls for sensitive AI logs | DONE | AI-003, SEC-002 | Rendered prompts/raw output live only in `ai_restricted_payloads`, readable by owner/admin with cross-tenant probes indistinguishable from missing; a planted canary reaches no audit row; §6.3's 30-day expiry runs through the existing purge path without loosening its allowlist |
 | AI-005 | Enforce tenant-safe retrieval | DONE | SEC-002, TEST-004 | AI chat/process/background generation require one authorized material and cross-owner/missing probes never invoke the provider or enter retrieval context |
-| AI-006 | Build the first admin-approved golden dataset | TODO | AI-001 | 30–50 reviewed cases cover critical AI use cases |
-| AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | TODO | AI-006 | Repeatable evaluation report is produced |
-| AI-008 | Add prompt/model regression thresholds to CI | TODO | AI-007 | Material metric regressions block the governed change |
-| AI-009 | Verify AI grading remains advisory until teacher/admin approval | TODO | AI-002, AI-007 | State and authorization tests prevent automatic final grading |
+| AI-006 | Build the first admin-approved golden dataset | DEFERRED | AI-001 | Deferred by owner decision on 2026-08-19. Requires 30–50 admin-approved reference cases that no agent may invent or self-approve (`REMAINING_HIGH_RISK_APPROVAL_PACKET.md` §7) |
+| AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | DEFERRED | AI-006 | Deferred with AI-006; blocked on its dataset |
+| AI-008 | Add prompt/model regression thresholds to CI | DEFERRED | AI-007 | Deferred with AI-006/007; the change contract forbids inventing thresholds before an approved baseline report exists |
+| AI-009 | Verify AI grading remains advisory until teacher/admin approval | DONE | AI-002, AI-007 | `AIGradeSuggestion` starts `awaiting_review` and its creation cannot change awarded points, submission totals, or result release; the existing deterministic `GradingService` is untouched and not reclassified. No AI grading exists yet, so the invariant is established ahead of it rather than retrofitted |
 
 Exit criteria:
 
@@ -362,6 +362,11 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-18 | DATA-005 | Completed | Allowlisted, dry-run-capable purge for soft-deleted `StudyMaterial` only (User/Exam/Question/Topic/audit_events unreachable by construction); two-phase file quarantine; guarded `plan`/`apply`/`reconcile` CLI. PostgreSQL integration 108/108. |
 | 2026-08-18 | DATA-009 | Completed | Closed the remaining lifecycle gap: removed a premature physical file delete at soft-delete time that broke the 30-day recovery window; full active→soft-deleted→restored/purged lifecycle proven cross-owner-indistinguishable throughout. PostgreSQL integration 112/112. |
 | 2026-08-18 | Milestone 8 independent review | Completed | A separate reviewer agent read all five commits in full and ran both verification suites independently; no P1s found. Two P2 gaps closed before sign-off: (1) the submission/grade visibility guarantee through `AnalyticsService`/`HistoryService`/`StudentService.get_exam_result` rested on an undocumented, untested `exam_service`/`topic_service`/`question_service` guard — now documented and positively tested; (2) the change contract's required "recoverable job/receipt" for a crash mid-purge didn't exist — added a `purge_jobs` ledger (migration `1dfa8dca16d5`) and `reconcile` path. Final state: `node scripts/verify.mjs fast` green at every commit; full guarded PostgreSQL integration 115/115; guarded migration round trip clean through head `1dfa8dca16d5`. See `../handoffs/DATA-002-005-009.md`. |
+| 2026-08-19 | AI-001 | Completed | Replaced two independently-instantiated OpenAI clients and three duplicated JSON extractors with one typed provider protocol, an OpenRouter adapter, per-use-case model policy from validated settings, and versioned prompt modules. A new non-baselined `provider-sdk-import` architecture rule keeps the SDK confined to the adapter. |
+| 2026-08-19 | AI-002 / AI-009 | Completed | Added `AIGenerationJob` (migration `c4e1a70b58d9`) enforcing the §9.2 states through an allowlist with no `generated -> published` pair, an optimistic `version` column, and row locking. Removed the three `save-*` direct-write routes, closed both background-worker bypasses, and shipped the review UI plus the §10.3 "material upload and AI content generation with review" E2E flow. Two publish-path bugs were found and fixed by the tests themselves. `AIGradeSuggestion` establishes the advisory-grading invariant before any AI grading exists. |
+| 2026-08-19 | AI-003 / AI-004 | Completed | Every transition and chat call now records the §2.4 metadata atomically with its state change; estimated cost is configuration-derived or an explicit null, never fabricated. Rendered prompts and raw output moved to `ai_restricted_payloads` (migration `e7b21c9d4a83`) under owner/admin-only access and §6.3's 30-day clock, expired through the existing purge path without loosening its allowlist. |
+| 2026-08-19 | AI-006 / AI-007 / AI-008 | Deferred | Owner elected to defer the golden dataset, evaluation runner, and CI regression thresholds. AI-006 requires 30–50 admin-approved reference cases that no agent may invent or self-approve; AI-007 and AI-008 are blocked on it, and the change contract forbids inventing thresholds before an approved baseline exists. Hard safety invariants are enforced and tested regardless; AI *quality* is governed but not yet measured. |
+| 2026-08-19 | Milestone 9 independent review | Completed | A separate reviewer agent read all eight commits and re-ran every suite. Two findings, both fixed before sign-off: a P1 auto-publish escape (the topic-kit background worker still wrote briefs and flashcard decks straight to live tables, producing no audit row on the owner path) and a P2 (the chat path recorded no §2.4 metadata and usually no audit event). Verified clean: publish reads only the reviewed draft, no `generated -> published` path exists, both redaction barriers hold under attack, restricted-payload cross-tenant reads are indistinguishable 404s, the purge allowlist did not loosen, and `GradingService` was untouched. Final: fast gate green, PostgreSQL integration 139/139, mocked E2E 24/24 across four browsers, migration round trip clean through `e7b21c9d4a83`. See `../handoffs/AI-001-004-009.md`. |
 
 ## 17. Known program risks
 
@@ -376,4 +381,6 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
 | Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
 | Admin student-submission permissions are ambiguous | Keep self-service routes student-only until an approved on-behalf-of target/audit contract or permission-matrix amendment resolves SEC-006 |
+| AI output is governed but its quality is not yet measured | Hard safety invariants (no cross-owner retrieval, no automatic publication, no final AI grading) are enforced in code and tested. Correctness, groundedness, injection resistance, latency, and cost remain unmeasured until AI-006–008 are undeferred; do not represent Milestone 9 as making AI output good, only as making it reviewable |
+| `AIGradeSuggestion` has no production caller | The advisory invariant currently holds trivially because nothing generates a suggestion yet. When AI grading is implemented, the apply-on-approval path described in the model docstring still has to be built and tested |
 | Post-MVP submission/grade retention remains undecided | The approved MVP policy forbids permanent purge; require a later educational-record ADR and explicit owner approval before changing it |
