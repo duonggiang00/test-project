@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "8b185892308d4e6d4dafe0f1500d7c059666ab17",
-    "source_commit_timestamp": "2026-08-19T07:39:06+07:00",
-    "source_tree_sha256": "a4502b46fee63b4737f42cd375f849805a0bf9b0e2a834dfb4797adc8a6eabf6",
-    "relevant_file_count": 346,
+    "source_commit": "0e6b38978cd44409a12716b33fcda839ce9ab140",
+    "source_commit_timestamp": "2026-08-19T13:36:04+07:00",
+    "source_tree_sha256": "02b5ecf64b61702b67540bc7f1e605df46c69379def386c9f239821a2ac1f099",
+    "relevant_file_count": 347,
     "alembic_heads": [
       "e7b21c9d4a83"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 258,
+    "backend_test_functions": 265,
     "frontend_test_calls": 85
   },
   "backend": {
@@ -5357,19 +5357,74 @@
             "name": "test_each_transition_emits_exactly_one_correctly_shaped_event"
           },
           {
-            "line": 726,
+            "line": 757,
             "markers": [],
             "name": "test_a_refused_transition_emits_no_audit_event"
           },
           {
-            "line": 757,
+            "line": 788,
             "markers": [],
             "name": "test_a_rolled_back_publish_writes_neither_rows_nor_an_event"
           },
           {
-            "line": 806,
+            "line": 837,
             "markers": [],
             "name": "test_creating_a_grade_suggestion_changes_no_awarded_points"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_ai_restricted_payload.py",
+        "tests": [
+          {
+            "line": 90,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_restricted_payload_is_readable_by_owner_and_admin"
+          },
+          {
+            "line": 110,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_cross_owner_and_missing_payload_reads_are_indistinguishable"
+          },
+          {
+            "line": 137,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_expired_payloads_are_planned_and_purged_at_the_30_day_boundary"
+          },
+          {
+            "line": 169,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_purged_payload_read_is_a_canonical_not_found"
+          },
+          {
+            "line": 188,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_restricted_payload_purge_is_admin_only"
+          },
+          {
+            "line": 210,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_purging_payloads_never_touches_protected_records"
+          },
+          {
+            "line": 250,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_no_audit_event_ever_contains_the_raw_prompt_canary"
           }
         ],
         "tier": "integration"

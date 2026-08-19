@@ -34,8 +34,11 @@ from app.services.purge_service import (
     DEFAULT_PURGE_BATCH_LIMIT,
     PurgeReport,
     ReconcileReport,
+    RestrictedPayloadPurgeReport,
     apply_purge,
+    apply_restricted_payload_purge,
     plan_purge,
+    plan_restricted_payload_purge,
     reconcile_pending_purge_jobs,
 )
 
@@ -85,6 +88,21 @@ def _print_report(report: PurgeReport) -> None:
         )
     for material_id in report.purged_ids:
         print(f"PURGE_PURGED entity={report.entity} id={material_id}")
+
+
+def _print_restricted_report(report: RestrictedPayloadPurgeReport) -> None:
+    if report.action == "plan":
+        print(
+            f"PURGE_PLAN entity={report.entity} "
+            f"eligible={report.eligible_count}"
+        )
+    else:
+        print(
+            f"PURGE_APPLY entity={report.entity} "
+            f"purged={report.purged_count} eligible={report.eligible_count}"
+        )
+    for payload_id in report.purged_ids:
+        print(f"PURGE_PURGED entity={report.entity} id={payload_id}")
 
 
 def _print_reconcile_report(report: ReconcileReport) -> None:
@@ -140,6 +158,14 @@ def main() -> int:
             if args.action == "plan":
                 report = plan_purge(session, batch_limit=args.batch_limit)
                 _print_report(report)
+                # Both governed retention clocks are reported by one `plan`
+                # run: an operator asking "what is about to be permanently
+                # deleted?" should not have to know there are two answers.
+                _print_restricted_report(
+                    plan_restricted_payload_purge(
+                        session, batch_limit=args.batch_limit
+                    )
+                )
             elif args.action == "apply":
                 actor = _resolve_actor(session, args.actor_email)
                 report = apply_purge(
@@ -148,6 +174,13 @@ def main() -> int:
                     batch_limit=args.batch_limit,
                 )
                 _print_report(report)
+                _print_restricted_report(
+                    apply_restricted_payload_purge(
+                        session,
+                        actor,
+                        batch_limit=args.batch_limit,
+                    )
+                )
             else:
                 actor = _resolve_actor(session, args.actor_email)
                 reconcile_report = reconcile_pending_purge_jobs(session, actor)

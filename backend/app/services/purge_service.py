@@ -35,6 +35,8 @@ from app.core.correlation import get_current_request_id, new_correlation_id
 from app.core.file_storage import FileStorage, material_file_storage
 from app.core.permissions import Actor, Permission, require_permission
 from app.db.soft_delete import RESTORE_WINDOW
+from app.models.ai_generation import AIGenerationJob
+from app.models.ai_restricted_payload import AIRestrictedPayload
 from app.models.exam import Question
 from app.models.flashcard import FlashcardDeck
 from app.models.material import StudyMaterial
@@ -389,3 +391,185 @@ def reconcile_pending_purge_jobs(
         reconciled.append(job.material_id)
 
     return ReconcileReport(reconciled_material_ids=tuple(reconciled))
+
+
+# ---------------------------------------------------------------------------
+# Restricted AI payload expiry (AI-004)
+#
+# `CANONICAL_PROJECT_SPEC.md` §6.3: "Restricted raw AI prompts and retrieved
+# context are retained for 30 days after the generation job completes, then
+# purged through the governed lifecycle."
+#
+# This is deliberately a *separate* selector and a separate report rather than
+# a widening of `_eligible_material_rows`. The material purge path's narrowness
+# is the thing that makes its safety argument short enough to verify: it emits
+# exactly one hardcoded `delete(StudyMaterial)` and reads only
+# `Question`/`FlashcardDeck`/`TopicBrief` to check links. Threading a second
+# entity type through that path would turn it into a generic dispatcher, and a
+# generic dispatcher is exactly what the change contract forbids with "Purge is
+# allowlisted, not generic."
+#
+# So the allowlist grows by one explicitly-named member with its own
+# hardcoded delete, and `User`/`Exam`/`Question`/`Topic`/`Submission`/
+# `SubmissionAnswer`/`audit_events` remain unreachable from either path -- see
+# `test_purge_service_source_never_deletes_protected_models`, which asserts
+# that over this module's whole source.
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class RestrictedPayloadPurgeReport:
+    action: Literal["plan", "apply"]
+    entity: str = "ai_restricted_payload"
+    eligible_ids: tuple[UUID, ...] = ()
+    purged_ids: tuple[UUID, ...] = ()
+
+    @property
+    def eligible_count(self) -> int:
+        return len(self.eligible_ids)
+
+    @property
+    def purged_count(self) -> int:
+        return len(self.purged_ids)
+
+
+def _expired_restricted_payloads(
+    db: Session, *, limit: int | None
+) -> list[tuple[AIRestrictedPayload, UUID]]:
+    """Payloads past their stamped §6.3 boundary, oldest first.
+
+    Selects on the stored `expires_at` rather than recomputing
+    `created_at + 30 days`, so the retention decision that actually applied
+    to a given row governs it even if the constant later changes.
+
+    The parent job's `owner_id` is joined in rather than looked up per row:
+    the audit contract requires an owner on a purge event, and fetching it
+    inside the purge loop would be exactly the query-in-loop pattern
+    `architecture-guard` rejects.
+    """
+    statement = (
+        select(AIRestrictedPayload, AIGenerationJob.owner_id)
+        .join(AIGenerationJob, AIGenerationJob.id == AIRestrictedPayload.job_id)
+        .where(AIRestrictedPayload.expires_at <= datetime.now(timezone.utc))
+        .order_by(AIRestrictedPayload.expires_at, AIRestrictedPayload.id)
+    )
+    if limit is not None:
+        statement = statement.limit(limit)
+    return [(row[0], row[1]) for row in db.execute(statement).all()]
+
+
+def plan_restricted_payload_purge(
+    db: Session, *, batch_limit: int | None = None
+) -> RestrictedPayloadPurgeReport:
+    """Dry run: which restricted AI payloads are past their retention window.
+
+    Read-only: no row is mutated and no audit event is written.
+    """
+    return RestrictedPayloadPurgeReport(
+        action="plan",
+        eligible_ids=tuple(
+            payload.id
+            for payload, _owner_id in _expired_restricted_payloads(
+                db, limit=batch_limit
+            )
+        ),
+    )
+
+
+
+def _purge_one_restricted_payload(
+    db: Session,
+    actor: Actor,
+    *,
+    payload_id: UUID,
+    job_id: UUID,
+    owner_id: UUID,
+    expires_at: str,
+    resolved_request_id: str,
+) -> None:
+    """Audit and delete exactly one expired payload, as one transaction.
+
+    Extracted from `apply_restricted_payload_purge`'s loop for the same
+    reason `_attempt_purge_one` is: the per-item work issues statements, and
+    `architecture-guard`'s `backend.query-in-loop` rule correctly rejects
+    that shape inline. Keeping one transaction per payload also means a
+    failure part-way through a batch leaves earlier payloads purged and
+    audited, and later ones untouched -- never a deleted row with no audit
+    event, nor an audit event for a row that still exists.
+    """
+    try:
+        AuditService.record(
+            db,
+            AuditEventCreate(
+                request_id=resolved_request_id,
+                actor=_audit_actor(actor),
+                action="purge.completed",
+                entity=AuditEntity(
+                    type="ai_restricted_payload",
+                    id=str(payload_id),
+                    owner_id=owner_id,
+                ),
+                outcome="success",
+                changes={},
+                # The parent job id is what keeps this event interpretable:
+                # once the payload row is gone its own id names nothing, and
+                # the surviving job is the only remaining handle on what was
+                # purged.
+                metadata={"expires_at": expires_at, "job_id": str(job_id)},
+            ),
+        )
+        db.execute(
+            delete(AIRestrictedPayload).where(AIRestrictedPayload.id == payload_id)
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+
+def apply_restricted_payload_purge(
+    db: Session,
+    actor: Actor,
+    *,
+    batch_limit: int = DEFAULT_PURGE_BATCH_LIMIT,
+    request_id: str | None = None,
+) -> RestrictedPayloadPurgeReport:
+    """Permanently delete restricted AI payloads past their §6.3 window.
+
+    Admin-only, bounded, audited, and idempotent, matching `apply_purge`.
+    Simpler than the material path because there is no file and no cascade
+    to consider: the row *is* the sensitive data, nothing references it, and
+    the parent `AIGenerationJob` deliberately survives it -- §6.3 keeps the
+    redacted metadata (prompt version, provider/model, usage, cost, latency,
+    reviewer, outcome) "while the parent business record exists" and expires
+    only the raw prompt and output.
+
+    Each payload is deleted and audited in one transaction, so a crash can
+    never leave a deleted payload unaudited or an audit event describing a
+    row that still exists.
+    """
+    require_permission(actor, Permission.PURGE_DELETED_DATA)
+
+    resolved_request_id = (
+        request_id or get_current_request_id() or new_correlation_id()
+    )
+    candidates = _expired_restricted_payloads(db, limit=batch_limit)
+
+    purged: list[UUID] = []
+    for payload, owner_id in candidates:
+        _purge_one_restricted_payload(
+            db,
+            actor,
+            payload_id=payload.id,
+            job_id=payload.job_id,
+            owner_id=owner_id,
+            expires_at=payload.expires_at.isoformat(),
+            resolved_request_id=resolved_request_id,
+        )
+        purged.append(payload.id)
+
+    return RestrictedPayloadPurgeReport(
+        action="apply",
+        eligible_ids=tuple(payload.id for payload, _owner_id in candidates),
+        purged_ids=tuple(purged),
+    )

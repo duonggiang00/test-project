@@ -227,6 +227,7 @@ class AIGenerationService:
         override_entity_id: UUID | None = None,
         override_operation: str | None = None,
         request_id: str | None = None,
+        audit_metadata: dict[str, Any] | None = None,
     ) -> AIGenerationJob:
         """Transition and commit atomically with exactly one audit event.
 
@@ -237,6 +238,14 @@ class AIGenerationService:
         optional because the owning teacher's own transitions need no
         override event, and the background generation worker acts as the
         material's own uploader.
+
+        `audit_metadata` carries the AI-003 `ERROR_AND_AUDIT_CONTRACTS.md`
+        §2.4 projection (prompt version, provider/model, token usage,
+        estimated cost, latency, context source ids, restricted-payload id,
+        reviewer, outcome). It is merged over the always-present `use_case`,
+        and `audit_policy`'s per-action allowlist decides what each
+        individual transition may actually carry -- a caller cannot widen
+        an action's field set by passing extra keys here.
         """
         previous_status = job.status
         AIGenerationService.transition(
@@ -260,7 +269,7 @@ class AIGenerationService:
             override_entity_id=override_entity_id,
             operation=override_operation,
             changes={"status": {"before": previous_status, "after": target_status}},
-            metadata={"use_case": job.use_case},
+            metadata={"use_case": job.use_case, **(audit_metadata or {})},
             request_id=request_id,
         )
         return job

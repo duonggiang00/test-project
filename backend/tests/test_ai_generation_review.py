@@ -715,8 +715,39 @@ def test_each_transition_emits_exactly_one_correctly_shaped_event(client, db):
         assert event.actor_id == owner["id"]
         assert event.actor_role == "teacher"
         assert event.changes == {"status": {"before": before, "after": after}}
-        assert event.event_metadata == {"use_case": "question_generation"}
+        # `use_case` is on every transition; AI-003 adds the
+        # `ERROR_AND_AUDIT_CONTRACTS.md` §2.4 fields that are knowable at
+        # each particular point, so the exact metadata shape is asserted
+        # per-action below rather than as one fixed dict.
+        assert event.event_metadata["use_case"] == "question_generation"
         assert event.request_id
+
+    # AI-003: each action carries exactly the §2.4 fields knowable at that
+    # point -- the call's identity once the prompt is rendered, the usage
+    # and cost once the provider answers, and the reviewer once a human
+    # decides. The raw prompt and raw output are in neither: they live only
+    # in `ai_restricted_payloads`, referenced here by id.
+    by_action = {event.action: event.event_metadata for event in events}
+
+    processing = by_action["ai.generation.processing"]
+    assert processing["prompt_version"] == "question_generation-v1"
+    assert processing["provider"] == "openrouter"
+    assert processing["model"]
+    assert processing["context_source_ids"]
+
+    generated = by_action["ai.generation.generated"]
+    assert generated["prompt_version"] == "question_generation-v1"
+    assert "input_tokens" in generated
+    assert "output_tokens" in generated
+    # Honest when unpriced: no `AI_TOKEN_PRICING` entry means an explicit
+    # null, never a fabricated figure.
+    assert "estimated_cost" in generated
+    assert isinstance(generated["latency_ms"], int)
+    assert generated["restricted_payload_id"]
+
+    approved = by_action["ai.generation.approved"]
+    assert approved["reviewer_id"] == str(owner["id"])
+    assert approved["review_outcome"] == "approved"
 
     # No rejected/failed event was emitted along a clean path.
     assert _transition_events(db, job_id, "ai.generation.rejected") == []

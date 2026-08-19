@@ -28,10 +28,12 @@ from app.schemas.material import (
 )
 
 from app.ai import default_provider
+from app.ai.cost_policy import estimate_cost
 from app.ai.json_extraction import extract_json_payload
 from app.ai.model_policy import ModelUseCase, resolve_model_config
 from app.ai.prompts import (
     flashcard_generation_v1,
+    prompt_version_label,
     question_generation_v1,
     topic_brief_generation_v1,
 )
@@ -45,6 +47,7 @@ from app.db.soft_delete import is_restorable, soft_delete
 from app.models.submission import SubmissionAnswer
 from app.models.user import User
 from app.services.ai_generation_service import AIGenerationService
+from app.services.ai_restricted_payload_service import AIRestrictedPayloadService
 from app.services.authorization_service import AuthorizationService
 
 class MaterialService:
@@ -497,6 +500,17 @@ class MaterialService:
         return material, chunks
 
     @staticmethod
+    def _context_source_ids(chunks) -> list[str]:
+        """The §2.4 `context_source_ids` for a retrieval context.
+
+        Chunks without an id are skipped rather than stringified: an audit
+        event should name the sources it actually has, and a placeholder
+        would both fail the audit contract's UUID check and misreport what
+        the model was given.
+        """
+        return [str(chunk.id) for chunk in chunks if chunk.id is not None]
+
+    @staticmethod
     def _run_generation_job(
         db: Session,
         material: StudyMaterial,
@@ -504,6 +518,8 @@ class MaterialService:
         *,
         use_case: str,
         prompt: str,
+        prompt_module,
+        context_source_ids: list[str],
         model_use_case: ModelUseCase,
         temperature: float,
         provider: AIProvider,
@@ -518,6 +534,14 @@ class MaterialService:
         A slow or hanging model therefore never holds a row lock or an idle
         transaction open, and a crash mid-call leaves a durable `processing`
         job rather than a silently vanished request.
+
+        Each committed transition carries the AI-003
+        `ERROR_AND_AUDIT_CONTRACTS.md` §2.4 metadata that is knowable at
+        that point: `processing` records what the call is about to do
+        (prompt version, provider/model, context sources), `generated`
+        adds what came back (token usage, estimated cost, latency) plus the
+        id of the restricted row holding the raw prompt/output. The raw text
+        itself never travels through the audit path -- only that id does.
         """
         job = AIGenerationService.create_job(
             db,
@@ -525,6 +549,15 @@ class MaterialService:
             material_id=material.id,
             use_case=use_case,
         )
+        model_config = resolve_model_config(model_use_case)
+        call_metadata = {
+            "prompt_version": prompt_version_label(prompt_module),
+            "provider": model_config.provider,
+            "model": model_config.model,
+        }
+        if context_source_ids:
+            call_metadata["context_source_ids"] = context_source_ids
+
         AIGenerationService.commit_transition(
             db,
             job,
@@ -534,9 +567,9 @@ class MaterialService:
             override_entity_type="study_material",
             override_entity_id=material.id,
             override_operation="generate",
+            audit_metadata=call_metadata,
         )
 
-        model_config = resolve_model_config(model_use_case)
         try:
             result = provider.generate(
                 GenerateRequest(
@@ -570,12 +603,35 @@ class MaterialService:
                 status_code=500, error_code="AI_GENERATION_FAILED"
             ) from exc
 
+        # The rendered prompt and raw response land in restricted storage,
+        # flushed into the same transaction that commits the `generated`
+        # transition -- so an audit event can never name a payload row that
+        # was never written, nor can a payload row exist with no audited
+        # reason for its §6.3 retention clock to have started.
+        payload = AIRestrictedPayloadService.store(
+            db,
+            job=job,
+            rendered_prompt=prompt,
+            raw_output=result.text,
+        )
         AIGenerationService.commit_transition(
             db,
             job,
             "generated",
             actor=current_user,
             draft_payload=draft,
+            audit_metadata={
+                **call_metadata,
+                "input_tokens": result.usage.input_tokens,
+                "output_tokens": result.usage.output_tokens,
+                "estimated_cost": estimate_cost(
+                    model=result.model,
+                    input_tokens=result.usage.input_tokens,
+                    output_tokens=result.usage.output_tokens,
+                ),
+                "latency_ms": round(result.latency_ms),
+                "restricted_payload_id": str(payload.id),
+            },
         )
         AIGenerationService.commit_transition(
             db,
@@ -636,6 +692,8 @@ class MaterialService:
             current_user,
             use_case="question_generation",
             prompt=prompt,
+            prompt_module=question_generation_v1,
+            context_source_ids=MaterialService._context_source_ids(chunks),
             model_use_case=ModelUseCase.QUESTION_GENERATION,
             temperature=0.7,
             provider=provider,
@@ -664,6 +722,8 @@ class MaterialService:
             current_user,
             use_case="flashcard_generation",
             prompt=prompt,
+            prompt_module=flashcard_generation_v1,
+            context_source_ids=MaterialService._context_source_ids(chunks),
             model_use_case=ModelUseCase.FLASHCARD_GENERATION,
             temperature=0.5,
             provider=provider,
@@ -692,6 +752,8 @@ class MaterialService:
             current_user,
             use_case="topic_brief_generation",
             prompt=prompt,
+            prompt_module=topic_brief_generation_v1,
+            context_source_ids=MaterialService._context_source_ids(chunks),
             model_use_case=ModelUseCase.TOPIC_BRIEF_GENERATION,
             temperature=0.5,
             provider=provider,
@@ -753,6 +815,13 @@ class MaterialService:
                 override_operation=MaterialService._REVIEW_OPERATIONS[
                     target_status
                 ],
+                # §2.4's reviewer/outcome pair. `reviewer_id` is the acting
+                # user, which `transition` has just written onto the job for
+                # the same reason: it is never inferred from the owner.
+                audit_metadata={
+                    "reviewer_id": str(current_user.id),
+                    "review_outcome": target_status,
+                },
             )
         except Exception:
             # Release the row lock taken by `get_job_for_review(lock=True)`
