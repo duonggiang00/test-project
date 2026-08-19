@@ -30,6 +30,10 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   EXAM_NOT_FOUND: "The requested exam could not be found or is unavailable.",
   QUESTION_NOT_FOUND: "The requested question could not be found.",
   SUBMISSION_NOT_FOUND: "The requested submission could not be found.",
+  SUBMISSION_ANSWER_NOT_FOUND:
+    "The requested answer could not be found on this submission.",
+  GRADE_OVERRIDE_EXCEEDS_QUESTION_POINTS:
+    "The corrected score is outside the range this question allows.",
   MATERIAL_NOT_FOUND: "The requested material could not be found.",
   MATERIAL_DELETE_REQUIRES_CASCADE: "This material has linked resources.",
   DECK_NOT_FOUND: "The requested flashcard deck could not be found.",

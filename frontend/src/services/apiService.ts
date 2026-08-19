@@ -1,6 +1,6 @@
 import api from "@/lib/api";
 import type { AIGenerationJobStatus } from "@/lib/ai-generation-review";
-import type { PaginatedResponse } from "@/types";
+import type { PaginatedResponse, SubmissionDetail } from "@/types";
 
 // ==========================================
 // 1. TOPICS MUTATIONS
@@ -276,6 +276,35 @@ export const publishGenerationJob = async (
     topic_id: payload.topic_id ?? null,
     expected_version: expectedVersion ?? null,
   });
+  return response.data;
+};
+
+// ==========================================
+// SUBMISSION GRADE CORRECTION (GRADE-001)
+// ==========================================
+// The first write on `/history/*`. `is_correct` and `total_score` are absent
+// on purpose: the backend derives the first with the same rule the automatic
+// grader uses and recomputes the second from the answers, so a client can
+// neither assert a total nor desynchronise it from its parts. The response is
+// the full updated submission, which lets the caller write it straight into
+// the SWR cache instead of inventing a shape.
+
+export interface UpdateSubmissionGradePayload {
+  /** Bounded server-side by the question's own `points`. */
+  points_awarded: number;
+  /** Non-blank, at most 2000 characters. Stored as the correction trail. */
+  reason: string;
+}
+
+export const updateSubmissionGrade = async (
+  submissionId: string,
+  questionId: string,
+  payload: UpdateSubmissionGradePayload,
+): Promise<SubmissionDetail> => {
+  const response = await api.put(
+    `/history/submissions/${submissionId}/answers/${questionId}/grade`,
+    { points_awarded: payload.points_awarded, reason: payload.reason },
+  );
   return response.data;
 };
 

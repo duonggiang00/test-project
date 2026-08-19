@@ -186,7 +186,11 @@ export interface SubmissionAnswerDetail {
   answer_data?: Record<string, unknown> | unknown;
   is_correct?: boolean | null;
   points_awarded: number;
+  /** The question's maximum. Bounds a manual correction (GRADE-001). */
   max_points?: number;
+  /** Manual-correction trail. Both are null on an answer nobody corrected. */
+  override_reason?: string | null;
+  overridden_at?: string | null;
 }
 
 export interface SubmissionDetail extends Submission {
