@@ -1,22 +1,20 @@
-import React, { useState } from "react";
+import React from "react";
 import { Loader2 } from "lucide-react";
-import { toast } from "@/components/ui/toast";
-import { getBackendErrorMessage, logBackendError } from "@/lib/errors";
-import {
-  saveGeneratedFlashcards,
-  saveGeneratedQuestions,
-  saveGeneratedTopicBrief,
-} from "@/services/apiService";
+import GenerationJobReview from "./GenerationJobReview";
 
 interface GenerativePreviewProps {
   toolName: string | null;
   toolArgs: string | Record<string, unknown> | null;
   isStreaming: boolean;
-  materialId?: string | null;
 }
 
-export default function GenerativePreview({ toolName, toolArgs, isStreaming, materialId }: GenerativePreviewProps) {
-  const [isSaving, setIsSaving] = useState(false);
+const DEFAULT_PUBLISH_TITLES: Record<string, string> = {
+  draft_exam: "AI-generated questions",
+  draft_flashcards: "AI-generated flashcards",
+  draft_topic_brief: "AI-generated topic brief",
+};
+
+export default function GenerativePreview({ toolName, toolArgs, isStreaming }: GenerativePreviewProps) {
   if (!toolName) {
     return (
       <div className="flex-1 p-8 flex items-center justify-center bg-white border-4 border-black m-4 shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
@@ -43,55 +41,30 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming, mat
     parsedArgs = toolArgs as Record<string, unknown> | null;
   }
 
-  const handleSave = async () => {
-    if (!materialId || !parsedArgs) return;
-    setIsSaving(true);
-    try {
-      if (toolName === "draft_exam") {
-        await saveGeneratedQuestions(materialId, parsedArgs.questions);
-        toast.add({ title: "Thành công", description: "Đã lưu bộ câu hỏi vào hệ thống", type: "success" });
-      } else if (toolName === "draft_flashcards") {
-        await saveGeneratedFlashcards(materialId, parsedArgs.flashcards);
-        toast.add({ title: "Thành công", description: "Đã lưu bộ flashcard vào hệ thống", type: "success" });
-      } else if (toolName === "draft_topic_brief") {
-        await saveGeneratedTopicBrief(
-          materialId,
-          String(parsedArgs.content || ""),
-        );
-        toast.add({ title: "Thành công", description: "Đã lưu bản tóm tắt vào hệ thống", type: "success" });
-      }
-    } catch (error) {
-      logBackendError("Generated content save failed", error);
-      toast.add({
-        title: "Save failed",
-        description: getBackendErrorMessage(
-          error,
-          "The generated content could not be saved.",
-        ),
-        type: "error",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // A generation response identifies the review job its draft was parked in.
+  // A chat-driven tool call has no job, so nothing about it is publishable and
+  // the panel says so rather than offering an action that would 404.
+  const jobId =
+    typeof parsedArgs?.job_id === "string" && parsedArgs.job_id
+      ? parsedArgs.job_id
+      : null;
+  const publishTitle =
+    typeof parsedArgs?.title === "string" && parsedArgs.title
+      ? parsedArgs.title
+      : DEFAULT_PUBLISH_TITLES[toolName] ?? null;
 
   return (
     <div className="flex-1 p-6 bg-white overflow-y-auto">
-      <div className="flex items-center justify-between mb-6 pb-2 border-b-4 border-black">
+      <div className="mb-6 pb-2 border-b-4 border-black space-y-3">
         <h3 className="text-xl font-bold font-mono flex items-center gap-2 text-black">
           {toolName === "draft_exam" && "[EXAM] Drafting Exam..."}
           {toolName === "draft_flashcards" && "[CARDS] Drafting Flashcards..."}
           {toolName === "draft_topic_brief" && "[DOC] Drafting Brief..."}
           {isStreaming && <Loader2 className="animate-spin w-5 h-5 ml-2 text-black" />}
         </h3>
-        <button 
-          onClick={handleSave}
-          disabled={isStreaming || !parsedArgs || isSaving}
-          className="px-4 py-2 bg-black text-white font-mono font-bold hover:bg-white hover:text-black border-4 border-black transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50 uppercase tracking-tight flex items-center gap-2"
-        >
-          {isSaving && <Loader2 className="animate-spin w-4 h-4" />}
-          Lưu vào hệ thống
-        </button>
+        {!isStreaming && (
+          <GenerationJobReview jobId={jobId} title={publishTitle} />
+        )}
       </div>
 
       {!parsedArgs ? (

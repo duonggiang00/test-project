@@ -503,11 +503,10 @@ export default function AIWorkspacePage() {
 
       {/* CỘT PHẢI: GENERATIVE UI (RIGHT PANE Part 2) */}
       <div className="w-full md:w-1/3 flex flex-col bg-white border-l-0 md:border-l-4 border-black">
-        <GenerativePreview 
-          toolName={activeToolCall?.name || null} 
-          toolArgs={activeToolCall?.args || null} 
-          isStreaming={isStreaming} 
-          materialId={activeMaterial}
+        <GenerativePreview
+          toolName={activeToolCall?.name || null}
+          toolArgs={activeToolCall?.args || null}
+          isStreaming={isStreaming}
         />
       </div>
 

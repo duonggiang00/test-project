@@ -1,5 +1,6 @@
 import api from "../lib/api";
 import {
+  approveGenerationJob,
   createExam,
   createQuestion,
   createTopic,
@@ -7,10 +8,11 @@ import {
   generateMaterialFlashcards,
   generateMaterialQuestions,
   generateMaterialTopicBrief,
+  getGenerationJob,
+  listGenerationJobs,
   openAiChatStream,
-  saveGeneratedFlashcards,
-  saveGeneratedQuestions,
-  saveGeneratedTopicBrief,
+  publishGenerationJob,
+  rejectGenerationJob,
   uploadMaterial,
   updateStudentRole,
 } from "./apiService";
@@ -19,12 +21,14 @@ jest.mock("../lib/api", () => ({
   __esModule: true,
   default: {
     delete: jest.fn(),
+    get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
   },
 }));
 
 const mockedDelete = jest.mocked(api.delete);
+const mockedGet = jest.mocked(api.get);
 const mockedPost = jest.mocked(api.post);
 const originalFetch = global.fetch;
 
@@ -135,38 +139,77 @@ describe("AI workspace transport services", () => {
     );
   });
 
-  test("uses explicit contracts for all generated-content save operations", async () => {
-    mockedPost.mockResolvedValue({ data: { saved: true } } as never);
-    const questions = [{ content: "Question" }];
-    const flashcards = [{ term: "Term", definition: "Definition" }];
+  test("reads generation jobs through the owner-scoped review endpoints", async () => {
+    mockedGet.mockResolvedValue({ data: { items: [] } } as never);
 
-    await saveGeneratedQuestions("material-1", questions);
-    await saveGeneratedFlashcards("material-1", flashcards);
-    await saveGeneratedTopicBrief("material-1", "Brief content");
+    await listGenerationJobs({ status: "awaiting_review", material_id: "m1" });
+    await getGenerationJob("job-1");
+
+    expect(mockedGet).toHaveBeenNthCalledWith(1, "/ai/generation-jobs", {
+      params: { status: "awaiting_review", material_id: "m1" },
+    });
+    expect(mockedGet).toHaveBeenNthCalledWith(2, "/ai/generation-jobs/job-1");
+  });
+
+  test("drives review decisions through the generation-job endpoints", async () => {
+    mockedPost.mockResolvedValue({ data: { id: "job-1" } } as never);
+
+    await approveGenerationJob("job-1", 3);
+    await rejectGenerationJob("job-2", 4);
 
     expect(mockedPost).toHaveBeenNthCalledWith(
       1,
-      "/materials/material-1/save-questions",
-      { questions },
+      "/ai/generation-jobs/job-1/approve",
+      { expected_version: 3 },
     );
     expect(mockedPost).toHaveBeenNthCalledWith(
       2,
-      "/materials/material-1/save-flashcards",
-      {
-        title: "AI-generated flashcards",
-        topic_id: null,
-        flashcards,
-      },
+      "/ai/generation-jobs/job-2/reject",
+      { expected_version: 4 },
     );
-    expect(mockedPost).toHaveBeenNthCalledWith(
-      3,
-      "/materials/material-1/save-topic-brief",
-      {
-        title: "AI-generated topic brief",
-        content: "Brief content",
-        topic_id: null,
-      },
+  });
+
+  test("publishes with placement fields only and never generated content", async () => {
+    mockedPost.mockResolvedValue({
+      data: { job_id: "job-1", status: "published" },
+    } as never);
+
+    await publishGenerationJob(
+      "job-1",
+      { title: "Approved deck", topic_id: "topic-1" },
+      7,
     );
+
+    expect(mockedPost).toHaveBeenCalledTimes(1);
+    const [url, body] = mockedPost.mock.calls[0];
+    expect(url).toBe("/ai/generation-jobs/job-1/publish");
+    expect(body).toEqual({
+      title: "Approved deck",
+      topic_id: "topic-1",
+      expected_version: 7,
+    });
+    // The reviewed draft is the only content source; a publish request that
+    // could carry questions/flashcards/content would reopen the bypass the
+    // review queue exists to close.
+    expect(Object.keys(body as object).sort()).toEqual([
+      "expected_version",
+      "title",
+      "topic_id",
+    ]);
+  });
+
+  test("defaults publish placement and concurrency guard to null", async () => {
+    mockedPost.mockResolvedValue({
+      data: { job_id: "job-1", status: "published" },
+    } as never);
+
+    await publishGenerationJob("job-1");
+
+    expect(mockedPost).toHaveBeenCalledWith("/ai/generation-jobs/job-1/publish", {
+      title: null,
+      topic_id: null,
+      expected_version: null,
+    });
   });
 
   test("opens the AI stream through the BFF with the expected JSON contract", async () => {

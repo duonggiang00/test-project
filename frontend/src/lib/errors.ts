@@ -62,6 +62,20 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   AI_AUTHENTICATION_FAILED: "The AI service is currently unavailable. Try again later.",
   AI_INTERNAL_ERROR: "The AI request could not be completed.",
 
+  // AI generation review queue (AI-002)
+  AI_JOB_NOT_FOUND: "The requested AI generation job could not be found.",
+  AI_JOB_INVALID_TRANSITION:
+    "This AI generation job is not in a state that allows this action.",
+  AI_JOB_INVALID_STATUS: "This AI generation job has an unrecognized state.",
+  AI_JOB_VERSION_CONFLICT:
+    "This AI generation job was already updated by someone else. Reload and try again.",
+  AI_JOB_REVIEWER_REQUIRED:
+    "A reviewer must be identified before this decision can be recorded.",
+  AI_JOB_USE_CASE_NOT_PUBLISHABLE:
+    "This kind of AI-generated content cannot be published.",
+  AI_DRAFT_INVALID:
+    "The reviewed draft is no longer valid and cannot be published.",
+
   // Generic transport errors
   BAD_REQUEST: "The request is invalid.",
   METHOD_NOT_ALLOWED: "This action is not allowed for the requested resource.",

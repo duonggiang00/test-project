@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "f6ba04e69dc8e3c1cfaaa64b4fe3428d473833b0",
-    "source_commit_timestamp": "2026-08-19T01:07:22+07:00",
-    "source_tree_sha256": "295e6fe4755a88e07cf16ad936e647b38c2851c74c527a9a59f915a323a6e41f",
-    "relevant_file_count": 338,
+    "source_commit": "bf131fa30b23a92e6f4733da41df5f03d90ac4ec",
+    "source_commit_timestamp": "2026-08-19T01:26:30+07:00",
+    "source_tree_sha256": "b354af512726a299f737deef4f02d90ffa9c564ad1724bee4a94dc7f39da852c",
+    "relevant_file_count": 341,
     "alembic_heads": [
       "c4e1a70b58d9"
     ]
@@ -18,7 +18,7 @@
     "frontend_hooks": 15,
     "frontend_services": 2,
     "backend_test_functions": 258,
-    "frontend_test_calls": 64
+    "frontend_test_calls": 84
   },
   "backend": {
     "models": [
@@ -4975,8 +4975,7 @@
         "exports": [
           "generateFlashcards",
           "generateQuestions",
-          "saveFlashcards",
-          "saveQuestions",
+          "useGenerationJobReview",
           "useMaterialDetail",
           "useMaterialQuestions"
         ]
@@ -5052,6 +5051,7 @@
         "file": "frontend/src/services/apiService.ts",
         "exports": [
           "addQuestionToExam",
+          "approveGenerationJob",
           "bulkAddQuestionsToExam",
           "createExam",
           "createQuestion",
@@ -5065,14 +5065,15 @@
           "generateMaterialFlashcards",
           "generateMaterialQuestions",
           "generateMaterialTopicBrief",
+          "getGenerationJob",
+          "listGenerationJobs",
           "login",
           "logoutUser",
           "openAiChatStream",
+          "publishGenerationJob",
           "registerUser",
+          "rejectGenerationJob",
           "resetPassword",
-          "saveGeneratedFlashcards",
-          "saveGeneratedQuestions",
-          "saveGeneratedTopicBrief",
           "submitExam",
           "updateExam",
           "updateQuestion",
@@ -6831,6 +6832,11 @@
         "test_count": 1
       },
       {
+        "path": "frontend/src/lib/ai-generation-review.test.ts",
+        "tier": "unit",
+        "test_count": 5
+      },
+      {
         "path": "frontend/src/lib/backend-url.test.ts",
         "tier": "unit",
         "test_count": 3
@@ -6853,7 +6859,7 @@
       {
         "path": "frontend/src/services/apiService.test.ts",
         "tier": "unit",
-        "test_count": 7
+        "test_count": 10
       },
       {
         "path": "frontend/src/types/index.test.ts",
@@ -6886,9 +6892,9 @@
         "test_count": 3
       },
       {
-        "path": "frontend/tests/component/generative-preview-save.test.tsx",
+        "path": "frontend/tests/component/generation-job-review.test.tsx",
         "tier": "component",
-        "test_count": 1
+        "test_count": 13
       },
       {
         "path": "frontend/tests/component/password-reset-errors.test.tsx",

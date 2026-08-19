@@ -1,4 +1,6 @@
 import api from "@/lib/api";
+import type { AIGenerationJobStatus } from "@/lib/ai-generation-review";
+import type { PaginatedResponse } from "@/types";
 
 // ==========================================
 // 1. TOPICS MUTATIONS
@@ -187,40 +189,93 @@ export const generateMaterialTopicBrief = async (materialId: string) => {
   return response.data;
 };
 
-export const saveGeneratedQuestions = async (
-  materialId: string,
-  questions: unknown,
-) => {
-  const response = await api.post(`/materials/${materialId}/save-questions`, {
-    questions,
+// ==========================================
+// AI GENERATION REVIEW QUEUE (AI-002)
+// ==========================================
+// The `/materials/{id}/save-*` routes these replaced were removed with the
+// review state machine. Publishing is the only writer of AI-generated rows
+// and it reads its content from the job's reviewed `draft_payload`, so no
+// request here carries generated content -- only placement and the
+// optimistic-concurrency guard.
+
+export interface AIGenerationJob {
+  id: string;
+  owner_id: string;
+  material_id: string;
+  use_case: string;
+  status: AIGenerationJobStatus;
+  version: number;
+  draft_payload?: Record<string, unknown> | null;
+  failure_code?: string | null;
+  reviewer_id?: string | null;
+  created_at: string;
+  reviewed_at?: string | null;
+  published_at?: string | null;
+}
+
+export interface ListGenerationJobsParams {
+  status?: AIGenerationJobStatus;
+  material_id?: string;
+  page?: number;
+  size?: number;
+}
+
+/** Placement only. Content is never accepted from the client. */
+export interface PublishGenerationJobPayload {
+  title?: string | null;
+  topic_id?: string | null;
+}
+
+export interface PublishGenerationJobResult {
+  job_id: string;
+  status: "published";
+  [key: string]: unknown;
+}
+
+export const listGenerationJobs = async (
+  params: ListGenerationJobsParams = {},
+): Promise<PaginatedResponse<AIGenerationJob>> => {
+  const response = await api.get("/ai/generation-jobs", { params });
+  return response.data;
+};
+
+export const getGenerationJob = async (
+  jobId: string,
+): Promise<AIGenerationJob> => {
+  const response = await api.get(`/ai/generation-jobs/${jobId}`);
+  return response.data;
+};
+
+export const approveGenerationJob = async (
+  jobId: string,
+  expectedVersion?: number,
+): Promise<AIGenerationJob> => {
+  const response = await api.post(`/ai/generation-jobs/${jobId}/approve`, {
+    expected_version: expectedVersion ?? null,
   });
   return response.data;
 };
 
-export const saveGeneratedFlashcards = async (
-  materialId: string,
-  flashcards: unknown,
-) => {
-  const response = await api.post(`/materials/${materialId}/save-flashcards`, {
-    title: "AI-generated flashcards",
-    topic_id: null,
-    flashcards,
+export const rejectGenerationJob = async (
+  jobId: string,
+  expectedVersion?: number,
+): Promise<AIGenerationJob> => {
+  const response = await api.post(`/ai/generation-jobs/${jobId}/reject`, {
+    expected_version: expectedVersion ?? null,
   });
   return response.data;
 };
 
-export const saveGeneratedTopicBrief = async (
-  materialId: string,
-  content: string,
-) => {
-  const response = await api.post(
-    `/materials/${materialId}/save-topic-brief`,
-    {
-      title: "AI-generated topic brief",
-      content,
-      topic_id: null,
-    },
-  );
+export const publishGenerationJob = async (
+  jobId: string,
+  payload: PublishGenerationJobPayload = {},
+  expectedVersion?: number,
+): Promise<PublishGenerationJobResult> => {
+  const response = await api.post(`/ai/generation-jobs/${jobId}/publish`, {
+    title: payload.title ?? null,
+    topic_id: payload.topic_id ?? null,
+    expected_version: expectedVersion ?? null,
+  });
   return response.data;
 };
 
