@@ -1,10 +1,23 @@
 "use client";
 
-import React, { use } from "react";
-import { useSubmissionDetail } from "@/hooks/useExamHistory";
+import React, { use, useCallback } from "react";
+import { useSubmissionGradeOverride } from "@/hooks/useExamHistory";
 import { Loader2, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+import { toast } from "@/components/ui/toast";
+import { getBackendErrorMessage, logBackendError } from "@/lib/errors";
+import AnswerGradeEditor from "./AnswerGradeEditor";
+
+/**
+ * Safe fallback for a refusal that carries no recognised `error_code`. The
+ * backend's 404 is deliberately indistinguishable between a missing
+ * submission and one owned by somebody else, so the message must not claim
+ * which of the two happened.
+ */
+const SAVE_ERROR_FALLBACK =
+  "The score could not be corrected. Reload the submission and try again.";
 
 export default function HistoryDetailPage({
   params,
@@ -12,7 +25,36 @@ export default function HistoryDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const unwrappedParams = use(params);
-  const { submission, isLoading, isError } = useSubmissionDetail(unwrappedParams.id);
+
+  const handleSaveError = useCallback((error: unknown) => {
+    logBackendError("Submission grade override failed", error);
+    toast.add({
+      title: "Grade correction failed",
+      description: getBackendErrorMessage(error, SAVE_ERROR_FALLBACK),
+      type: "error",
+    });
+  }, []);
+
+  const { submission, isLoading, isError, pendingQuestionId, saveGrade } =
+    useSubmissionGradeOverride(unwrappedParams.id, handleSaveError);
+
+  const handleSave = useCallback(
+    async (questionId: string, pointsAwarded: number, reason: string) => {
+      const accepted = await saveGrade(questionId, pointsAwarded, reason);
+      // Failures are surfaced by `handleSaveError`; only a correction the
+      // server actually stored is announced as a success.
+      if (accepted) {
+        toast.add({
+          title: "Thành công",
+          description:
+            "Đã lưu điểm điều chỉnh. Tổng điểm của bài làm đã được tính lại.",
+          type: "success",
+        });
+      }
+      return accepted;
+    },
+    [saveGrade],
+  );
 
   if (isLoading) {
     return (
@@ -87,6 +129,13 @@ export default function HistoryDetailPage({
                     </div>
                   </div>
                   
+                  <AnswerGradeEditor
+                    answer={ans}
+                    isSaving={pendingQuestionId === ans.question_id}
+                    isLocked={pendingQuestionId !== null}
+                    onSave={handleSave}
+                  />
+
                   <div className="mt-6 p-6 border-2 border-black bg-gray-100 shadow-inner">
                     <p className="text-lg font-bold font-mono uppercase text-black mb-4 border-b-2 border-black pb-2 inline-block">DỮ LIỆU BÀI LÀM:</p>
                     <pre className="whitespace-pre-wrap font-mono text-base bg-white border-2 border-black p-4 overflow-x-auto shadow-[4px_4px_0_0_rgba(0,0,0,1)]">

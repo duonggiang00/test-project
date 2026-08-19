@@ -99,7 +99,9 @@ export interface SubmissionGradeOverride {
  */
 export function useSubmissionGradeOverride(
   submissionId: string | null,
-  onError?: (questionId: string, error: unknown) => void,
+  // `error` comes first so a caller that only reports the failure can take a
+  // single parameter; `questionId` is there for one that reports per row.
+  onError?: (error: unknown, questionId: string) => void,
 ): SubmissionGradeOverride {
   const { submission, isLoading, isError, mutate } =
     useSubmissionDetail(submissionId);
@@ -124,7 +126,7 @@ export function useSubmissionGradeOverride(
         return true;
       } catch (caught) {
         await mutate();
-        onError?.(questionId, caught);
+        onError?.(caught, questionId);
         return false;
       } finally {
         setPendingQuestionId(null);

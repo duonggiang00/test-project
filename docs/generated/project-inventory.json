@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "f01c85b17eeca678b459bd4fd2bc13a3b0fe8482",
-    "source_commit_timestamp": "2026-08-19T17:40:20+07:00",
-    "source_tree_sha256": "db992e00bde08ae6fcd1c13337468ae7a7c8a52f29185998252b629c3522cced",
-    "relevant_file_count": 351,
+    "source_commit": "2afc2c8033f98788407f2010c87ca2a33a041552",
+    "source_commit_timestamp": "2026-08-19T17:49:42+07:00",
+    "source_tree_sha256": "f472d4ff8f964729084e4503f62dab34d21ee6aff30bcc45e92561165a8b42e0",
+    "relevant_file_count": 353,
     "alembic_heads": [
       "b6d4f0a17c53"
     ]
@@ -18,7 +18,7 @@
     "frontend_hooks": 15,
     "frontend_services": 2,
     "backend_test_functions": 288,
-    "frontend_test_calls": 85
+    "frontend_test_calls": 96
   },
   "backend": {
     "models": [
@@ -7281,6 +7281,11 @@
         "path": "frontend/tests/component/student-exam-errors.test.tsx",
         "tier": "component",
         "test_count": 1
+      },
+      {
+        "path": "frontend/tests/component/submission-grade-override.test.tsx",
+        "tier": "component",
+        "test_count": 11
       },
       {
         "path": "frontend/tests/component/topic-material-delete.test.tsx",
