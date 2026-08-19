@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "3d6366953a819edee9407fc3e7d8daccbf6cc890",
-    "source_commit_timestamp": "2026-08-19T14:04:56+07:00",
-    "source_tree_sha256": "acd6f79b0bf30ccf4d57b5b2b3be114c638d78bebe4a60508495c756568ed232",
-    "relevant_file_count": 347,
+    "source_commit": "15d7b7b861fc838268045a644d4302cb2781f744",
+    "source_commit_timestamp": "2026-08-19T14:45:35+07:00",
+    "source_tree_sha256": "8afa9b2caee3d9773ec84b7f0aa269bc27fb1ecb1d2bfc94964de01ecf4d0923",
+    "relevant_file_count": 349,
     "alembic_heads": [
       "e7b21c9d4a83"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 266,
+    "backend_test_functions": 276,
     "frontend_test_calls": 85
   },
   "backend": {
@@ -5984,6 +5984,26 @@
         "tier": "integration"
       },
       {
+        "path": "tests/test_single_choice_grading_flow.py",
+        "tests": [
+          {
+            "line": 81,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_a_correct_single_choice_answer_is_scored"
+          },
+          {
+            "line": 95,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_a_wrong_single_choice_answer_scores_zero"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
         "path": "tests/test_soft_delete.py",
         "tests": [
           {
@@ -6691,6 +6711,69 @@
             "line": 107,
             "markers": [],
             "name": "test_local_storage_removes_temporary_file_when_atomic_replace_fails"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_grading_single_choice.py",
+        "tests": [
+          {
+            "line": 55,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_correct_single_choice_answer_scores_full_points"
+          },
+          {
+            "line": 64,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_wrong_single_choice_answer_scores_zero"
+          },
+          {
+            "line": 73,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_the_list_payload_shape_is_accepted_when_it_holds_exactly_one_id"
+          },
+          {
+            "line": 83,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_selecting_two_options_scores_zero_rather_than_full_marks"
+          },
+          {
+            "line": 99,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_a_question_without_exactly_one_correct_option_scores_zero"
+          },
+          {
+            "line": 136,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_missing_or_malformed_answers_score_zero_without_raising"
+          },
+          {
+            "line": 142,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_uuid_objects_and_their_strings_grade_identically"
+          },
+          {
+            "line": 155,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_other_question_types_are_unaffected_by_the_new_branch"
           }
         ],
         "tier": "unit"

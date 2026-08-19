@@ -23,6 +23,47 @@ class GradingService:
         return 0.0
 
     @staticmethod
+    def grade_single_choice(question: Question, answer_data: Dict[str, Any]) -> float:
+        """
+        answer_data: {"selected_option_id": "uuid-1"} or {"selected_option_ids": ["uuid-1"]}
+
+        Deliberately stricter than `grade_multiple_choice` rather than an
+        alias for it. A single-choice question asks for exactly one answer,
+        so selecting two options is a malformed answer, not a half-right
+        one -- set-comparing it would silently award full marks to a
+        submission that picked the correct option *and* a wrong one, as long
+        as the question happened to have two correct options recorded.
+
+        A question that does not have exactly one correct option is itself
+        malformed. This scores 0 rather than guessing which option was
+        intended: awarding points off a broken question would put a wrong
+        grade on a retained educational record.
+        """
+        correct_ids = [str(opt.id) for opt in question.options if opt.is_correct]
+        if len(correct_ids) != 1:
+            return 0.0
+
+        if "selected_option_id" in answer_data:
+            selected = answer_data["selected_option_id"]
+            if selected is None:
+                return 0.0
+            selected_ids = [str(selected)]
+        elif "selected_option_ids" in answer_data:
+            raw = answer_data["selected_option_ids"] or []
+            if not isinstance(raw, (list, tuple, set)):
+                return 0.0
+            selected_ids = [str(item) for item in raw]
+        else:
+            return 0.0
+
+        # Exactly one selection, and it is the correct one.
+        if len(selected_ids) != 1:
+            return 0.0
+        if selected_ids[0] != correct_ids[0]:
+            return 0.0
+        return float(question.points)
+
+    @staticmethod
     def grade_fill_in_blank(question: Question, answer_data: Dict[str, Any]) -> float:
         """
         question.metadata_json: {"blanks": [{"blank_index": 0, "acceptable_answers": ["apple", "quả táo"]}, ...]}
@@ -82,7 +123,9 @@ class GradingService:
         if not answer_data:
             return 0.0
             
-        if question.question_type == QuestionType.MULTIPLE_CHOICE:
+        if question.question_type == QuestionType.SINGLE_CHOICE:
+            return cls.grade_single_choice(question, answer_data)
+        elif question.question_type == QuestionType.MULTIPLE_CHOICE:
             return cls.grade_multiple_choice(question, answer_data)
         elif question.question_type == QuestionType.FILL_IN_BLANK:
             return cls.grade_fill_in_blank(question, answer_data)

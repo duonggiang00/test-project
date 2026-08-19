@@ -502,6 +502,14 @@ class DemoDataManager:
 
     @staticmethod
     def _answer_for(question: Question, correct: bool) -> dict[str, Any]:
+        if question.question_type.value == "SINGLE_CHOICE":
+            options = list(cast(Any, question.options))
+            chosen = next(
+                item for item in options if item.is_correct is bool(correct)
+            )
+            # The canonical single-choice shape: one id, not a list. The
+            # grader refuses a multi-id payload for this type on purpose.
+            return {"selected_option_id": str(chosen.id)}
         if question.question_type.value == "MULTIPLE_CHOICE":
             options = list(cast(Any, question.options))
             selected = [str(item.id) for item in options if item.is_correct]
