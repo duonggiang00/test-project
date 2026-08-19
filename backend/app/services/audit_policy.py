@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Callable, Literal, NoReturn
@@ -13,6 +14,13 @@ from app.core.permissions import Permission
 
 
 MAX_AUDIT_PAYLOAD_BYTES = 32 * 1024
+
+# `<prompt-id>-v<n>`, matching §2.4's `"prompt_version": "exam-generation-v3"`
+# and produced by `app.ai.prompts.prompt_version_label`. Anchored and narrow
+# so the field cannot become a free-text carrier for prompt content.
+_PROMPT_VERSION_PATTERN = re.compile(r"^[a-z][a-z0-9_]{0,62}-v[0-9]{1,4}$")
+# A plain non-negative decimal, e.g. §2.4's `"estimated_cost": "0.0123"`.
+_DECIMAL_STRING_PATTERN = re.compile(r"^[0-9]{1,12}(\.[0-9]{1,12})?$")
 
 
 @dataclass(frozen=True)
@@ -136,11 +144,24 @@ def _validate_purge_event(
     _changes: dict[str, JsonValue],
     metadata: dict[str, JsonValue],
 ) -> None:
-    deleted_at = metadata.get("deleted_at")
-    if deleted_at is not None and not isinstance(deleted_at, str):
-        _reject_invalid_action_payload()
+    """Metadata for both governed purge roots.
+
+    A soft-deleted `study_material` purge is dated by `deleted_at` and may
+    report whether a file was quarantined. An `ai_restricted_payload` purge
+    is dated by `expires_at` (the §6.3 30-day boundary) and names its parent
+    `job_id`, because once the payload row is gone its own entity id refers
+    to nothing and the surviving generation job is the only handle left that
+    makes the event interpretable.
+    """
+    for key in ("deleted_at", "expires_at"):
+        value = metadata.get(key)
+        if value is not None and not isinstance(value, str):
+            _reject_invalid_action_payload()
     quarantined = metadata.get("quarantined")
     if quarantined is not None and not isinstance(quarantined, bool):
+        _reject_invalid_action_payload()
+    job_id = metadata.get("job_id")
+    if job_id is not None and not _is_uuid(job_id):
         _reject_invalid_action_payload()
 
 
@@ -167,16 +188,78 @@ _AI_USE_CASES = frozenset(
 )
 
 
+_AI_REVIEW_OUTCOMES = frozenset({"approved", "rejected"})
+
+# The exact `ERROR_AND_AUDIT_CONTRACTS.md` §2.4 field names, grouped by the
+# point in the lifecycle at which each becomes known. `use_case` predates
+# AI-003 and `restricted_payload_id` is the §2.4-mandated "safe reference"
+# standing in for the raw prompt/output, which lives in
+# `ai_restricted_payloads` and must never appear here.
+_AI_BASE_METADATA = frozenset({"use_case"})
+_AI_CALL_METADATA = frozenset(
+    {"prompt_version", "provider", "model", "context_source_ids"}
+)
+_AI_USAGE_METADATA = frozenset(
+    {
+        "input_tokens",
+        "output_tokens",
+        "estimated_cost",
+        "latency_ms",
+        "restricted_payload_id",
+    }
+)
+_AI_REVIEW_METADATA = frozenset({"reviewer_id", "review_outcome"})
+
+# A rendered prompt is not merely unlisted here -- it is unrepresentable.
+# `safe_payload._is_sensitive_key` rejects `prompt`/`raw_prompt`/
+# `prompt_text`/`context`/`document_content` and friends outright, and the
+# per-action allowlist below rejects any field it has not been told about,
+# so both the key and the allowlist have to be defeated for raw content to
+# reach `audit_events`.
+_AI_METADATA_BY_ACTION: dict[str, frozenset[str]] = {
+    # Requested/processing: the prompt has been rendered and the model
+    # resolved, but nothing has come back yet.
+    "ai.generation.processing": _AI_BASE_METADATA | _AI_CALL_METADATA,
+    # Completion: the full §2.4 usage/cost/latency set.
+    "ai.generation.generated": (
+        _AI_BASE_METADATA | _AI_CALL_METADATA | _AI_USAGE_METADATA
+    ),
+    "ai.generation.awaiting_review": _AI_BASE_METADATA,
+    "ai.generation.approved": _AI_BASE_METADATA | _AI_REVIEW_METADATA,
+    "ai.generation.rejected": _AI_BASE_METADATA | _AI_REVIEW_METADATA,
+    "ai.generation.published": _AI_BASE_METADATA | _AI_REVIEW_METADATA,
+    # A failure has a prompt and a latency but no usable output, so it gets
+    # the call metadata plus the two usage fields that survive a failed call.
+    "ai.generation.failed": (
+        _AI_BASE_METADATA
+        | _AI_CALL_METADATA
+        | frozenset({"latency_ms", "restricted_payload_id"})
+    ),
+}
+
+
+def _reject_unless_non_negative_int(value: JsonValue) -> None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        _reject_invalid_action_payload()
+
+
 def _validate_ai_generation_transition(
     changes: dict[str, JsonValue],
     metadata: dict[str, JsonValue],
 ) -> None:
-    """Only a `{before, after}` status pair drawn from the canonical states.
+    """A `{before, after}` status pair plus the §2.4 AI metadata fields.
 
-    The AI-001-009 change contract puts prompt/provider/token/cost/latency
-    metadata in AI-003's scope and the rendered prompt itself in a separate
-    restricted payload store, so a transition event carries nothing beyond
-    its status change and use case.
+    AI-003 widened this from the status-only shape AI-002 shipped. What did
+    *not* widen: every field here is a safe projection -- an identifier, a
+    version label, a count, or an outcome. The rendered prompt and the raw
+    provider output are in `ai_restricted_payloads`, referenced by
+    `restricted_payload_id`, exactly as §2.4 requires ("The core audit
+    record should prefer prompt version and safe references over duplicating
+    raw sensitive content").
+
+    Each field is type-checked rather than merely allowlisted, so a caller
+    cannot smuggle a paragraph of document text through, say, `model`
+    without it also passing `safe_payload`'s value scan.
     """
     status = changes.get("status")
     if not isinstance(status, dict) or set(status) != {"before", "after"}:
@@ -190,6 +273,53 @@ def _validate_ai_generation_transition(
 
     use_case = metadata.get("use_case")
     if use_case is not None and use_case not in _AI_USE_CASES:
+        _reject_invalid_action_payload()
+
+    prompt_version = metadata.get("prompt_version")
+    if prompt_version is not None and (
+        not isinstance(prompt_version, str)
+        or not _PROMPT_VERSION_PATTERN.fullmatch(prompt_version)
+    ):
+        _reject_invalid_action_payload()
+
+    for key in ("provider", "model"):
+        value = metadata.get(key)
+        if value is not None and (
+            not isinstance(value, str) or not value or len(value) > 128
+        ):
+            _reject_invalid_action_payload()
+
+    for key in ("input_tokens", "output_tokens", "latency_ms"):
+        value = metadata.get(key)
+        if value is not None:
+            _reject_unless_non_negative_int(value)
+
+    # Serialized as a decimal string (§2.4 shows `"0.0123"`), or explicitly
+    # null when no approved price list covers the model -- see
+    # `app/ai/cost_policy.py`. A float is refused so cost never silently
+    # picks up binary rounding error on its way into the record.
+    if "estimated_cost" in metadata:
+        estimated_cost = metadata["estimated_cost"]
+        if estimated_cost is not None and (
+            not isinstance(estimated_cost, str)
+            or not _DECIMAL_STRING_PATTERN.fullmatch(estimated_cost)
+        ):
+            _reject_invalid_action_payload()
+
+    source_ids = metadata.get("context_source_ids")
+    if source_ids is not None:
+        if not isinstance(source_ids, list) or not source_ids:
+            _reject_invalid_action_payload()
+        if not all(_is_uuid(value) for value in source_ids):
+            _reject_invalid_action_payload()
+
+    for key in ("reviewer_id", "restricted_payload_id"):
+        value = metadata.get(key)
+        if value is not None and not _is_uuid(value):
+            _reject_invalid_action_payload()
+
+    review_outcome = metadata.get("review_outcome")
+    if review_outcome is not None and review_outcome not in _AI_REVIEW_OUTCOMES:
         _reject_invalid_action_payload()
 
 
@@ -531,28 +661,41 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             metadata_fields=frozenset(),
             validate_payload=_validate_restore,
         ),
+        # Both purge actions accept exactly the two governed purge roots and
+        # no others (AI-004). Widening this to `ai_restricted_payload` is
+        # what lets the 30-day restricted-log expiry run through the same
+        # audited lifecycle as material purge; it does not make any other
+        # entity purgeable, because `purge_service.PURGE_ALLOWLIST` -- not
+        # this registry -- decides what can be deleted.
         "purge.requested": AuditActionPolicy(
-            entity_types=frozenset({"study_material"}),
+            entity_types=frozenset({"ai_restricted_payload", "study_material"}),
             success_roles=frozenset({"admin"}),
             denied_roles=frozenset({"admin"}),
             failure_roles=frozenset({"admin"}),
             owner_requirement="required",
             required_success_change_fields=frozenset(),
             change_fields=frozenset(),
-            metadata_fields=frozenset({"deleted_at"}),
+            metadata_fields=frozenset({"deleted_at", "expires_at", "job_id"}),
             validate_payload=_validate_purge_event,
         ),
         "purge.completed": AuditActionPolicy(
-            entity_types=frozenset({"study_material"}),
+            entity_types=frozenset({"ai_restricted_payload", "study_material"}),
             success_roles=frozenset({"admin"}),
             denied_roles=frozenset({"admin"}),
             failure_roles=frozenset({"admin"}),
             owner_requirement="required",
             required_success_change_fields=frozenset(),
             change_fields=frozenset(),
-            metadata_fields=frozenset({"deleted_at", "quarantined"}),
+            metadata_fields=frozenset(
+                {"deleted_at", "expires_at", "job_id", "quarantined"}
+            ),
             validate_payload=_validate_purge_event,
         ),
+        # AI-003 widens each action to exactly the §2.4 metadata it can
+        # actually know at that point in the lifecycle -- an approval has a
+        # reviewer but no token usage, a completion has token usage but no
+        # reviewer -- so an event cannot carry a field it had no way to
+        # observe.
         **{
             action: AuditActionPolicy(
                 entity_types=frozenset({"ai_generation_job"}),
@@ -562,18 +705,10 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
                 owner_requirement="required",
                 required_success_change_fields=frozenset({"status"}),
                 change_fields=frozenset({"status"}),
-                metadata_fields=frozenset({"use_case"}),
+                metadata_fields=metadata_fields,
                 validate_payload=_validate_ai_generation_transition,
             )
-            for action in (
-                "ai.generation.processing",
-                "ai.generation.generated",
-                "ai.generation.awaiting_review",
-                "ai.generation.approved",
-                "ai.generation.rejected",
-                "ai.generation.published",
-                "ai.generation.failed",
-            )
+            for action, metadata_fields in _AI_METADATA_BY_ACTION.items()
         },
         "user.create": AuditActionPolicy(
             entity_types=frozenset({"user"}),

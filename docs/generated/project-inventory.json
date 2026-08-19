@@ -2,16 +2,16 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "a426c196ae0fa9ca0c832efe0b575e4b4148a9aa",
-    "source_commit_timestamp": "2026-08-19T07:30:57+07:00",
-    "source_tree_sha256": "1954cbe5126ccdd40800fa2bfe422b3e6be9b865fbf9fb1263e317b0bf2e97b8",
-    "relevant_file_count": 342,
+    "source_commit": "8b185892308d4e6d4dafe0f1500d7c059666ab17",
+    "source_commit_timestamp": "2026-08-19T07:39:06+07:00",
+    "source_tree_sha256": "a4502b46fee63b4737f42cd375f849805a0bf9b0e2a834dfb4797adc8a6eabf6",
+    "relevant_file_count": 346,
     "alembic_heads": [
-      "c4e1a70b58d9"
+      "e7b21c9d4a83"
     ]
   },
   "summary": {
-    "sqlalchemy_models": 17,
+    "sqlalchemy_models": 18,
     "pydantic_schemas": 71,
     "fastapi_routes": 70,
     "next_pages": 25,
@@ -233,6 +233,64 @@
         "module": "app.models.ai_generation",
         "relationships": [],
         "table": "ai_grade_suggestions"
+      },
+      {
+        "class": "AIRestrictedPayload",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "ai_generation_jobs.id"
+            ],
+            "name": "job_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "rendered_prompt",
+            "nullable": false,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "raw_output",
+            "nullable": true,
+            "primary_key": false,
+            "type": "TEXT",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": false,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "expires_at",
+            "nullable": false,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          }
+        ],
+        "module": "app.models.ai_restricted_payload",
+        "relationships": [],
+        "table": "ai_restricted_payloads"
       },
       {
         "class": "AuditEvent",

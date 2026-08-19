@@ -10,6 +10,7 @@ from app.models.topic_brief import TopicBrief
 from app.models.audit_event import AuditEvent
 from app.models.purge_job import PurgeJob
 from app.models.ai_generation import AIGenerationJob, AIGradeSuggestion
+from app.models.ai_restricted_payload import AIRestrictedPayload
 
 __all__ = [
     "User",
@@ -23,4 +24,5 @@ __all__ = [
     "AuditEvent",
     "PurgeJob",
     "AIGenerationJob", "AIGradeSuggestion",
+    "AIRestrictedPayload",
 ]

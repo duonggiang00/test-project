@@ -39,6 +39,17 @@ class Settings(BaseSettings):
     AI_MODEL_FLASHCARD_GENERATION: str = ""
     AI_MODEL_TOPIC_BRIEF_GENERATION: str = ""
 
+    # Per-model token pricing for the §2.4 `estimated_cost` audit field
+    # (AI-003), as a JSON object:
+    #   {"<model-id>": {"input_per_1k_usd": "0.0002",
+    #                   "output_per_1k_usd": "0.0006"}}
+    # Deliberately empty by default. There is no approved price list in this
+    # project, and a hardcoded default rate would put a fabricated number in
+    # an audit record. With no entry for the calling model, AI audit events
+    # record the real token counts and `"estimated_cost": null` -- see
+    # `app/ai/cost_policy.py`.
+    AI_TOKEN_PRICING: str = ""
+
     @model_validator(mode="after")
     def validate_database_configuration(self) -> Self:
         if self.DATABASE_URL:
