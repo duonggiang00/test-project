@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "bf131fa30b23a92e6f4733da41df5f03d90ac4ec",
-    "source_commit_timestamp": "2026-08-19T01:26:30+07:00",
-    "source_tree_sha256": "b354af512726a299f737deef4f02d90ffa9c564ad1724bee4a94dc7f39da852c",
-    "relevant_file_count": 341,
+    "source_commit": "a426c196ae0fa9ca0c832efe0b575e4b4148a9aa",
+    "source_commit_timestamp": "2026-08-19T07:30:57+07:00",
+    "source_tree_sha256": "1954cbe5126ccdd40800fa2bfe422b3e6be9b865fbf9fb1263e317b0bf2e97b8",
+    "relevant_file_count": 342,
     "alembic_heads": [
       "c4e1a70b58d9"
     ]
@@ -18,7 +18,7 @@
     "frontend_hooks": 15,
     "frontend_services": 2,
     "backend_test_functions": 258,
-    "frontend_test_calls": 84
+    "frontend_test_calls": 85
   },
   "backend": {
     "models": [
@@ -6925,6 +6925,11 @@
         "path": "frontend/tests/e2e/admin-flow.spec.ts",
         "tier": "e2e",
         "test_count": 5
+      },
+      {
+        "path": "frontend/tests/e2e/ai-review-flow.spec.ts",
+        "tier": "e2e",
+        "test_count": 1
       },
       {
         "path": "frontend/tests/e2e/student-flow.spec.ts",

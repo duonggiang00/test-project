@@ -64,7 +64,9 @@ const assertSquareMonochromeAuthSurface = async (page: Page) => {
   ).toBe(true);
 };
 
-test('PlayStudy branding is consistent on public and student surfaces', async ({ browser, page }) => {
+test('PlayStudy branding is consistent on public and student surfaces', {
+  tag: '@owner-frontend',
+}, async ({ browser, page }) => {
   await page.goto('/');
   await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
 
@@ -133,7 +135,9 @@ test('PlayStudy branding is consistent on public and student surfaces', async ({
   await studentContext.close();
 });
 
-test('auth surfaces are square, monochrome, responsive, and visually stable', async ({ page }, testInfo) => {
+test('auth surfaces are square, monochrome, responsive, and visually stable', {
+  tag: '@owner-frontend',
+}, async ({ page }, testInfo) => {
   await page.addInitScript(() => localStorage.removeItem('user-storage'));
   await page.goto('/login');
   await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
@@ -184,7 +188,9 @@ test('auth surfaces are square, monochrome, responsive, and visually stable', as
   }
 });
 
-test('login follows a predictable keyboard order with visible focus', async ({ page }, testInfo) => {
+test('login follows a predictable keyboard order with visible focus', {
+  tag: '@owner-frontend',
+}, async ({ page }, testInfo) => {
   await page.goto('/login');
   await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
   await expect(page.getByTestId('auth-shell')).toBeVisible();
@@ -219,7 +225,9 @@ test('login follows a predictable keyboard order with visible focus', async ({ p
   }
 });
 
-test('student registration returns to login with a one-time success notice', async ({ page }) => {
+test('student registration returns to login with a one-time success notice', {
+  tag: '@owner-frontend',
+}, async ({ page }) => {
   await page.route('**/api/proxy/auth/register', async route => {
     await route.fulfill({
       status: 201,

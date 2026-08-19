@@ -10,7 +10,7 @@ const webServerCommand = `${JSON.stringify(process.execPath)} ${JSON.stringify(n
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: /admin-flow\.spec\.ts/,
+  testMatch: /(?:admin-flow|ai-review-flow)\.spec\.ts/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
