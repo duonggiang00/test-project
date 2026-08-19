@@ -312,18 +312,29 @@ def test_background_admin_override_serializes_against_demotion(
 
     worker_ready = Event()
     release_worker = Event()
-    original_commit = AuthorizationService.commit_with_admin_override
+    # AI-002 routed the topic-kit worker through the review queue, so its
+    # commit boundary is now `commit_with_audit` rather than
+    # `commit_with_admin_override`. The invariant under test is unchanged:
+    # the worker's `with_for_update` lock on the acting user must serialize
+    # a concurrent demotion behind it. Only the pause point moved. Pause on
+    # the first call so the lock is held while the demotion is attempted.
+    original_commit = AuthorizationService.commit_with_audit
+    paused_once = Event()
 
     def paused_commit(session, **kwargs):
-        worker_ready.set()
-        if not release_worker.wait(timeout=5):
-            raise RuntimeError("Timed out waiting to release background worker")
+        if not paused_once.is_set():
+            paused_once.set()
+            worker_ready.set()
+            if not release_worker.wait(timeout=5):
+                raise RuntimeError(
+                    "Timed out waiting to release background worker"
+                )
         return original_commit(session, **kwargs)
 
     monkeypatch.setattr("app.services.ai_service.time.sleep", lambda _seconds: None)
     monkeypatch.setattr(
         AuthorizationService,
-        "commit_with_admin_override",
+        "commit_with_audit",
         paused_commit,
     )
 

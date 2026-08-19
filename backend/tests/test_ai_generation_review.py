@@ -28,6 +28,7 @@ from app.models.exam import Exam, Option, Question
 from app.models.flashcard import Flashcard, FlashcardDeck
 from app.models.material import StudyMaterial
 from app.models.submission import Submission, SubmissionAnswer
+from app.models.topic import Topic
 from app.models.topic_brief import TopicBrief
 from app.models.user import User
 from app.schemas.material import (
@@ -39,7 +40,7 @@ from app.services.ai_generation_service import (
     AIGradeSuggestionService,
 )
 from app.services.material_service import MaterialService
-from tests.test_authorization_idor import create_teacher
+from tests.test_authorization_idor import create_teacher, create_topic
 
 QUESTIONS_RESPONSE = """[
   {"type": "MULTIPLE_CHOICE", "content": "What is the capital of France?",
@@ -900,3 +901,86 @@ def test_creating_a_grade_suggestion_changes_no_awarded_points(
     reloaded_submission = db.get(Submission, submission.id)
     assert reloaded_submission.total_score == 4.0
     assert reloaded_submission.status == "graded"
+
+
+def test_generating_a_topic_kit_creates_drafts_not_live_content(
+    client, db, test_teacher, monkeypatch
+):
+    """`generate-topic-kit` used to publish a brief and a deck outright.
+
+    Independent review of Milestone 9 found this second background worker
+    still writing `topic.brief_content`/`brief_ai_generated` and adding a
+    `FlashcardDeck` with its `Flashcard` rows directly -- an auto-publish
+    escape that `CANONICAL_PROJECT_SPEC.md` 9.2 and ADR-0006 both forbid,
+    and that AI-002's own acceptance criterion rules out.
+    """
+    monkeypatch.setattr("app.services.ai_service.time.sleep", lambda _s: None)
+
+    material = _material_with_chunk(db, test_teacher["id"])
+    topic = create_topic(client, test_teacher, f"Topic kit {uuid.uuid4()}")
+    topic_id = uuid.UUID(topic["id"])
+
+    response = client.post(
+        "/flashcards/ai/generate-topic-kit",
+        json={"material_id": str(material.id), "topic_id": str(topic_id)},
+        headers=test_teacher["headers"],
+    )
+    assert response.status_code == 200
+
+    db.expire_all()
+
+    # Nothing reached a live table.
+    assert db.scalar(
+        select(func.count())
+        .select_from(FlashcardDeck)
+        .where(FlashcardDeck.material_id == material.id)
+    ) == 0
+    assert db.scalar(
+        select(func.count())
+        .select_from(TopicBrief)
+        .where(TopicBrief.material_id == material.id)
+    ) == 0
+    refreshed_topic = db.get(Topic, topic_id)
+    assert not refreshed_topic.brief_content
+    assert not refreshed_topic.brief_ai_generated
+
+    # Both halves of the kit are waiting for a human instead.
+    jobs = db.scalars(
+        select(AIGenerationJob).where(AIGenerationJob.material_id == material.id)
+    ).all()
+    by_use_case = {job.use_case: job for job in jobs}
+    assert set(by_use_case) == {
+        "topic_brief_generation",
+        "flashcard_generation",
+    }
+    for job in by_use_case.values():
+        assert job.status == "awaiting_review"
+        assert job.owner_id == test_teacher["id"]
+        assert job.reviewer_id is None
+
+    assert by_use_case["topic_brief_generation"].draft_payload["content"]
+    assert len(by_use_case["flashcard_generation"].draft_payload["flashcards"]) == 3
+
+    # And the content only becomes real once a human approves and publishes.
+    brief_job = by_use_case["topic_brief_generation"]
+    assert (
+        client.post(
+            f"/ai/generation-jobs/{brief_job.id}/approve",
+            headers=test_teacher["headers"],
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/ai/generation-jobs/{brief_job.id}/publish",
+            json={"topic_id": str(topic_id)},
+            headers=test_teacher["headers"],
+        ).status_code
+        == 200
+    )
+    db.expire_all()
+    assert db.scalar(
+        select(func.count())
+        .select_from(TopicBrief)
+        .where(TopicBrief.material_id == material.id)
+    ) == 1

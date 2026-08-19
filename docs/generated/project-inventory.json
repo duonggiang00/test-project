@@ -2,9 +2,9 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "0e6b38978cd44409a12716b33fcda839ce9ab140",
-    "source_commit_timestamp": "2026-08-19T13:36:04+07:00",
-    "source_tree_sha256": "02b5ecf64b61702b67540bc7f1e605df46c69379def386c9f239821a2ac1f099",
+    "source_commit": "3d6366953a819edee9407fc3e7d8daccbf6cc890",
+    "source_commit_timestamp": "2026-08-19T14:04:56+07:00",
+    "source_tree_sha256": "acd6f79b0bf30ccf4d57b5b2b3be114c638d78bebe4a60508495c756568ed232",
     "relevant_file_count": 347,
     "alembic_heads": [
       "e7b21c9d4a83"
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 265,
+    "backend_test_functions": 266,
     "frontend_test_calls": 85
   },
   "backend": {
@@ -5302,74 +5302,79 @@
         "path": "tests/test_ai_generation_review.py",
         "tests": [
           {
-            "line": 171,
+            "line": 172,
             "markers": [],
             "name": "test_generated_questions_reach_the_live_table_only_after_approve_then_publish"
           },
           {
-            "line": 248,
+            "line": 249,
             "markers": [],
             "name": "test_publish_is_refused_directly_from_generated"
           },
           {
-            "line": 301,
+            "line": 302,
             "markers": [],
             "name": "test_reapproving_and_republishing_duplicate_nothing"
           },
           {
-            "line": 339,
+            "line": 340,
             "markers": [],
             "name": "test_a_stale_reviewer_version_is_refused"
           },
           {
-            "line": 375,
+            "line": 376,
             "markers": [],
             "name": "test_flashcards_and_topic_brief_publish_through_the_same_gate"
           },
           {
-            "line": 437,
+            "line": 438,
             "markers": [],
             "name": "test_rejecting_a_job_closes_it_without_writing_anything"
           },
           {
-            "line": 456,
+            "line": 457,
             "markers": [],
             "name": "test_a_provider_failure_records_the_sanitized_code_and_publishes_nothing"
           },
           {
-            "line": 498,
+            "line": 499,
             "markers": [],
             "name": "test_review_authorization_across_the_five_actor_kinds"
           },
           {
-            "line": 573,
+            "line": 574,
             "markers": [],
             "name": "test_an_admin_approving_a_teachers_job_is_recorded_as_the_reviewer"
           },
           {
-            "line": 630,
+            "line": 631,
             "markers": [],
             "name": "test_uploading_a_material_creates_a_draft_not_questions"
           },
           {
-            "line": 679,
+            "line": 680,
             "markers": [],
             "name": "test_each_transition_emits_exactly_one_correctly_shaped_event"
           },
           {
-            "line": 757,
+            "line": 758,
             "markers": [],
             "name": "test_a_refused_transition_emits_no_audit_event"
           },
           {
-            "line": 788,
+            "line": 789,
             "markers": [],
             "name": "test_a_rolled_back_publish_writes_neither_rows_nor_an_event"
           },
           {
-            "line": 837,
+            "line": 838,
             "markers": [],
             "name": "test_creating_a_grade_suggestion_changes_no_awarded_points"
+          },
+          {
+            "line": 906,
+            "markers": [],
+            "name": "test_generating_a_topic_kit_creates_drafts_not_live_content"
           }
         ],
         "tier": "integration"
@@ -5531,12 +5536,12 @@
             "name": "test_background_admin_override_serializes_against_demotion"
           },
           {
-            "line": 375,
+            "line": 386,
             "markers": [],
             "name": "test_concurrent_approvals_of_one_generation_job_leave_a_single_decision"
           },
           {
-            "line": 439,
+            "line": 450,
             "markers": [],
             "name": "test_concurrent_publishes_of_one_generation_job_write_one_set_of_rows"
           }
@@ -6253,7 +6258,7 @@
         "path": "tests/unit/test_ai_studio_chat_generator.py",
         "tests": [
           {
-            "line": 88,
+            "line": 99,
             "markers": [
               "asyncio",
               "unit"
@@ -6261,7 +6266,7 @@
             "name": "test_chat_generator_streams_text_events_matching_the_original_sse_envelope"
           },
           {
-            "line": 117,
+            "line": 128,
             "markers": [
               "asyncio",
               "unit"
@@ -6269,7 +6274,7 @@
             "name": "test_chat_generator_streams_tool_call_deltas_matching_the_original_shape"
           },
           {
-            "line": 147,
+            "line": 158,
             "markers": [
               "asyncio",
               "unit"
@@ -6277,7 +6282,7 @@
             "name": "test_chat_generator_can_emit_both_text_and_tool_calls_from_one_chunk"
           },
           {
-            "line": 181,
+            "line": 192,
             "markers": [
               "asyncio",
               "unit"
@@ -6285,7 +6290,7 @@
             "name": "test_chat_generator_surfaces_a_sanitized_provider_error_with_no_raw_text"
           },
           {
-            "line": 197,
+            "line": 208,
             "markers": [
               "asyncio",
               "unit"
@@ -6293,7 +6298,7 @@
             "name": "test_chat_generator_sends_the_resolved_model_and_the_three_tools"
           },
           {
-            "line": 222,
+            "line": 233,
             "markers": [
               "asyncio",
               "unit"

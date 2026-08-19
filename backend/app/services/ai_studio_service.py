@@ -8,7 +8,7 @@ import json
 
 from app.ai import default_provider
 from app.ai.model_policy import ModelUseCase, resolve_model_config
-from app.ai.prompts import chat_system_v1
+from app.ai.prompts import chat_system_v1, prompt_version_label
 from app.ai.provider import AIProvider, AIProviderError, GenerateRequest
 from app.core.security_guardrails import (
     detect_prompt_injection,
@@ -118,14 +118,33 @@ class AiStudioService:
                     .limit(3)
                 ).all()
 
-            AuthorizationService.commit_with_admin_override(
+            # AI-003: record the provider call itself, not just a
+            # cross-owner override. `commit_with_admin_override` emits an
+            # event *only* when a non-owning admin acts, so on the common
+            # owner-teacher path chat used to reach the model with no audit
+            # row at all -- leaving spend and usage unreconstructable, which
+            # spec 9.3 does not scope to generation only. `chat` is already
+            # a declared use case in the audit policy.
+            model_config = resolve_model_config(ModelUseCase.CHAT)
+            chat_metadata = {
+                "prompt_version": prompt_version_label(chat_system_v1),
+                "provider": model_config.provider,
+                "model": model_config.model,
+            }
+            context_source_ids = [str(c.id) for c in chunks if c.id is not None]
+            if context_source_ids:
+                chat_metadata["context_source_ids"] = context_source_ids
+
+            AuthorizationService.commit_with_audit(
                 db,
                 actor=current_user,
-                permission=Permission.READ_OWNED_CONTENT,
+                action="ai.chat.requested",
                 entity_type="study_material",
                 entity_id=material.id,
                 owner_id=material.uploader_id,
+                permission=Permission.READ_OWNED_CONTENT,
                 operation="generate",
+                metadata=chat_metadata,
             )
 
             context_text = "\n".join([c.content for c in chunks])

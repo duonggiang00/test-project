@@ -6,7 +6,6 @@ from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.models.material import StudyMaterial
 from app.models.topic import Topic
-from app.models.flashcard import FlashcardDeck, Flashcard
 from app.models.document_chunk import DocumentChunk
 from app.models.user import User
 from app.core.permissions import Permission, evaluate_owned_resource
@@ -16,6 +15,62 @@ from app.services.material_processing import extract_and_chunk_material
 import os
 
 logger = logging.getLogger(__name__)
+
+
+
+def _park_draft_for_review(
+    db,
+    *,
+    actor,
+    material,
+    use_case: str,
+    draft_payload: dict,
+    request_id: str,
+    override_permission=None,
+    override_entity_type: str | None = None,
+    override_entity_id=None,
+):
+    """Create one generation job and drive it to `awaiting_review`.
+
+    Shared by the background workers so both reach the review queue by the
+    same route as the request-path flows: each transition is its own atomic
+    transaction carrying exactly one audit event, and the job stops short of
+    any publish.
+
+    The `override_*` arguments ride only on the first transition, matching
+    `MaterialService._run_generation_job`: a non-owning admin triggering
+    generation produces exactly one `admin.override` event for the request,
+    not one per state change.
+    """
+    job = AIGenerationService.create_job(
+        db,
+        owner_id=material.uploader_id,
+        material_id=material.id,
+        use_case=use_case,
+    )
+    AIGenerationService.commit_transition(
+        db,
+        job,
+        "processing",
+        actor=actor,
+        request_id=request_id,
+        override_permission=override_permission,
+        override_entity_type=override_entity_type,
+        override_entity_id=override_entity_id,
+        override_operation="generate" if override_permission else None,
+    )
+    AIGenerationService.commit_transition(
+        db,
+        job,
+        "generated",
+        actor=actor,
+        draft_payload=draft_payload,
+        request_id=request_id,
+    )
+    AIGenerationService.commit_transition(
+        db, job, "awaiting_review", actor=actor, request_id=request_id
+    )
+    return job
 
 
 def mock_process_document_and_generate_questions(
@@ -163,43 +218,71 @@ def mock_generate_topic_kit(
         ).allowed:
             return
 
-        # 1. Generate Topic Brief
-        topic.brief_content = f"# {topic.name}\n\nĐây là bài tóm tắt kiến thức được tạo tự động bởi AI từ tài liệu: **{material.title}**.\n\n## 1. Khái niệm cơ bản\nNội dung khái niệm...\n\n## 2. Các điểm trọng tâm\n- Điểm 1\n- Điểm 2\n"
-        topic.brief_ai_generated = True
-
-        # 2. Generate Flashcard Deck
-        deck = FlashcardDeck(
-            topic_id=topic.id,
-            material_id=material.id,
-            title=f"Flashcards: {material.title}",
-            description="Bộ thẻ ghi nhớ tự động tạo từ tài liệu."
+        # Mock generating a topic kit.
+        #
+        # This used to write straight into the live tables: it set
+        # `topic.brief_content`/`brief_ai_generated` and added a
+        # `FlashcardDeck` with its `Flashcard` rows, so calling
+        # `POST /flashcards/ai/generate-topic-kit` published AI-authored
+        # content to students with no approval, no reviewer, and no way to
+        # reject it. `CANONICAL_PROJECT_SPEC.md` 9.2 names generated
+        # flashcards and generated topic briefs as requiring human approval,
+        # and ADR-0006's supersession clause makes automatic publishing a
+        # decision needing a new ADR -- so the mock *content* is unchanged,
+        # but it now stops at `awaiting_review` like every other flow.
+        #
+        # Two jobs rather than one: a brief and a deck are separately
+        # reviewable and separately publishable, and splitting them here
+        # reuses the existing `topic_brief_generation`/`flashcard_generation`
+        # publishers unchanged instead of inventing a combined use case with
+        # a third publish branch.
+        brief_content = (
+            f"# {topic.name}\n\nĐây là bài tóm tắt kiến thức được tạo "
+            f"tự động bởi AI từ tài liệu: **{material.title}**.\n\n"
+            "## 1. Khái niệm cơ bản\nNội dung khái niệm...\n\n"
+            "## 2. Các điểm trọng tâm\n- Điểm 1\n- Điểm 2\n"
         )
-        db.add(deck)
-        db.flush()
-
-        # 3. Generate Flashcards
         cards_data = [
-            ("AI là gì?", "Trí tuệ nhân tạo (AI) là khả năng của máy tính bắt chước các chức năng nhận thức của con người."),
-            ("Spaced Repetition là gì?", "Kỹ thuật ôn tập ngắt quãng giúp ghi nhớ dài hạn bằng cách tăng dần thời gian giữa các lần ôn tập."),
-            ("Mô hình Dữ liệu (Data Model) là gì?", "Cách cấu trúc và tổ chức dữ liệu trong cơ sở dữ liệu.")
+            (
+                "AI là gì?",
+                "Trí tuệ nhân tạo (AI) là khả năng của máy tính bắt chước các "
+                "chức năng nhận thức của con người.",
+            ),
+            (
+                "Spaced Repetition là gì?",
+                "Kỹ thuật ôn tập ngắt quãng giúp ghi nhớ dài hạn bằng cách tăng "
+                "dần thời gian giữa các lần ôn tập.",
+            ),
+            (
+                "Mô hình Dữ liệu (Data Model) là gì?",
+                "Cách cấu trúc và tổ chức dữ liệu trong cơ sở dữ liệu.",
+            ),
         ]
 
-        for i, (front, back) in enumerate(cards_data):
-            card = Flashcard(
-                deck_id=deck.id,
-                front_content=front,
-                back_content=back,
-                order_index=i
-            )
-            db.add(card)
-
-        AuthorizationService.commit_with_admin_override(
+        _park_draft_for_review(
             db,
             actor=actor,
-            permission=Permission.UPDATE_OWNED_CONTENT,
-            entity_type="topic",
-            entity_id=topic.id,
-            owner_id=topic.owner_id,
-            operation="generate",
+            material=material,
+            use_case="topic_brief_generation",
+            draft_payload={
+                "content": brief_content,
+                "title": f"Tóm tắt: {material.title}",
+            },
+            request_id=request_id,
+            override_permission=Permission.UPDATE_OWNED_CONTENT,
+            override_entity_type="topic",
+            override_entity_id=topic.id,
+        )
+        _park_draft_for_review(
+            db,
+            actor=actor,
+            material=material,
+            use_case="flashcard_generation",
+            draft_payload={
+                "flashcards": [
+                    {"front_content": front, "back_content": back}
+                    for front, back in cards_data
+                ]
+            },
             request_id=request_id,
         )

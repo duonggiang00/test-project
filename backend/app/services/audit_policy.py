@@ -243,6 +243,43 @@ def _reject_unless_non_negative_int(value: JsonValue) -> None:
         _reject_invalid_action_payload()
 
 
+def _validate_ai_call_metadata(
+    _changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    """The §2.4 call-identity fields, shared by chat and generation.
+
+    Chat has no job and therefore no status change, so it reuses only this
+    half of the checks. Every field is type-checked rather than merely
+    allowlisted, so a caller cannot smuggle document text through, say,
+    `model` without it also having to pass `safe_payload`'s value scan.
+    """
+    use_case = metadata.get("use_case")
+    if use_case is not None and use_case not in _AI_USE_CASES:
+        _reject_invalid_action_payload()
+
+    prompt_version = metadata.get("prompt_version")
+    if prompt_version is not None and (
+        not isinstance(prompt_version, str)
+        or not _PROMPT_VERSION_PATTERN.fullmatch(prompt_version)
+    ):
+        _reject_invalid_action_payload()
+
+    for key in ("provider", "model"):
+        value = metadata.get(key)
+        if value is not None and (
+            not isinstance(value, str) or not value or len(value) > 128
+        ):
+            _reject_invalid_action_payload()
+
+    source_ids = metadata.get("context_source_ids")
+    if source_ids is not None:
+        if not isinstance(source_ids, list) or not source_ids:
+            _reject_invalid_action_payload()
+        if not all(_is_uuid(value) for value in source_ids):
+            _reject_invalid_action_payload()
+
+
 def _validate_ai_generation_transition(
     changes: dict[str, JsonValue],
     metadata: dict[str, JsonValue],
@@ -710,6 +747,24 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             )
             for action, metadata_fields in _AI_METADATA_BY_ACTION.items()
         },
+        # A chat turn is a provider call against one authorized material, so
+        # the event names the material rather than a generation job -- chat
+        # produces no publishable draft and therefore no job. It carries the
+        # same §2.4 call-identity fields as `ai.generation.processing`; the
+        # completion-side usage/cost fields are absent because the streaming
+        # path has no single point at which a complete `GenerateResult` with
+        # token accounting exists.
+        "ai.chat.requested": AuditActionPolicy(
+            entity_types=frozenset({"study_material"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset({"admin", "teacher"}),
+            failure_roles=frozenset({"admin", "teacher"}),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=_AI_BASE_METADATA | _AI_CALL_METADATA,
+            validate_payload=_validate_ai_call_metadata,
+        ),
         "user.create": AuditActionPolicy(
             entity_types=frozenset({"user"}),
             success_roles=frozenset({"admin", "system", "teacher"}),

@@ -40,9 +40,20 @@ class FakeSession:
     def __init__(self, chunks):
         self._chunks = chunks
         self.commit_calls = 0
+        self.added = []
 
     def scalars(self, statement):
         return _ScalarsResult(self._chunks)
+
+    def add(self, instance):
+        # AI-003 records one `ai.chat.requested` audit event per turn, so
+        # the double has to accept the write the real session would.
+        self.added.append(instance)
+
+    def flush(self):
+        for instance in self.added:
+            if getattr(instance, "id", None) is None:
+                instance.id = uuid4()
 
     def commit(self):
         self.commit_calls += 1
