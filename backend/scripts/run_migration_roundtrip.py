@@ -389,6 +389,44 @@ for _table in SOFT_DELETE_TABLES:
         "USING btree (deleted_by_id)",
     )
 del _table
+EXPECTED_GRADE_OVERRIDE_COLUMN_DEFINITIONS: dict[
+    tuple[str, str], tuple[str, bool, str | None]
+] = {
+    ("submission_answers", "override_reason"): ("text", True, None),
+    ("submission_answers", "overridden_at"): (
+        "timestamp with time zone",
+        True,
+        None,
+    ),
+    ("submission_answers", "overridden_by_id"): ("uuid", True, None),
+}
+EXPECTED_GRADE_OVERRIDE_FOREIGN_KEY_DEFINITIONS = {
+    "submission_answers_overridden_by_id_fkey": (
+        "submission_answers",
+        ("overridden_by_id",),
+        "users",
+        ("id",),
+        "n",
+        "a",
+        True,
+        False,
+        False,
+        "FOREIGN KEY (overridden_by_id) REFERENCES users(id) ON DELETE SET NULL",
+    )
+}
+EXPECTED_GRADE_OVERRIDE_INDEX_DEFINITIONS: dict[
+    str, tuple[bool, bool, bool, bool, str, str]
+] = {
+    "ix_submission_answers_overridden_by_id": (
+        False,
+        False,
+        True,
+        True,
+        "btree",
+        "CREATE INDEX ix_submission_answers_overridden_by_id ON "
+        "public.submission_answers USING btree (overridden_by_id)",
+    ),
+}
 DATABASE_SIGNATURE_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "database-model-signature.json"
 )
@@ -848,6 +886,238 @@ def grade_override_columns_present(cursor: PsycopgCursor) -> frozenset[str]:
     return frozenset(row[0] for row in cursor.fetchall())
 
 
+def grade_override_column_definitions(
+    cursor: PsycopgCursor,
+) -> dict[tuple[str, str], tuple[str, bool, str | None]]:
+    """Exact type/nullability/default for the three grade-override columns.
+
+    Mirrors `soft_delete_column_definitions`: existence alone (see
+    `grade_override_columns_present`, used only by the downgrade-refusal
+    probe) doesn't catch a column that exists with the wrong type or a
+    stray default, so a fresh upgrade is checked against the exact shape.
+    """
+    cursor.execute(
+        """
+        SELECT
+            pg_class.relname,
+            pg_attribute.attname,
+            format_type(pg_attribute.atttypid, pg_attribute.atttypmod),
+            NOT pg_attribute.attnotnull,
+            pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)
+        FROM pg_attribute
+        JOIN pg_class ON pg_class.oid = pg_attribute.attrelid
+        JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+        LEFT JOIN pg_attrdef
+          ON pg_attrdef.adrelid = pg_attribute.attrelid
+         AND pg_attrdef.adnum = pg_attribute.attnum
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_class.relname = 'submission_answers'
+          AND pg_attribute.attname = ANY(%s)
+          AND pg_attribute.attnum > 0
+          AND NOT pg_attribute.attisdropped
+        """,
+        (list(GRADE_OVERRIDE_COLUMNS),),
+    )
+    return {
+        (row[0], row[1]): (row[2], row[3], row[4])
+        for row in cursor.fetchall()
+    }
+
+
+def grade_override_foreign_key_definitions(
+    cursor: PsycopgCursor,
+) -> dict[
+    str,
+    tuple[
+        str,
+        tuple[str, ...],
+        str,
+        tuple[str, ...],
+        str,
+        str,
+        bool,
+        bool,
+        bool,
+        str,
+    ],
+]:
+    """Exact FK shape for `overridden_by_id`, in particular ON DELETE SET NULL.
+
+    Same query shape as `soft_delete_foreign_key_definitions`; the WHERE
+    clause narrows to the one grade-override FK by column name.
+    """
+    cursor.execute(
+        """
+        SELECT
+            pg_constraint.conname,
+            source_class.relname,
+            ARRAY(
+                SELECT source_attribute.attname
+                FROM unnest(pg_constraint.conkey)
+                     WITH ORDINALITY AS source_key(attnum, position)
+                JOIN pg_attribute AS source_attribute
+                  ON source_attribute.attrelid = pg_constraint.conrelid
+                 AND source_attribute.attnum = source_key.attnum
+                ORDER BY source_key.position
+            ),
+            target_class.relname,
+            ARRAY(
+                SELECT target_attribute.attname
+                FROM unnest(pg_constraint.confkey)
+                     WITH ORDINALITY AS target_key(attnum, position)
+                JOIN pg_attribute AS target_attribute
+                  ON target_attribute.attrelid = pg_constraint.confrelid
+                 AND target_attribute.attnum = target_key.attnum
+                ORDER BY target_key.position
+            ),
+            pg_constraint.confdeltype,
+            pg_constraint.confupdtype,
+            pg_constraint.convalidated,
+            pg_constraint.condeferrable,
+            pg_constraint.condeferred,
+            pg_get_constraintdef(pg_constraint.oid, true)
+        FROM pg_constraint
+        JOIN pg_class AS source_class
+          ON source_class.oid = pg_constraint.conrelid
+        JOIN pg_class AS target_class
+          ON target_class.oid = pg_constraint.confrelid
+        JOIN pg_namespace
+          ON pg_namespace.oid = source_class.relnamespace
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_constraint.contype = 'f'
+          AND source_class.relname = 'submission_answers'
+          AND EXISTS (
+              SELECT 1
+              FROM unnest(pg_constraint.conkey) AS source_key(attnum)
+              JOIN pg_attribute AS source_attribute
+                ON source_attribute.attrelid = pg_constraint.conrelid
+               AND source_attribute.attnum = source_key.attnum
+              WHERE source_attribute.attname = 'overridden_by_id'
+          )
+        """
+    )
+    return {
+        row[0]: (
+            row[1],
+            tuple(row[2]),
+            row[3],
+            tuple(row[4]),
+            row[5],
+            row[6],
+            row[7],
+            row[8],
+            row[9],
+            row[10],
+        )
+        for row in cursor.fetchall()
+    }
+
+
+def grade_override_index_definitions(
+    cursor: PsycopgCursor,
+) -> dict[str, tuple[bool, bool, bool, bool, str, str]]:
+    cursor.execute(
+        """
+        SELECT
+            index_class.relname,
+            pg_index.indisunique,
+            pg_index.indisprimary,
+            pg_index.indisvalid,
+            pg_index.indisready,
+            pg_am.amname,
+            pg_get_indexdef(index_class.oid)
+        FROM pg_index
+        JOIN pg_class AS index_class
+          ON index_class.oid = pg_index.indexrelid
+        JOIN pg_class AS table_class
+          ON table_class.oid = pg_index.indrelid
+        JOIN pg_namespace
+          ON pg_namespace.oid = table_class.relnamespace
+        JOIN pg_am
+          ON pg_am.oid = index_class.relam
+        WHERE pg_namespace.nspname = 'public'
+          AND index_class.relname = ANY(%s)
+        """,
+        (list(EXPECTED_GRADE_OVERRIDE_INDEX_DEFINITIONS),),
+    )
+    return {
+        row[0]: (row[1], row[2], row[3], row[4], row[5], row[6])
+        for row in cursor.fetchall()
+    }
+
+
+def validate_grade_override_schema_state(
+    revision: str,
+    *,
+    column_definitions: dict[
+        tuple[str, str], tuple[str, bool, str | None]
+    ],
+    foreign_key_definitions: dict[
+        str,
+        tuple[
+            str,
+            tuple[str, ...],
+            str,
+            tuple[str, ...],
+            str,
+            str,
+            bool,
+            bool,
+            bool,
+            str,
+        ],
+    ],
+    index_definitions: dict[str, tuple[bool, bool, bool, bool, str, str]],
+) -> None:
+    """Exact grade-override schema at head; empty before the migration landed."""
+    expected_columns = (
+        EXPECTED_GRADE_OVERRIDE_COLUMN_DEFINITIONS if revision == "head" else {}
+    )
+    expected_foreign_keys = (
+        EXPECTED_GRADE_OVERRIDE_FOREIGN_KEY_DEFINITIONS
+        if revision == "head"
+        else {}
+    )
+    expected_indexes = (
+        EXPECTED_GRADE_OVERRIDE_INDEX_DEFINITIONS if revision == "head" else {}
+    )
+    if column_definitions != expected_columns:
+        raise RuntimeError(
+            f"Unexpected grade-override column definitions at {revision}: "
+            f"expected={expected_columns!r} actual={column_definitions!r}"
+        )
+
+    normalized_foreign_keys = {
+        name: (*definition[:9], normalize_sql(definition[9]))
+        for name, definition in foreign_key_definitions.items()
+    }
+    normalized_expected_foreign_keys = {
+        name: (*definition[:9], normalize_sql(definition[9]))
+        for name, definition in expected_foreign_keys.items()
+    }
+    if normalized_foreign_keys != normalized_expected_foreign_keys:
+        raise RuntimeError(
+            f"Unexpected grade-override foreign key definitions at {revision}: "
+            f"expected={normalized_expected_foreign_keys!r} "
+            f"actual={normalized_foreign_keys!r}"
+        )
+
+    normalized_indexes = {
+        name: (*definition[:5], normalize_sql(definition[5]))
+        for name, definition in index_definitions.items()
+    }
+    normalized_expected_indexes = {
+        name: (*definition[:5], normalize_sql(definition[5]))
+        for name, definition in expected_indexes.items()
+    }
+    if normalized_indexes != normalized_expected_indexes:
+        raise RuntimeError(
+            f"Unexpected grade-override index definitions at {revision}: "
+            f"expected={normalized_expected_indexes!r} "
+            f"actual={normalized_indexes!r}"
+        )
+
+
 def soft_delete_foreign_key_definitions(
     cursor: PsycopgCursor,
 ) -> dict[
@@ -1286,6 +1556,11 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
             soft_delete_columns = soft_delete_column_definitions(cursor)
             soft_delete_foreign_keys = soft_delete_foreign_key_definitions(cursor)
             soft_delete_indexes = soft_delete_index_definitions(cursor)
+            grade_override_columns = grade_override_column_definitions(cursor)
+            grade_override_foreign_keys = grade_override_foreign_key_definitions(
+                cursor
+            )
+            grade_override_indexes = grade_override_index_definitions(cursor)
     finally:
         connection.close()
 
@@ -1322,6 +1597,12 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
         foreign_key_definitions=soft_delete_foreign_keys,
         index_definitions=soft_delete_indexes,
     )
+    validate_grade_override_schema_state(
+        revision,
+        column_definitions=grade_override_columns,
+        foreign_key_definitions=grade_override_foreign_keys,
+        index_definitions=grade_override_indexes,
+    )
 
     print(
         "MIGRATION_SCHEMA_ASSERTIONS_PASSED "
@@ -1338,7 +1619,10 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
         f"ownership_indexes={len(ownership_indexes)} "
         f"soft_delete_columns={len(soft_delete_columns)} "
         f"soft_delete_foreign_keys={len(soft_delete_foreign_keys)} "
-        f"soft_delete_indexes={len(soft_delete_indexes)}",
+        f"soft_delete_indexes={len(soft_delete_indexes)} "
+        f"grade_override_columns={len(grade_override_columns)} "
+        f"grade_override_foreign_keys={len(grade_override_foreign_keys)} "
+        f"grade_override_indexes={len(grade_override_indexes)}",
         flush=True,
     )
 
