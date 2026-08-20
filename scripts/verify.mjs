@@ -189,6 +189,12 @@ const steps = {
     [frontendBins.next, "build", "--webpack"],
     frontendRoot,
   ),
+  e2eMockedBuild: command(
+    "mocked E2E production build",
+    nodeExecutable,
+    [resolve(workspaceRoot, "scripts/build-e2e-mocked.mjs")],
+    workspaceRoot,
+  ),
   e2eMocked: command(
     "frontend mocked Playwright E2E",
     nodeExecutable,
@@ -273,7 +279,7 @@ const modes = {
   "database-drift": [steps.databaseDrift],
   coverage: [steps.backendCoverage, steps.frontendCoverage, steps.coveragePolicy],
   e2e: [steps.e2eReal, steps.e2eRealPolicy],
-  "e2e-mocked": [steps.e2eMocked, steps.e2eMockedPolicy],
+  "e2e-mocked": [steps.e2eMockedBuild, steps.e2eMocked, steps.e2eMockedPolicy],
   "e2e-real": [steps.e2eReal, steps.e2eRealPolicy],
   all: [
     steps.env,
