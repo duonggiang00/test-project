@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 OWNERSHIP_PREVIOUS_REVISION = "b57c9a14d2e8"
 SINGLE_CHOICE_PREVIOUS_REVISION = "ca82f9a51d44"
 SOFT_DELETE_PREVIOUS_REVISION = "a83c1d7e9f02"
+GRADE_OVERRIDE_PREVIOUS_REVISION = "e7b21c9d4a83"
+GRADE_OVERRIDE_COLUMNS = ("override_reason", "overridden_at", "overridden_by_id")
 SOFT_DELETE_TABLES = (
     "users",
     "topics",
@@ -825,6 +827,25 @@ def soft_delete_column_definitions(
         (row[0], row[1]): (row[2], row[3], row[4])
         for row in cursor.fetchall()
     }
+
+
+def grade_override_columns_present(cursor: PsycopgCursor) -> frozenset[str]:
+    """Which of the three grade-override-trail columns still exist."""
+    cursor.execute(
+        """
+        SELECT pg_attribute.attname
+        FROM pg_attribute
+        JOIN pg_class ON pg_class.oid = pg_attribute.attrelid
+        JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_class.relname = 'submission_answers'
+          AND pg_attribute.attname = ANY(%s)
+          AND pg_attribute.attnum > 0
+          AND NOT pg_attribute.attisdropped
+        """,
+        (list(GRADE_OVERRIDE_COLUMNS),),
+    )
+    return frozenset(row[0] for row in cursor.fetchall())
 
 
 def soft_delete_foreign_key_definitions(
@@ -1753,6 +1774,132 @@ def assert_soft_delete_downgrade_guard(manager: TestDatabaseManager) -> None:
     print("MIGRATION_SOFT_DELETE_DOWNGRADE_GUARD_PASSED", flush=True)
 
 
+def seed_grade_override_downgrade_probe(manager: TestDatabaseManager) -> uuid.UUID:
+    """Insert a manually-corrected answer so the downgrade-refusal path is real.
+
+    `submission_id`/`question_id` are nullable at the DB level, so a minimal
+    orphan row -- no exam/topic/submission fixture chain required -- is
+    enough to exercise the guard: it only cares whether `overridden_at` is
+    set, not what the correction belongs to.
+    """
+    answer_id = uuid.uuid4()
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO submission_answers "
+                "(id, override_reason, overridden_at) "
+                "VALUES (%s, %s, now())",
+                (str(answer_id), "Migration round-trip probe"),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+    print("MIGRATION_GRADE_OVERRIDE_PROBE_SEEDED", flush=True)
+    return answer_id
+
+
+def assert_grade_override_downgrade_guard(manager: TestDatabaseManager) -> None:
+    probe_answer_id = seed_grade_override_downgrade_probe(manager)
+
+    rejected = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "downgrade",
+            GRADE_OVERRIDE_PREVIOUS_REVISION,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if rejected.returncode == 0:
+        raise RuntimeError(
+            "Grade-override-trail downgrade unexpectedly succeeded while a "
+            "corrected answer exists"
+        )
+
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            if current_revisions(cursor) != {expected_head()}:
+                raise RuntimeError(
+                    "Rejected grade-override downgrade changed the Alembic "
+                    "revision"
+                )
+            columns = grade_override_columns_present(cursor)
+    finally:
+        connection.close()
+    if columns != frozenset(GRADE_OVERRIDE_COLUMNS):
+        raise RuntimeError(
+            "Rejected grade-override downgrade changed the trail columns: "
+            f"{columns!r}"
+        )
+
+    # Clear the probe so a clean downgrade can proceed.
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM submission_answers WHERE id = %s",
+                (str(probe_answer_id),),
+            )
+        connection.commit()
+    finally:
+        connection.close()
+
+    downgraded = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "downgrade",
+            GRADE_OVERRIDE_PREVIOUS_REVISION,
+        ],
+        check=False,
+    )
+    if downgraded.returncode != 0:
+        raise RuntimeError("Clean grade-override downgrade failed")
+
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            if current_revisions(cursor) != {GRADE_OVERRIDE_PREVIOUS_REVISION}:
+                raise RuntimeError(
+                    "Clean grade-override downgrade reached the wrong revision"
+                )
+            columns = grade_override_columns_present(cursor)
+            if columns:
+                raise RuntimeError(
+                    "Clean grade-override downgrade left columns behind: "
+                    f"{columns!r}"
+                )
+    finally:
+        connection.close()
+
+    upgraded = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            "alembic.ini",
+            "upgrade",
+            "head",
+        ],
+        check=False,
+    )
+    if upgraded.returncode != 0:
+        raise RuntimeError("Re-upgrade after the grade-override downgrade failed")
+    assert_schema_state(manager, "head")
+    print("MIGRATION_GRADE_OVERRIDE_DOWNGRADE_GUARD_PASSED", flush=True)
+
+
 def main() -> int:
     manager = build_manager()
     manager.create()
@@ -1817,6 +1964,7 @@ def main() -> int:
                     },
                 )
                 assert_soft_delete_downgrade_guard(manager)
+                assert_grade_override_downgrade_guard(manager)
             print(f"MIGRATION_STAGE_PASSED stage={stage_name}", flush=True)
         return 0
     finally:
