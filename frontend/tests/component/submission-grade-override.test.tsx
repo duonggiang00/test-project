@@ -84,11 +84,11 @@ async function renderPage(): Promise<void> {
 }
 
 const pointsInput = () =>
-  screen.getByLabelText(/Điểm mới/i) as HTMLInputElement;
+  screen.getByLabelText(/New Score/i) as HTMLInputElement;
 const reasonInput = () =>
-  screen.getByLabelText(/Lý do điều chỉnh/i) as HTMLTextAreaElement;
+  screen.getByLabelText(/Correction Reason/i) as HTMLTextAreaElement;
 const saveButton = () =>
-  screen.getByRole("button", { name: /Lưu điểm/i }) as HTMLButtonElement;
+  screen.getByRole("button", { name: /Save Score/i }) as HTMLButtonElement;
 
 /** Wait for the submission to have loaded through SWR. */
 const waitForEditor = () =>
@@ -123,7 +123,7 @@ describe("submission answer grade correction", () => {
     fireEvent.change(pointsInput(), { target: { value: "6" } });
 
     expect(saveButton()).toBeDisabled();
-    expect(screen.getByText(/Điểm phải nằm trong khoảng 0 đến 5/)).
+    expect(screen.getByText(/Score must be between 0 and 5/)).
       toBeInTheDocument();
     expect(pointsInput()).toHaveAttribute("aria-invalid", "true");
 
@@ -153,7 +153,7 @@ describe("submission answer grade correction", () => {
     fireEvent.change(pointsInput(), { target: { value: "4" } });
     expect(saveButton()).toBeDisabled();
     expect(
-      screen.getByText(/Bắt buộc nhập lý do điều chỉnh/),
+      screen.getByText(/A correction reason is required/),
     ).toBeInTheDocument();
 
     // Whitespace is blank to the server too, so it must not enable saving.
@@ -195,11 +195,11 @@ describe("submission answer grade correction", () => {
     // The response is the whole updated submission, so the recomputed total
     // and the trail appear without a re-fetch.
     await waitFor(() =>
-      expect(screen.getByText("5 ĐIỂM")).toBeInTheDocument(),
+      expect(screen.getByText("5 POINTS")).toBeInTheDocument(),
     );
     expect(
       screen.getByTestId(`answer-grade-trail-${QUESTION_ID}`),
-    ).toHaveTextContent(/ĐÃ ĐIỀU CHỈNH/);
+    ).toHaveTextContent(/CORRECTED/);
     expect(mockedFetcher).toHaveBeenCalledTimes(1);
     expect(mockedToastAdd).toHaveBeenCalledWith(
       expect.objectContaining({ type: "success" }),
@@ -277,7 +277,7 @@ describe("submission answer grade correction", () => {
         "request_id=01936ZQX9X0W7AZ2MR4BTHN5J8",
     );
     // A refused write leaves the stored score on screen, not the typed guess.
-    expect(screen.getByText("0 ĐIỂM")).toBeInTheDocument();
+    expect(screen.getByText("0 POINTS")).toBeInTheDocument();
     expect(mockedToastAdd).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "success" }),
     );
@@ -337,7 +337,7 @@ describe("submission answer grade correction", () => {
     await waitForEditor();
 
     const trail = screen.getByTestId(`answer-grade-trail-${QUESTION_ID}`);
-    expect(trail).toHaveTextContent(/ĐÃ ĐIỀU CHỈNH/);
+    expect(trail).toHaveTextContent(/CORRECTED/);
     expect(trail).toHaveTextContent(/Học sinh diễn đạt khác nhưng đúng ý/);
   });
 

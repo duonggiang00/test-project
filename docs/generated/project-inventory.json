@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "e087844d7d2d75f746f775cc6d47719ea9bdb1da",
-    "source_commit_timestamp": "2026-08-20T12:36:24+07:00",
-    "source_tree_sha256": "29cbc8a69d1613208bf7b1fee80fd08d1201b76fb84ae3705f5470a5e2b54552",
-    "relevant_file_count": 354,
+    "source_commit": "d33a34aacb39f29c7702190b5e4da034c3340f1c",
+    "source_commit_timestamp": "2026-08-20T13:03:44+07:00",
+    "source_tree_sha256": "6f804ad7e7e7717b2135c36067f1d9925be79c1c590ac5b1eeba5fa2e7d26b97",
+    "relevant_file_count": 356,
     "alembic_heads": [
       "b6d4f0a17c53"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 288,
+    "backend_test_functions": 295,
     "frontend_test_calls": 97
   },
   "backend": {
@@ -5754,14 +5754,14 @@
         "path": "tests/test_demo_data_loader.py",
         "tests": [
           {
-            "line": 50,
+            "line": 72,
             "markers": [
               "integration"
             ],
             "name": "test_demo_dataset_lifecycle_and_api_contracts"
           },
           {
-            "line": 210,
+            "line": 232,
             "markers": [
               "integration"
             ],
@@ -6800,6 +6800,61 @@
               "unit"
             ],
             "name": "test_database_guard_accepts_local_development_and_test"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_demo_data_revision_guard.py",
+        "tests": [
+          {
+            "line": 65,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_database_at_head_descending_from_minimum_revision_passes"
+          },
+          {
+            "line": 77,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_minimum_revision_equal_to_head_passes"
+          },
+          {
+            "line": 84,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_a_stale_database_behind_the_repository_head_is_refused"
+          },
+          {
+            "line": 96,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_a_database_ahead_of_or_off_the_known_head_is_refused"
+          },
+          {
+            "line": 109,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_diverged_repository_history_is_refused_before_checking_the_database"
+          },
+          {
+            "line": 119,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_a_minimum_revision_that_is_not_an_ancestor_of_head_is_refused"
+          },
+          {
+            "line": 131,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_a_merge_point_between_head_and_the_minimum_revision_is_refused"
           }
         ],
         "tier": "unit"

@@ -78,12 +78,12 @@ export default function AnswerGradeEditor({
 
   const hint = pointsOutOfRange
     ? maxPoints !== null
-      ? `[!] Điểm phải nằm trong khoảng 0 đến ${maxPoints}.`
-      : "[!] Điểm phải là một số không âm."
+      ? `[!] Score must be between 0 and ${maxPoints}.`
+      : "[!] Score must be a non-negative number."
     : reasonTooLong
-      ? `[!] Lý do tối đa ${REASON_MAX_LENGTH} ký tự.`
+      ? `[!] Reason must be at most ${REASON_MAX_LENGTH} characters.`
       : reasonMissing
-        ? "[!] Bắt buộc nhập lý do điều chỉnh trước khi lưu."
+        ? "[!] A correction reason is required before saving."
         : null;
 
   const handleSave = async () => {
@@ -104,7 +104,7 @@ export default function AnswerGradeEditor({
       data-testid={`answer-grade-editor-${answer.question_id}`}
     >
       <p className="font-mono text-xs font-bold uppercase underline">
-        Điều chỉnh điểm
+        Grade Correction
       </p>
 
       {(answer.override_reason || answer.overridden_at) && (
@@ -113,14 +113,14 @@ export default function AnswerGradeEditor({
           data-testid={`answer-grade-trail-${answer.question_id}`}
           className="font-mono text-xs mt-2 border-2 border-black p-2"
         >
-          <span className="font-bold uppercase">[ĐÃ ĐIỀU CHỈNH]</span>
+          <span className="font-bold uppercase">[CORRECTED]</span>
           {answer.overridden_at && (
             <span className="ml-2">
-              {new Date(answer.overridden_at).toLocaleString("vi-VN")}
+              {new Date(answer.overridden_at).toLocaleString("en-US")}
             </span>
           )}
           {answer.override_reason && (
-            <span className="block mt-1">Lý do: {answer.override_reason}</span>
+            <span className="block mt-1">Reason: {answer.override_reason}</span>
           )}
         </p>
       )}
@@ -132,7 +132,7 @@ export default function AnswerGradeEditor({
               htmlFor={pointsFieldId}
               className="font-mono text-[10px] font-bold uppercase"
             >
-              Điểm mới{maxPoints !== null ? ` (0 - ${maxPoints})` : ""}
+              New Score{maxPoints !== null ? ` (0 - ${maxPoints})` : ""}
             </label>
             <input
               id={pointsFieldId}
@@ -159,7 +159,7 @@ export default function AnswerGradeEditor({
             {isSaving && (
               <Loader2 className="animate-spin w-4 h-4" aria-hidden="true" />
             )}
-            Lưu điểm
+            Save Score
           </button>
         </div>
 
@@ -168,7 +168,7 @@ export default function AnswerGradeEditor({
             htmlFor={reasonFieldId}
             className="font-mono text-[10px] font-bold uppercase"
           >
-            Lý do điều chỉnh (bắt buộc)
+            Correction Reason (required)
           </label>
           <textarea
             id={reasonFieldId}

@@ -199,7 +199,7 @@ test('a teacher views a submission and corrects one answer score (MOCKED)', {
   await expect(page.getByText('Nguyen Van A')).toBeVisible();
   await page.getByRole('button', { name: 'View Details' }).click();
   await page.waitForURL(`/history/${SUBMISSION_ID}`);
-  await expect(page.getByText('0 ĐIỂM')).toBeVisible();
+  await expect(page.getByText('0 POINTS')).toBeVisible();
 
   const editor = page.getByTestId(`answer-grade-editor-${QUESTION_ID}`);
   await expect(editor).toBeVisible();
@@ -208,9 +208,9 @@ test('a teacher views a submission and corrects one answer score (MOCKED)', {
     page.getByTestId(`answer-grade-trail-${QUESTION_ID}`),
   ).toHaveCount(0);
 
-  const pointsField = editor.getByLabel(/Điểm mới/);
-  const reasonField = editor.getByLabel(/Lý do điều chỉnh/);
-  const saveButton = editor.getByRole('button', { name: /Lưu điểm/ });
+  const pointsField = editor.getByLabel(/New Score/);
+  const reasonField = editor.getByLabel(/Correction Reason/);
+  const saveButton = editor.getByRole('button', { name: /Save Score/ });
 
   // --- THE SCORE IS BOUNDED BY THE QUESTION'S OWN MAXIMUM ---
   await expect(pointsField).toHaveAttribute('max', String(MAX_POINTS));
@@ -234,8 +234,8 @@ test('a teacher views a submission and corrects one answer score (MOCKED)', {
   // --- THE RECOMPUTED TOTAL AND THE TRAIL COME BACK FROM THE SERVER ---
   await expect(
     page.getByTestId(`answer-grade-trail-${QUESTION_ID}`),
-  ).toContainText('ĐÃ ĐIỀU CHỈNH');
-  await expect(page.getByText(`${MAX_POINTS} ĐIỂM`)).toBeVisible();
+  ).toContainText('CORRECTED');
+  await expect(page.getByText(`${MAX_POINTS} POINTS`)).toBeVisible();
 
   // --- CONTRACT: the body carries exactly `points_awarded` and `reason` ---
   expect(gradeRequests).toHaveLength(1);
