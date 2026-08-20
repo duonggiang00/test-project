@@ -3,11 +3,10 @@
   "policy": "Existing fingerprints may be removed; every new fingerprint fails.",
   "summary": {
     "backend.query-in-loop": 6,
-    "backend.raw-error-message": 6,
     "backend.router-layer-import": 22,
     "backend.session-query": 4,
     "design.non-monochrome-literal": 2,
-    "design.non-monochrome-token": 118,
+    "design.non-monochrome-token": 113,
     "frontend.component-data-fetch": 2,
     "frontend.token-local-storage": 1
   },
@@ -15,74 +14,38 @@
     {
       "rule": "backend.query-in-loop",
       "file": "backend/app/demo_data/loader.py",
-      "line": 1067,
+      "line": 1027,
+      "snippet": "student = self.session.scalar(select(User).where(User.email == student_item.email))"
+    },
+    {
+      "rule": "backend.query-in-loop",
+      "file": "backend/app/demo_data/loader.py",
+      "line": 1145,
       "snippet": "result = self.session.execute(delete(model).where(model.id.in_(ids)))"
     },
     {
       "rule": "backend.query-in-loop",
       "file": "backend/app/demo_data/loader.py",
-      "line": 140,
+      "line": 210,
       "snippet": "account = self.session.scalar(select(User).where(User.email == email))"
     },
     {
       "rule": "backend.query-in-loop",
       "file": "backend/app/demo_data/loader.py",
-      "line": 166,
+      "line": 236,
       "snippet": "account = self.session.scalar(select(User).where(User.email == email))"
     },
     {
       "rule": "backend.query-in-loop",
       "file": "backend/app/demo_data/loader.py",
-      "line": 309,
+      "line": 379,
       "snippet": "existing_email = self.session.scalar(select(User).where(User.email == item.email))"
     },
     {
       "rule": "backend.query-in-loop",
       "file": "backend/app/demo_data/loader.py",
-      "line": 619,
+      "line": 697,
       "snippet": "count = self.session.scalar("
-    },
-    {
-      "rule": "backend.query-in-loop",
-      "file": "backend/app/demo_data/loader.py",
-      "line": 949,
-      "snippet": "student = self.session.scalar(select(User).where(User.email == student_item.email))"
-    },
-    {
-      "rule": "backend.raw-error-message",
-      "file": "backend/app/services/material_service.py",
-      "line": 501,
-      "snippet": "raise AppException(status_code=500, error_code=\"AI_PARSE_ERROR\", message=f\"Failed to parse AI response as JSON: {str(e)}\")"
-    },
-    {
-      "rule": "backend.raw-error-message",
-      "file": "backend/app/services/material_service.py",
-      "line": 503,
-      "snippet": "raise AppException(status_code=500, error_code=\"AI_GENERATION_FAILED\", message=str(e))"
-    },
-    {
-      "rule": "backend.raw-error-message",
-      "file": "backend/app/services/material_service.py",
-      "line": 657,
-      "snippet": "raise AppException(status_code=500, error_code=\"AI_PARSE_ERROR\", message=str(e))"
-    },
-    {
-      "rule": "backend.raw-error-message",
-      "file": "backend/app/services/material_service.py",
-      "line": 659,
-      "snippet": "raise AppException(status_code=500, error_code=\"AI_GENERATION_FAILED\", message=str(e))"
-    },
-    {
-      "rule": "backend.raw-error-message",
-      "file": "backend/app/services/material_service.py",
-      "line": 794,
-      "snippet": "raise AppException(status_code=500, error_code=\"AI_PARSE_ERROR\", message=str(e))"
-    },
-    {
-      "rule": "backend.raw-error-message",
-      "file": "backend/app/services/material_service.py",
-      "line": 796,
-      "snippet": "raise AppException(status_code=500, error_code=\"AI_GENERATION_FAILED\", message=str(e))"
     },
     {
       "rule": "backend.router-layer-import",
@@ -99,14 +62,14 @@
     {
       "rule": "backend.router-layer-import",
       "file": "backend/app/api/endpoints/ai_studio.py",
-      "line": 3,
-      "snippet": "from app.db.session import get_db"
+      "line": 12,
+      "snippet": "from app.models.user import User"
     },
     {
       "rule": "backend.router-layer-import",
       "file": "backend/app/api/endpoints/ai_studio.py",
-      "line": 7,
-      "snippet": "from app.models.user import User"
+      "line": 3,
+      "snippet": "from app.db.session import get_db"
     },
     {
       "rule": "backend.router-layer-import",
@@ -219,26 +182,26 @@
     {
       "rule": "backend.session-query",
       "file": "backend/app/services/auth_service.py",
-      "line": 16,
+      "line": 101,
+      "snippet": "user = db.query(User).filter(User.email == email).first()"
+    },
+    {
+      "rule": "backend.session-query",
+      "file": "backend/app/services/auth_service.py",
+      "line": 19,
       "snippet": "user = db.query(User).filter(User.email == user_in.email).first()"
     },
     {
       "rule": "backend.session-query",
       "file": "backend/app/services/auth_service.py",
-      "line": 36,
+      "line": 70,
       "snippet": "user = db.query(User).filter(User.email == form_data.username).first()"
     },
     {
       "rule": "backend.session-query",
       "file": "backend/app/services/auth_service.py",
-      "line": 48,
+      "line": 82,
       "snippet": "user = db.query(User).filter(User.email == req.email).first()"
-    },
-    {
-      "rule": "backend.session-query",
-      "file": "backend/app/services/auth_service.py",
-      "line": 67,
-      "snippet": "user = db.query(User).filter(User.email == email).first()"
     },
     {
       "rule": "design.non-monochrome-literal",
@@ -285,7 +248,7 @@
     {
       "rule": "design.non-monochrome-token",
       "file": "frontend/src/app/(admin)/ai-workspace/page.tsx",
-      "line": 527,
+      "line": 526,
       "snippet": "className=\"flex-1 border-4 border-black bg-white text-black font-mono font-bold uppercase p-2 hover:bg-gray-100 transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)]\""
     },
     {
@@ -335,36 +298,6 @@
       "file": "frontend/src/app/(admin)/exams/page.tsx",
       "line": 366,
       "snippet": "className=\"px-6 py-2 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-gray-100 text-black\""
-    },
-    {
-      "rule": "design.non-monochrome-token",
-      "file": "frontend/src/app/(admin)/history/[id]/page.tsx",
-      "line": 50,
-      "snippet": "<p className=\"flex justify-between border-b-2 border-dashed border-gray-300 pb-2\"><span>TÊN:</span> <span className=\"font-bold uppercase text-right\">{submission.student_name}</span></p>"
-    },
-    {
-      "rule": "design.non-monochrome-token",
-      "file": "frontend/src/app/(admin)/history/[id]/page.tsx",
-      "line": 51,
-      "snippet": "<p className=\"flex justify-between border-b-2 border-dashed border-gray-300 pb-2\"><span>EMAIL:</span> <span className=\"font-bold uppercase text-right\">{submission.student_email}</span></p>"
-    },
-    {
-      "rule": "design.non-monochrome-token",
-      "file": "frontend/src/app/(admin)/history/[id]/page.tsx",
-      "line": 59,
-      "snippet": "<p className=\"flex justify-between border-b-2 border-dashed border-gray-300 pb-2\"><span>ĐỀ THI:</span> <span className=\"font-bold uppercase text-right\">{submission.exam_title}</span></p>"
-    },
-    {
-      "rule": "design.non-monochrome-token",
-      "file": "frontend/src/app/(admin)/history/[id]/page.tsx",
-      "line": 60,
-      "snippet": "<p className=\"flex justify-between border-b-2 border-dashed border-gray-300 pb-2 items-center\"><span>ĐIỂM SỐ:</span> <span className=\"text-2xl font-bold border-2 border-black px-3 py-1 shadow-[2px_2px_0_0_rgba(0,0,0,1)] bg-white\">{submission.total_score}</span></p>"
-    },
-    {
-      "rule": "design.non-monochrome-token",
-      "file": "frontend/src/app/(admin)/history/[id]/page.tsx",
-      "line": 90,
-      "snippet": "<div className=\"mt-6 p-6 border-2 border-black bg-gray-100 shadow-inner\">"
     },
     {
       "rule": "design.non-monochrome-token",
