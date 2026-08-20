@@ -23,7 +23,12 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 ROOT = Path(__file__).resolve().parent
 MATERIALS = ROOT / "materials"
 DATASET_ID = "demo-standard-v1"
-ALEMBIC_HEAD = "f9f952e6df1a"
+# DATA-DEMO-002: the fixture's minimum compatible revision, not an
+# exact pin -- see DemoManifest.minimum_alembic_revision. This is the
+# earliest revision at which SINGLE_CHOICE (used by 24 seeded questions)
+# existed; every later migration to date is additive and does not
+# change the meaning of any column this fixture writes.
+MINIMUM_ALEMBIC_REVISION = "a83c1d7e9f02"
 NAMESPACE = "playstudy/demo-standard-v1"
 
 
@@ -533,7 +538,7 @@ def main() -> None:
     manifest = {
         "dataset_id": DATASET_ID,
         "version": 1,
-        "alembic_head": ALEMBIC_HEAD,
+        "minimum_alembic_revision": MINIMUM_ALEMBIC_REVISION,
         "namespace": NAMESPACE,
         "teacher_email": "teacher@example.com",
         "interactive_student_email": "student@example.com",

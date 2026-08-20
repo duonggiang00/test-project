@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any, Iterable, cast
 from uuid import UUID
 
+from alembic.config import Config as AlembicConfig
+from alembic.script import ScriptDirectory
 from sqlalchemy import delete, func, or_, select, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, selectinload
@@ -28,6 +30,7 @@ from app.services.material_processing import MOCK_EMBEDDING, extract_and_chunk_m
 
 
 LOCAL_DATABASE_HOSTS = {"127.0.0.1", "localhost", "::1"}
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
 FIXED_START = datetime(2026, 8, 1, 8, 0, tzinfo=timezone.utc)
 LOCAL_DEMO_LOGIN_PASSWORD = "12345678"
 
@@ -89,9 +92,76 @@ class DemoDataManager:
         self.storage = storage
 
     def _assert_revision(self) -> None:
+        """The database must be at the repo's real head, on a history the
+        fixture is actually compatible with.
+
+        Two checks, in order, because they fail closed for different
+        reasons and the error should say which:
+
+        1. The live database's `alembic_version` must equal the
+           *repository's* current head -- computed live from the Alembic
+           scripts directory, never from a value stored in this fixture.
+           A stale database (behind head) or a diverged one (the scripts
+           directory itself has more than one head, which would mean the
+           repo's own migration history is broken) both fail here.
+        2. `manifest.minimum_alembic_revision` must be a linear ancestor of
+           that head -- walked one `down_revision` at a time with no branch
+           point. This is deliberately weaker than an exact pin: a fixture
+           with no schema dependency on anything past its minimum revision
+           should not go stale every time an unrelated migration ships (the
+           old exact-pin manifest field was already three heads behind by
+           the time this changed). A merge point in the walk means the
+           fixture's compatibility with post-merge history is unproven, so
+           it is refused rather than assumed.
+        """
         current = self.session.scalar(text("SELECT version_num FROM alembic_version"))
-        if current != self.fixture.manifest.alembic_head:
-            raise DemoDataError("database is not at the fixture's required Alembic head")
+        script = ScriptDirectory.from_config(
+            AlembicConfig(str(_BACKEND_ROOT / "alembic.ini"))
+        )
+        heads = script.get_heads()
+        if len(heads) != 1:
+            raise DemoDataError(
+                "repository Alembic history has diverged heads "
+                f"{sorted(heads)!r}; refusing to load demo data"
+            )
+        repository_head = heads[0]
+        if current != repository_head:
+            raise DemoDataError(
+                f"database is at revision {current!r}, not the repository's "
+                f"current Alembic head {repository_head!r}; run "
+                "`alembic upgrade head` first"
+            )
+
+        minimum_revision = self.fixture.manifest.minimum_alembic_revision
+        revision: str | None = repository_head
+        visited: set[str] = set()
+        while revision is not None:
+            if revision == minimum_revision:
+                return
+            if revision in visited:
+                raise DemoDataError(
+                    "cycle detected walking Alembic history from "
+                    f"{repository_head!r}"
+                )
+            visited.add(revision)
+            script_revision = script.get_revision(revision)
+            down_revision = script_revision.down_revision if script_revision else None
+            # Alembic represents a merge point's `down_revision` as a
+            # sequence (a `tuple` at runtime; the type stubs also allow
+            # `list`), never as a bare revision id, so any non-`str`
+            # non-`None` value here means multiple parents.
+            if down_revision is not None and not isinstance(down_revision, str):
+                raise DemoDataError(
+                    f"revision {revision!r} has multiple parents "
+                    f"{down_revision!r} (a merge point); the fixture's "
+                    "minimum_alembic_revision must be a linear ancestor of "
+                    "head"
+                )
+            revision = down_revision
+        raise DemoDataError(
+            f"fixture minimum_alembic_revision {minimum_revision!r} is not "
+            f"an ancestor of the repository head {repository_head!r}"
+        )
 
     def _teacher(self) -> User:
         teacher = self.session.scalar(

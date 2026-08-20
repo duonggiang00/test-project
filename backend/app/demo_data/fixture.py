@@ -57,7 +57,15 @@ class ManifestFiles(StrictModel):
 class DemoManifest(StrictModel):
     dataset_id: Literal["demo-standard-v1"]
     version: Literal[1]
-    alembic_head: str
+    # DATA-DEMO-002: was `alembic_head`, an exact pin that went stale every
+    # time an unrelated migration landed (it was still `f9f952e6df1a` after
+    # three later heads shipped). A fixture with no schema dependency on
+    # anything past this revision should not block on migrations it never
+    # needed; the loader instead requires the live database to sit at the
+    # *repository's actual current head* (computed from the Alembic scripts,
+    # not from this file) AND requires that head to be a linear descendant
+    # of this revision -- see `DemoDataManager._assert_revision`.
+    minimum_alembic_revision: str
     namespace: str
     teacher_email: str = Field(min_length=1)
     interactive_student_email: str = Field(min_length=1)

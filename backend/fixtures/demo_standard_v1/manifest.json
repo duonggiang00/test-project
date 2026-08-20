@@ -1,7 +1,7 @@
 {
   "dataset_id": "demo-standard-v1",
   "version": 1,
-  "alembic_head": "f9f952e6df1a",
+  "minimum_alembic_revision": "a83c1d7e9f02",
   "namespace": "playstudy/demo-standard-v1",
   "teacher_email": "teacher@example.com",
   "interactive_student_email": "student@example.com",

@@ -4,6 +4,8 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from alembic.config import Config as AlembicConfig
+from alembic.script import ScriptDirectory
 from sqlalchemy import delete, select, text
 
 from app.core.file_storage import LocalFileStorage
@@ -16,11 +18,31 @@ from app.models.topic import Topic
 from app.models.user import User
 
 
+def _current_repository_head() -> str:
+    """The real head, computed the same way `_assert_revision` does.
+
+    Hardcoding a revision literal here is exactly what made the fixture's
+    old exact-pin manifest field go stale (DATA-DEMO-002): it was still
+    `f9f952e6df1a` three heads after that stopped being true. Computing it
+    live means this fixture can never go stale the same way again.
+    """
+    backend_root = Path(__file__).resolve().parents[1]
+    script = ScriptDirectory.from_config(
+        AlembicConfig(str(backend_root / "alembic.ini"))
+    )
+    heads = script.get_heads()
+    assert len(heads) == 1, f"expected a single Alembic head, got {heads!r}"
+    return heads[0]
+
+
 @pytest.fixture(scope="module")
 def demo_accounts(db):
     db.execute(text("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) PRIMARY KEY)"))
     db.execute(text("DELETE FROM alembic_version"))
-    db.execute(text("INSERT INTO alembic_version (version_num) VALUES ('f9f952e6df1a')"))
+    db.execute(
+        text("INSERT INTO alembic_version (version_num) VALUES (:head)"),
+        {"head": _current_repository_head()},
+    )
     accounts = {}
     for role, email, name in [
         ("teacher", "other.teacher@example.invalid", "Other Teacher"),
