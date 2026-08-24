@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 
 from app.db.session import get_db
-from app.models.topic import Topic
 from app.schemas.topic import TopicCreate, TopicUpdate, TopicResponse
 from app.services.topic_service import TopicService
 from app.api.deps import (
@@ -16,7 +15,6 @@ from app.api.deps import (
     get_current_user,
 )
 from app.models.user import User
-from app.core.exceptions import AppException
 
 router = APIRouter()
 

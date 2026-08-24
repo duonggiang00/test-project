@@ -8,5 +8,5 @@ export function BrokenComponent() {
   localStorage.setItem('token', 'unsafe');
   location.reload();
   const endpoint = '/exams/';
-  return <div className="bg-red-500" style={{ color: '#ff0000' }}>{endpoint}</div>;
+  return <div className="material-symbols-outlined bg-gradient-to-r from-red-500" style={{ color: '#ff0000' }}>{endpoint}</div>;
 }

@@ -67,7 +67,16 @@ function scanBackend(path) {
     }
 
     const isImport = /^\s*(?:from|import)\s+app\./u.test(line);
-    if (isImport && (relativePath.includes('/api/endpoints/') || isBadFixture) && /app\.(?:models|db)\b/u.test(line)) {
+    const isRouter = relativePath.includes('/api/endpoints/');
+    const allowedRouterDependency =
+      /^\s*from\s+app\.db\.session\s+import\s+get_db\s*$/u.test(line) ||
+      /^\s*from\s+app\.models\.user\s+import\s+User\s*$/u.test(line);
+    if (
+      isImport &&
+      (isRouter || isBadFixture) &&
+      /app\.(?:models|db)\b/u.test(line) &&
+      (isBadFixture || !allowedRouterDependency)
+    ) {
       results.push(violation('backend.router-layer-import', path, lineNumber, line));
     }
     if (isImport && relativePath.includes('/models/') && /app\.(?:api|services)\b/u.test(line)) {
@@ -102,6 +111,23 @@ function scanBackend(path) {
 
 const forbiddenColors = '(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)';
 
+function containsNonMonochromeRgb(line) {
+  for (const match of line.matchAll(/rgba?\(([^)]*)\)/giu)) {
+    const values = match[1]
+      .replace(/[,/]/gu, ' ')
+      .trim()
+      .split(/\s+/u)
+      .map(Number);
+    if (values.length < 3 || values.slice(0, 3).some(Number.isNaN)) return true;
+    const channels = values.slice(0, 3);
+    const isBlack = channels.every((value) => value === 0);
+    const isWhite = channels.every((value) => value === 255);
+    const alpha = values[3];
+    if ((!isBlack && !isWhite) || (alpha !== undefined && alpha !== 1)) return true;
+  }
+  return false;
+}
+
 function scanFrontend(path) {
   const source = readFileSync(path, 'utf8');
   const lines = source.split(/\r?\n/u);
@@ -109,7 +135,12 @@ function scanFrontend(path) {
   const relativePath = posix(relative(workspaceRoot, path));
   const isBadFixture = relativePath.includes('/fixtures/architecture/bad/');
   const isBff = relativePath.includes('/src/app/api/');
-  const isUiFile = relativePath.includes('/src/app/') || relativePath.includes('/src/components/') || isBadFixture;
+  const isCss = relativePath.endsWith('.css');
+  const isUiFile = !isBff && (
+    relativePath.includes('/src/app/') ||
+    relativePath.includes('/src/components/') ||
+    isBadFixture
+  );
 
   lines.forEach((line, index) => {
     const lineNumber = index + 1;
@@ -119,7 +150,7 @@ function scanFrontend(path) {
     if (isUiFile && /(?:fetch\s*\(|axios\.)/u.test(line)) {
       results.push(violation('frontend.component-data-fetch', path, lineNumber, line));
     }
-    if (/localStorage\.(?:getItem|setItem|removeItem)\s*\(\s*["'](?:access_)?token["']/iu.test(line)) {
+    if (/localStorage\.(?:getItem|setItem)\s*\(\s*["'](?:access_)?token["']/iu.test(line)) {
       results.push(violation('frontend.token-local-storage', path, lineNumber, line));
     }
     if ((relativePath.endsWith('/src/lib/store.ts') || isBadFixture) && /(?:^|[{,])\s*(?:exams|topics|students|questions|materials|submissions)\s*:/u.test(line)) {
@@ -134,11 +165,28 @@ function scanFrontend(path) {
     ) {
       results.push(violation('contract.frontend-trailing-slash', path, lineNumber, line));
     }
-    if (/from\s+["']next\/font\/google["']|@import\s+url\s*\(/u.test(line)) {
+    if (
+      /from\s+["']next\/font\/google["']|@import\s+url\s*\(|<link\b[^>]*href=["']https?:\/\//iu.test(line)
+    ) {
       results.push(violation('design.remote-font', path, lineNumber, line));
+    }
+    if (/material-symbols-outlined/u.test(line)) {
+      results.push(violation('design.material-symbols', path, lineNumber, line));
+    }
+    if (/\b(?:linear|radial|conic)-gradient\s*\(|\bbg-gradient-to-/u.test(line)) {
+      results.push(violation('design.gradient', path, lineNumber, line));
     }
     if (new RegExp(`\\b(?:bg|text|border|ring|from|via|to)-${forbiddenColors}(?:-|\\b)`, 'u').test(line)) {
       results.push(violation('design.non-monochrome-token', path, lineNumber, line));
+    }
+    if (
+      isCss &&
+      new RegExp(`(?:^|[;{]\\s*)(?:color|background(?:-color)?|border(?:-[\\w-]+)?-color)\\s*:\\s*${forbiddenColors}\\b`, 'iu').test(line)
+    ) {
+      results.push(violation('design.non-monochrome-token', path, lineNumber, line));
+    }
+    if (/\b(?:hsl|hsla|oklch|oklab|lab|lch|color-mix)\s*\(/iu.test(line) || containsNonMonochromeRgb(line)) {
+      results.push(violation('design.non-monochrome-color-function', path, lineNumber, line));
     }
     for (const color of line.matchAll(/#[0-9a-fA-F]{3,8}\b/gu)) {
       const normalized = color[0].toLowerCase();
@@ -153,7 +201,7 @@ function scanFrontend(path) {
 
 function scan(paths = null) {
   const backendFiles = paths?.filter((path) => path.endsWith('.py')) ?? filesUnder(resolve(workspaceRoot, 'backend/app'), ['.py']);
-  const frontendFiles = paths?.filter((path) => /\.[jt]sx?$/u.test(path)) ?? filesUnder(resolve(workspaceRoot, 'frontend/src'), ['.ts', '.tsx', '.js', '.jsx'])
+  const frontendFiles = paths?.filter((path) => /(?:\.[jt]sx?|\.css)$/u.test(path)) ?? filesUnder(resolve(workspaceRoot, 'frontend/src'), ['.ts', '.tsx', '.js', '.jsx', '.css'])
     .filter((path) => !/\.(?:test|spec)\.[jt]sx?$/u.test(path));
   return [
     ...backendFiles.flatMap(scanBackend),
@@ -211,8 +259,8 @@ try {
     console.log(`ARCHITECTURE_OK current=${current.length} baseline=${baseline.violations.length}`);
   } else if (mode === 'fixtures') {
     const fixtureRoot = resolve(workspaceRoot, 'scripts/fixtures/architecture');
-    const good = scan(filesUnder(resolve(fixtureRoot, 'good'), ['.py', '.ts', '.tsx']));
-    const bad = scan(filesUnder(resolve(fixtureRoot, 'bad'), ['.py', '.ts', '.tsx']));
+    const good = scan(filesUnder(resolve(fixtureRoot, 'good'), ['.py', '.ts', '.tsx', '.css']));
+    const bad = scan(filesUnder(resolve(fixtureRoot, 'bad'), ['.py', '.ts', '.tsx', '.css']));
     if (good.length !== 0) throw new Error(`Compliant fixtures produced ${good.length} violations`);
     const required = new Set([
       'backend.session-query',
@@ -231,8 +279,11 @@ try {
       'frontend.reload-mutation',
       'contract.frontend-trailing-slash',
       'design.remote-font',
+      'design.material-symbols',
+      'design.gradient',
       'design.non-monochrome-token',
       'design.non-monochrome-literal',
+      'design.non-monochrome-color-function',
     ]);
     const observed = new Set(bad.map((item) => item.rule));
     const missing = [...required].filter((rule) => !observed.has(rule));

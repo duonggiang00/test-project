@@ -1,0 +1,6 @@
+@import url("https://fonts.example.test/unsafe.css");
+
+.broken {
+  color: rgb(255, 0, 0);
+  background: linear-gradient(#000, #fff);
+}
