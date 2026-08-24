@@ -40,5 +40,5 @@ Approval evidence: The owner explicitly directed implementation of the recommend
 ## Assumptions and drift
 
 - Verified assumptions: `node scripts/verify.mjs fast` passes without PostgreSQL; the PostgreSQL integration runner is blocked because no local server is installed; Lucide is already installed; no repository-owned font asset exists.
-- Unresolved assumptions: WebKit verification remains unavailable because its browser download exhausted the remaining system-drive space. Chromium desktop/mobile and Firefox are available and verified.
+- Unresolved assumptions: none for the no-database scope. Chromium, Firefox, WebKit, and mobile Chrome are installed and verified locally.
 - SPEC_DRIFT: the current remote Material Symbols link and colored CSS conflict with ADR-0005; database-related drift is explicitly deferred.

@@ -30,7 +30,7 @@ Risk level: L2
 | `npm run lint` | 0 | Frontend source | All | 0 | ESLint passed. |
 | `npm run test:unit -- --runInBand` | 0 | 27 suites / 132 tests | 132 | 0 | Jest passed with no snapshots. |
 | `npm run build` | 0 | 28 application routes | All | 0 | Next.js production compilation, TypeScript, static generation, and trace collection passed. |
-| `npx playwright test --config=playwright.mocked.config.ts --project=chromium --project=firefox --project=mobile-chrome` | 0 | 21 | 21 | 0 | Desktop Chromium, desktop Firefox, and Pixel 7 Chrome flows and reviewed snapshots passed. |
+| `node scripts/verify.mjs e2e-mocked` | 0 | 28 | 28 | 0 | Production build plus Chromium, Firefox, WebKit, and Pixel 7 Chrome flows passed; owner/flake policy passed all 28 results. |
 
 ## Impact
 
@@ -46,7 +46,7 @@ Risk level: L2
 
 ## Risks and follow-up
 
-- WebKit is unverified in this local run. Firefox installed successfully, but WebKit extraction failed with `ENOSPC`; the system drive had 171,655,168 bytes free when checked. No external cache was deleted.
+- Browser installation initially hit a transient `ENOSPC` while unpacking WebKit. Playwright removed its temporary download, the isolated retry succeeded, and the canonical four-project suite then passed; no external cache was deleted.
 - Ten backend query findings remain in `demo_data/loader.py` and `auth_service.py`. They require the separately approved PostgreSQL-capable track and are not represented as fixed here.
 - A survey found 456 pre-existing non-ASCII source lines. A dedicated product-copy review should translate legacy UI strings without mixing that behavior/content change into this design remediation.
 
