@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 
 interface WelcomeBannerProps {
@@ -15,8 +16,8 @@ export default function WelcomeBanner({ studentName }: WelcomeBannerProps) {
           Hôm nay bạn muốn khám phá vũ trụ tri thức nào?
         </p>
       </div>
-      <div className="relative w-32 h-32 md:w-40 md:h-40 z-10 border-4 border-black bg-gray-200 shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex items-center justify-center shrink-0">
-        <span className="material-symbols-outlined text-6xl text-black">school</span>
+      <div className="relative w-32 h-32 md:w-40 md:h-40 z-10 border-4 border-black bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex items-center justify-center shrink-0">
+        <AppIcon name="school" className="size-16 text-black" />
       </div>
     </section>
   );

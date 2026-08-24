@@ -7,13 +7,14 @@ Approval evidence: The owner explicitly directed implementation of the recommend
 
 ## Scope
 
-- In scope: stabilize the current review-stage worktree; improve architecture-guard precision; remove orphan workspace test code; replace remote fonts and Material Symbols; normalize touched UI to the approved black-and-white English design; and perform behavior-preserving frontend/pure-logic refactors that can be verified without a database server.
+- In scope: stabilize the current review-stage worktree; improve architecture-guard precision; remove orphan workspace test code; replace remote fonts and Material Symbols; normalize the active design system to approved black-and-white styling; keep all newly written or modified UI copy in English; and perform behavior-preserving frontend/pure-logic refactors that can be verified without a database server.
+- Copy boundary: a survey found 456 pre-existing non-ASCII source lines across legacy frontend screens. Translating that independent product-copy backlog is not required to remove the code/design anti-patterns and is deferred to a dedicated copy-review task.
 - Out of scope: Alembic migrations, authentication/session lifecycle, authorization or ownership behavior, query-shape changes, PostgreSQL concurrency, audit-trigger behavior, data backfills, and real-backend E2E.
 
 ## Behavior
 
 - Before: the worktree contains several uncommitted review-stage tasks; the guard contains known false positives and does not inspect CSS; the root layout loads a remote icon font; legacy colored CSS and Material Symbols remain; one ad-hoc browser script bypasses the formal test harness.
-- After: existing work is checkpointed without being misreported as PostgreSQL-verified; guard findings are actionable and monotonically reduced; the frontend uses bundled IBM Plex Mono and Lucide icons; active UI is strict black and white with English text; orphan test code is removed or represented by formal tests.
+- After: existing work is checkpointed without being misreported as PostgreSQL-verified; guard findings are actionable and monotonically reduced; the frontend uses bundled IBM Plex Mono and Lucide icons; active UI styling is strict black and white; new or modified copy is English; orphan test code is removed or represented by formal tests.
 - Preserved invariants: public API, database schema, authentication, authorization, ownership, route URLs, BFF-only transport, and user-flow behavior remain unchanged.
 
 ## Expected files and contracts
@@ -39,5 +40,5 @@ Approval evidence: The owner explicitly directed implementation of the recommend
 ## Assumptions and drift
 
 - Verified assumptions: `node scripts/verify.mjs fast` passes without PostgreSQL; the PostgreSQL integration runner is blocked because no local server is installed; Lucide is already installed; no repository-owned font asset exists.
-- Unresolved assumptions: full visual matrix depends on completing the interrupted Playwright browser download.
+- Unresolved assumptions: WebKit verification remains unavailable because its browser download exhausted the remaining system-drive space. Chromium desktop/mobile and Firefox are available and verified.
 - SPEC_DRIFT: the current remote Material Symbols link and colored CSS conflict with ADR-0005; database-related drift is explicitly deferred.

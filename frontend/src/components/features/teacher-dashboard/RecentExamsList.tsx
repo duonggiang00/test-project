@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 
 export default function RecentExamsList() {
@@ -29,7 +30,7 @@ export default function RecentExamsList() {
                 </span>
               </td>
               <td className="py-4 px-5 text-right">
-                <button className="text-black group-hover:text-white hover:scale-110 transition-transform"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>
+                <button className="text-black group-hover:text-white hover:scale-110 transition-transform"><AppIcon name="more_vert" className="size-5" /></button>
               </td>
             </tr>
             <tr className="border-b-2 border-black hover:bg-black hover:text-white transition-colors group">
@@ -42,7 +43,7 @@ export default function RecentExamsList() {
                 </span>
               </td>
               <td className="py-4 px-5 text-right">
-                <button className="text-black group-hover:text-white hover:scale-110 transition-transform"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>
+                <button className="text-black group-hover:text-white hover:scale-110 transition-transform"><AppIcon name="more_vert" className="size-5" /></button>
               </td>
             </tr>
             <tr className="hover:bg-black hover:text-white transition-colors group">
@@ -55,7 +56,7 @@ export default function RecentExamsList() {
                 </span>
               </td>
               <td className="py-4 px-5 text-right">
-                <button className="text-black group-hover:text-white hover:scale-110 transition-transform"><span className="material-symbols-outlined text-[20px]">more_vert</span></button>
+                <button className="text-black group-hover:text-white hover:scale-110 transition-transform"><AppIcon name="more_vert" className="size-5" /></button>
               </td>
             </tr>
           </tbody>

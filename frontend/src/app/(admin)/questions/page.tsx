@@ -272,9 +272,9 @@ function QuestionsContent() {
                 {q.question_type === "MATCHING" && q.metadata_json && Array.isArray(q.metadata_json.pairs) ? (
                   (q.metadata_json.pairs as MatchingPair[]).map((pair, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 border-2 border-black bg-white text-black font-mono">
-                      <span className="w-1/2 p-2 border-2 border-black bg-gray-50 break-words">{pair.left}</span>
+                      <span className="w-1/2 p-2 border-2 border-black bg-white break-words">{pair.left}</span>
                       <span className="font-bold px-2">{"->"}</span>
-                      <span className="w-1/2 p-2 border-2 border-black bg-gray-50 break-words">{pair.right}</span>
+                      <span className="w-1/2 p-2 border-2 border-black bg-white break-words">{pair.right}</span>
                     </div>
                   ))
                 ) : q.question_type === "FILL_IN_BLANK" && q.metadata_json && Array.isArray(q.metadata_json.blanks) ? (
@@ -428,7 +428,7 @@ function QuestionsContent() {
                     </div>
                     
                     {options.map((opt, i) => (
-                      <div key={i} className={`flex items-start gap-4 p-4 border-4 ${opt.is_correct ? 'border-black bg-gray-50' : 'border-dashed border-black bg-white'}`}>
+                      <div key={i} className={`flex items-start gap-4 p-4 border-4 ${opt.is_correct ? 'border-black bg-white' : 'border-dashed border-black bg-white'}`}>
                         <span className="font-mono text-xl mt-2 w-8 font-bold">{String.fromCharCode(65 + i)}.</span>
                         <input
                           data-testid="global-option-content-input"
@@ -471,7 +471,7 @@ function QuestionsContent() {
               <button
                 onClick={handleCloseModal}
                 disabled={isSaving}
-                className="px-8 py-3 border-4 border-black bg-white font-bold uppercase tracking-widest hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="px-8 py-3 border-4 border-black bg-white font-bold uppercase tracking-widest hover:bg-white transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>

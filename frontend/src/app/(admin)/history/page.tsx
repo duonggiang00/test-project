@@ -43,7 +43,7 @@ export default function HistoryPage() {
             <input
               type="text"
               placeholder="SEARCH BY STUDENT OR EXAM..."
-              className="w-full border-2 border-black py-2 pl-10 pr-4 focus:outline-none font-mono uppercase bg-white placeholder:text-gray-400"
+              className="w-full border-2 border-black py-2 pl-10 pr-4 focus:outline-none font-mono uppercase bg-white placeholder:text-black"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />

@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -25,7 +27,7 @@ export function Sidebar() {
       {/* Header Profile */}
       <div className="px-6 mb-8 flex items-center space-x-3">
         <div className="w-10 h-10 border-2 border-black bg-white flex items-center justify-center text-black font-headline-sm flex-shrink-0">
-          <span className="material-symbols-outlined">person</span>
+          <AppIcon name="person" className="" />
         </div>
         <div>
           <h2 className="text-headline-sm font-bold text-black truncate font-mono">Teacher Workspace</h2>
@@ -48,7 +50,7 @@ export function Sidebar() {
                   : "bg-white text-black border-transparent hover:bg-black hover:text-white"
               )}
             >
-              <span className="material-symbols-outlined" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}>{item.icon}</span>
+              <AppIcon name={item.icon} className="" style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}} />
               <span>{item.label}</span>
             </Link>
           );
@@ -60,15 +62,15 @@ export function Sidebar() {
       {/* Footer Navigation */}
       <div className="mt-8 px-4 space-y-2">
         <Link href="#" className="flex items-center space-x-3 px-4 py-2 font-mono font-bold text-black bg-white border-2 border-transparent hover:bg-black hover:text-white transition-none">
-          <span className="material-symbols-outlined">settings</span>
+          <AppIcon name="settings" className="" />
           <span>Settings</span>
         </Link>
         <Link href="#" className="flex items-center space-x-3 px-4 py-2 font-mono font-bold text-black bg-white border-2 border-transparent hover:bg-black hover:text-white transition-none">
-          <span className="material-symbols-outlined">help</span>
+          <AppIcon name="help" className="" />
           <span>Support</span>
         </Link>
         <button onClick={logout} className="flex w-full text-left items-center space-x-3 px-4 py-2 font-mono font-bold text-black bg-white border-2 border-transparent hover:bg-black hover:text-white transition-none">
-          <span className="material-symbols-outlined">logout</span>
+          <AppIcon name="logout" className="" />
           <span>Logout</span>
         </button>
       </div>

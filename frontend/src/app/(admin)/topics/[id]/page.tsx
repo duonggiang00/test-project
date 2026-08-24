@@ -217,7 +217,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
                 <div key={m.id} className="border-4 border-black p-4 bg-white flex justify-between items-center shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
                   <div>
                     <h3 className="font-bold text-lg">{m.title}</h3>
-                    <p className="text-sm font-mono text-gray-600">Status: {m.ai_status.toUpperCase()}</p>
+                    <p className="text-sm font-mono text-black">Status: {m.ai_status.toUpperCase()}</p>
                   </div>
                   <Button 
                     variant="outline" 
@@ -369,7 +369,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
                 <div key={exam.id} className="border-4 border-black p-4 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex flex-col">
                   <h3 className="font-bold text-lg uppercase truncate mb-2">{exam.title}</h3>
                   <p className="text-sm flex-1 mb-4">{exam.description || "No description"}</p>
-                  <p className="text-sm font-bold mb-4 font-mono border-2 border-black p-2 text-center bg-gray-100">{exam.duration_minutes} mins</p>
+                  <p className="text-sm font-bold mb-4 font-mono border-2 border-black p-2 text-center bg-white">{exam.duration_minutes} mins</p>
                   <Button variant="outline" onClick={() => router.push(`/exams/${exam.id}`)} className="border-2 border-black rounded-none bg-white text-black hover:bg-black hover:text-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] font-bold uppercase w-full">
                     Manage Exam
                   </Button>

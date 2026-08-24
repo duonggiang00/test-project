@@ -71,7 +71,7 @@ export default function FillInBlankBuilder({ content, blanks, onChange }: FillIn
   if (blanks.length === 0) {
     return (
       <div className="p-4 border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center">
-        <p className="uppercase font-mono font-bold text-gray-500">NO [BLANK] TAGS FOUND IN CONTENT</p>
+        <p className="uppercase font-mono font-bold text-black">NO [BLANK] TAGS FOUND IN CONTENT</p>
       </div>
     );
   }
@@ -95,13 +95,13 @@ export default function FillInBlankBuilder({ content, blanks, onChange }: FillIn
                   value={answer}
                   onChange={(e) => handleChangeAnswer(blank.blank_index, answerIndex, e.target.value)}
                   placeholder="ACCEPTABLE ANSWER"
-                  className="flex-1 p-3 border-4 border-black font-mono uppercase outline-none focus:bg-gray-100 placeholder:text-gray-400"
+                  className="flex-1 p-3 border-4 border-black font-mono uppercase outline-none focus:bg-white placeholder:text-black"
                 />
                 <button
                   type="button"
                   onClick={() => handleRemoveAnswer(blank.blank_index, answerIndex)}
                   disabled={blank.acceptable_answers.length <= 1}
-                  className="p-3 border-4 border-black bg-white hover:bg-gray-200 disabled:opacity-50 flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="p-3 border-4 border-black bg-white hover:bg-white disabled:opacity-50 flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-5 h-5 text-black" />
                 </button>

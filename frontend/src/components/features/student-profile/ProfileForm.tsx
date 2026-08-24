@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
+
 import { useState, useRef } from "react";
 import { useProfile, updateProfile, uploadAvatar } from "@/hooks/useProfile";
 import Image from "next/image";
@@ -62,7 +64,7 @@ export default function ProfileForm() {
     <div className="bg-white border-4 border-black p-6 md:p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
       <div className="flex items-center justify-between mb-6 border-b-4 border-black pb-4">
         <h2 className="text-2xl font-black uppercase flex items-center gap-3">
-          <span className="material-symbols-outlined text-black text-3xl">manage_accounts</span>
+          <AppIcon name="manage_accounts" className="text-black size-8" />
           Hồ Sơ Cá Nhân
         </h2>
         {!isEditing && (
@@ -86,11 +88,11 @@ export default function ProfileForm() {
       <div className="flex flex-col md:flex-row gap-8">
         {/* Avatar Section */}
         <div className="flex flex-col items-center gap-4">
-          <div className="w-32 h-32 border-4 border-black bg-gray-100 flex items-center justify-center overflow-hidden relative shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+          <div className="w-32 h-32 border-4 border-black bg-white flex items-center justify-center overflow-hidden relative shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
             {profile.avatar_url ? (
               <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" />
             ) : (
-              <span className="material-symbols-outlined text-6xl text-black">person</span>
+              <AppIcon name="person" className="size-16 text-black" />
             )}
           </div>
           <button
@@ -111,7 +113,7 @@ export default function ProfileForm() {
         {/* Info Section */}
         <div className="flex-1">
           {errorMsg && (
-            <div className="mb-4 p-3 border-2 border-black bg-red-100 text-black font-mono font-bold uppercase text-sm">
+            <div className="mb-4 p-3 border-2 border-black bg-white text-black font-mono font-bold uppercase text-sm">
               {errorMsg}
             </div>
           )}
@@ -119,25 +121,25 @@ export default function ProfileForm() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="font-mono text-xs text-gray-500 uppercase block mb-1">Họ và tên</span>
+                  <span className="font-mono text-xs text-black uppercase block mb-1">Họ và tên</span>
                   <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.full_name || "Chưa cập nhật"}</span>
                 </div>
                 <div>
-                  <span className="font-mono text-xs text-gray-500 uppercase block mb-1">Email</span>
+                  <span className="font-mono text-xs text-black uppercase block mb-1">Email</span>
                   <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.email}</span>
                 </div>
                 <div>
-                  <span className="font-mono text-xs text-gray-500 uppercase block mb-1">Số điện thoại</span>
+                  <span className="font-mono text-xs text-black uppercase block mb-1">Số điện thoại</span>
                   <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.phone_number || "Chưa cập nhật"}</span>
                 </div>
                 <div>
-                  <span className="font-mono text-xs text-gray-500 uppercase block mb-1">Ngày sinh</span>
+                  <span className="font-mono text-xs text-black uppercase block mb-1">Ngày sinh</span>
                   <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.date_of_birth || "Chưa cập nhật"}</span>
                 </div>
               </div>
               <div>
-                <span className="font-mono text-xs text-gray-500 uppercase block mb-1">Giới thiệu (Bio)</span>
-                <p className="font-mono text-base font-bold text-black border-2 border-black p-3 bg-gray-50 min-h-[80px]">
+                <span className="font-mono text-xs text-black uppercase block mb-1">Giới thiệu (Bio)</span>
+                <p className="font-mono text-base font-bold text-black border-2 border-black p-3 bg-white min-h-[80px]">
                   {profile.bio || "Chưa cập nhật"}
                 </p>
               </div>
@@ -161,7 +163,7 @@ export default function ProfileForm() {
                     type="text"
                     value={profile.email}
                     disabled
-                    className="border-4 border-black p-3 font-mono bg-gray-200 cursor-not-allowed"
+                    className="border-4 border-black p-3 font-mono bg-white cursor-not-allowed"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -207,7 +209,7 @@ export default function ProfileForm() {
                       bio: profile?.bio || "",
                     });
                   }}
-                  className="px-6 py-3 bg-white text-black font-mono font-bold uppercase border-2 border-black hover:bg-gray-100 transition-all"
+                  className="px-6 py-3 bg-white text-black font-mono font-bold uppercase border-2 border-black hover:bg-white transition-all"
                 >
                   Hủy
                 </button>

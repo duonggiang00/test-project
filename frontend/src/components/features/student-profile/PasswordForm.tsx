@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
+
 import { useState } from "react";
 import { updatePassword } from "@/hooks/useProfile";
 import { getBackendErrorMessage } from "@/lib/errors";
@@ -53,19 +55,19 @@ export default function PasswordForm() {
     <div className="bg-white border-4 border-black p-6 md:p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
       <div className="flex items-center justify-between mb-6 border-b-4 border-black pb-4">
         <h2 className="text-2xl font-black uppercase flex items-center gap-3">
-          <span className="material-symbols-outlined text-black text-3xl">lock</span>
+          <AppIcon name="lock" className="text-black size-8" />
           Bảo Mật & Mật Khẩu
         </h2>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         {errorMsg && (
-          <div className="p-3 border-2 border-black bg-red-100 text-black font-mono font-bold uppercase text-sm">
+          <div className="p-3 border-2 border-black bg-white text-black font-mono font-bold uppercase text-sm">
             {errorMsg}
           </div>
         )}
         {successMsg && (
-          <div className="p-3 border-2 border-black bg-green-100 text-black font-mono font-bold uppercase text-sm">
+          <div className="p-3 border-2 border-black bg-white text-black font-mono font-bold uppercase text-sm">
             {successMsg}
           </div>
         )}

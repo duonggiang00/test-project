@@ -300,13 +300,13 @@ export default function ExamDetailPage({
             <TabsList className="w-full justify-start border-b-4 border-black bg-transparent p-0 h-auto rounded-none flex mb-8">
               <TabsTrigger 
                 value="exam_questions"
-                className="rounded-none border-t-4 border-l-4 border-r-4 border-black bg-gray-200 data-[state=active]:bg-white data-[state=active]:text-black font-mono font-bold uppercase py-3 px-6 -mb-1 flex-1 sm:flex-none data-[state=active]:border-b-white z-10"
+                className="rounded-none border-t-4 border-l-4 border-r-4 border-black bg-white data-[state=active]:bg-white data-[state=active]:text-black font-mono font-bold uppercase py-3 px-6 -mb-1 flex-1 sm:flex-none data-[state=active]:border-b-white z-10"
               >
                 Câu Hỏi Đề Thi ({questions.length})
               </TabsTrigger>
               <TabsTrigger 
                 value="question_bank"
-                className="rounded-none border-t-4 border-r-4 border-black border-l-0 sm:border-l-4 bg-gray-200 data-[state=active]:bg-white data-[state=active]:text-black font-mono font-bold uppercase py-3 px-6 -mb-1 flex-1 sm:flex-none data-[state=active]:border-b-white z-10"
+                className="rounded-none border-t-4 border-r-4 border-black border-l-0 sm:border-l-4 bg-white data-[state=active]:bg-white data-[state=active]:text-black font-mono font-bold uppercase py-3 px-6 -mb-1 flex-1 sm:flex-none data-[state=active]:border-b-white z-10"
               >
                 Ngân Hàng Câu Hỏi
               </TabsTrigger>
@@ -586,7 +586,7 @@ export default function ExamDetailPage({
                     
                     <div className="space-y-4">
                       {options.map((opt, i) => (
-                        <div key={i} className={`flex items-start gap-4 p-4 border-4 ${opt.is_correct ? 'border-black bg-gray-50' : 'border-dashed border-black bg-white'}`}>
+                        <div key={i} className={`flex items-start gap-4 p-4 border-4 ${opt.is_correct ? 'border-black bg-white' : 'border-dashed border-black bg-white'}`}>
                           <span className="font-bold font-mono text-xl mt-1 w-8">{String.fromCharCode(65 + i)}.</span>
                           <input
                             data-testid="option-content-input"
@@ -626,7 +626,7 @@ export default function ExamDetailPage({
               <button
                 onClick={handleCloseModal}
                 disabled={isSaving}
-                className="px-8 py-3 border-4 border-black bg-white font-bold uppercase tracking-widest font-mono hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="px-8 py-3 border-4 border-black bg-white font-bold uppercase tracking-widest font-mono hover:bg-white transition-colors disabled:opacity-50"
               >
                 Hủy
               </button>

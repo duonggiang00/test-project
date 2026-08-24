@@ -61,7 +61,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
         </h1>
         
         {/* Progress Bar Dynamic */}
-        <div className="mb-6 bg-gray-100 border-4 border-black p-4">
+        <div className="mb-6 bg-white border-4 border-black p-4">
           <div className="flex justify-between items-center mb-2">
             <span className="font-bold uppercase">Tiến độ học tập</span>
             <span className="font-bold">{progress}%</span>
@@ -126,7 +126,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
                 setSearchExam(e.target.value);
                 setExamPage(1);
               }}
-              className="border-4 border-black px-4 py-2 w-full md:w-64 font-bold uppercase focus:outline-none focus:bg-gray-100 placeholder-gray-500 shadow-[4px_4px_0_0_rgba(0,0,0,1)] pl-10"
+              className="border-4 border-black px-4 py-2 w-full md:w-64 font-bold uppercase focus:outline-none focus:bg-white placeholder-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] pl-10"
             />
             <Search className="absolute left-3 top-3 w-5 h-5" />
           </div>
@@ -174,7 +174,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
                 >
                   TRƯỚC
                 </Button>
-                <span className="font-bold border-4 border-black px-4 py-2 bg-gray-100 flex items-center">
+                <span className="font-bold border-4 border-black px-4 py-2 bg-white flex items-center">
                   {examPage} / {pagination.pages}
                 </span>
                 <Button

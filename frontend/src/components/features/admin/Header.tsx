@@ -21,12 +21,12 @@ export function Header() {
       </div>
       
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-black">
           <User className="h-4 w-4" />
           <span>{user?.full_name || "Admin"}</span>
-          <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">{user?.role}</span>
+          <span className="text-xs bg-white px-2 py-0.5 rounded-full">{user?.role}</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-500 hover:text-gray-900">
+        <Button variant="ghost" size="sm" onClick={handleLogout} className="text-black hover:text-black">
           <LogOut className="mr-2 h-4 w-4" />
           Đăng xuất
         </Button>

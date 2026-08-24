@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
+
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { useUserStore } from "@/lib/store";
@@ -328,13 +330,13 @@ export default function AIWorkspacePage() {
       <div className="w-full md:w-1/3 flex flex-col border-r-4 border-black border-b-4 md:border-b-0 min-h-[500px]">
         <div className="p-4 border-b-4 border-black bg-black text-white flex justify-between items-center">
           <h2 className="text-xl font-bold font-mono uppercase">Knowledge Base</h2>
-          <span className="material-symbols-outlined font-bold">folder</span>
+          <AppIcon name="folder" className="font-bold" />
         </div>
         
         {/* Upload Area */}
         <div className="p-4 border-b-4 border-black bg-white relative space-y-4">
           <div className="flex flex-col gap-2">
-            <label className="font-mono text-sm font-bold uppercase text-black">Chủ đề <span className="text-red-500">*</span></label>
+            <label className="font-mono text-sm font-bold uppercase text-black">Chủ đề <span className="text-black">*</span></label>
             <select
               value={selectedTopicId}
               onChange={(e) => setSelectedTopicId(e.target.value)}
@@ -347,10 +349,8 @@ export default function AIWorkspacePage() {
             </select>
           </div>
           
-          <div className="border-4 border-dashed border-black p-6 flex flex-col items-center justify-center bg-white hover:bg-gray-100 transition-none group text-center shadow-[4px_4px_0_0_rgba(0,0,0,1)] relative">
-            <span className="material-symbols-outlined text-3xl font-bold mb-2">
-              {isUploading ? 'sync' : 'cloud_upload'}
-            </span>
+          <div className="border-4 border-dashed border-black p-6 flex flex-col items-center justify-center bg-white hover:bg-white transition-none group text-center shadow-[4px_4px_0_0_rgba(0,0,0,1)] relative">
+            <AppIcon name={isUploading ? 'sync' : 'cloud_upload'} className="size-8 font-bold mb-2" />
             <h3 className="text-base font-bold text-black uppercase font-mono">Tải tài liệu lên</h3>
             <p className="text-black font-mono text-xs mt-1">PDF, DOCX, TXT. Max 50MB.</p>
             <input 
@@ -364,9 +364,9 @@ export default function AIWorkspacePage() {
         </div>
 
         {/* List of Materials */}
-        <div className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-4">
+        <div className="flex-1 p-4 overflow-y-auto bg-white flex flex-col space-y-4">
           {isLoading && materials.length === 0 ? (
-            <div className="text-center p-4"><span className="material-symbols-outlined animate-spin font-bold text-2xl">sync</span></div>
+            <div className="text-center p-4"><AppIcon name="sync" className="animate-spin font-bold size-6" /></div>
           ) : materials.length === 0 ? (
             <div className="text-center font-bold font-mono text-sm border-4 border-black p-4 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">Chưa có tài liệu nào.</div>
           ) : (
@@ -377,9 +377,7 @@ export default function AIWorkspacePage() {
                 onClick={() => setActiveMaterial(mat.id)}
               >
                 <div className="flex items-center gap-2">
-                  <span className={`material-symbols-outlined font-bold ${activeMaterial === mat.id ? 'text-white' : 'text-black'}`}>
-                    {activeMaterial === mat.id ? 'radio_button_checked' : 'radio_button_unchecked'}
-                  </span>
+                  <AppIcon name={activeMaterial === mat.id ? 'radio_button_checked' : 'radio_button_unchecked'} className={`font-bold ${activeMaterial === mat.id ? 'text-white' : 'text-black'}`} />
                   <span className="font-bold font-mono text-sm line-clamp-1 flex-1 uppercase" title={mat.title}>{mat.title}</span>
                 </div>
                 <div className="flex justify-between items-center pl-8 text-xs font-mono font-bold mt-2">
@@ -394,7 +392,7 @@ export default function AIWorkspacePage() {
                       className="bg-white text-black border-2 border-black hover:bg-black hover:text-white flex items-center justify-center p-1 transition-none"
                       title="Xóa tài liệu"
                     >
-                      <span className="material-symbols-outlined text-sm font-bold">delete</span>
+                      <AppIcon name="delete" className="size-4 font-bold" />
                     </button>
                   </div>
                 </div>
@@ -410,7 +408,7 @@ export default function AIWorkspacePage() {
           <h2 className="text-xl font-bold font-mono uppercase">
             {ragEnabled ? "AI Studio" : "Content Studio"}
           </h2>
-          <span className="material-symbols-outlined font-bold">smart_toy</span>
+          <AppIcon name="smart_toy" className="font-bold" />
         </div>
 
         {/* Thao tác nhanh (Only active if material selected) */}
@@ -459,7 +457,7 @@ export default function AIWorkspacePage() {
         </div>
 
         {/* Generation activity. User-authored chat messages appear only when enabled. */}
-        <div className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-4">
+        <div className="flex-1 p-4 overflow-y-auto bg-white flex flex-col space-y-4">
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[90%] p-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] ${msg.role === "user" ? "bg-white text-black" : "bg-black text-white"}`}>
@@ -502,7 +500,7 @@ export default function AIWorkspacePage() {
                     ? "Enter a material question..."
                     : "Select a material to enable chat"
                 }
-                className="flex-1 p-2 border-4 border-black font-mono focus:outline-none disabled:bg-gray-200"
+                className="flex-1 p-2 border-4 border-black font-mono focus:outline-none disabled:bg-white"
               />
               <button
                 type="submit"
@@ -539,7 +537,7 @@ export default function AIWorkspacePage() {
           <DialogFooter className="mt-6 flex gap-4 bg-transparent p-0 border-0">
             <button
               onClick={() => setMaterialToDelete(null)}
-              className="flex-1 border-4 border-black bg-white text-black font-mono font-bold uppercase p-2 hover:bg-gray-100 transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)]"
+              className="flex-1 border-4 border-black bg-white text-black font-mono font-bold uppercase p-2 hover:bg-white transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)]"
             >
               Hủy
             </button>

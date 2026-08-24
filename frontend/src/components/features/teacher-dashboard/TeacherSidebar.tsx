@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 
 export default function TeacherSidebar() {
@@ -6,7 +7,7 @@ export default function TeacherSidebar() {
       {/* Header Profile */}
       <div className="px-6 mb-8 flex items-center space-x-3">
         <div className="w-10 h-10 border-2 border-black bg-white flex items-center justify-center text-black flex-shrink-0">
-          <span className="material-symbols-outlined">person</span>
+          <AppIcon name="person" className="" />
         </div>
         <div>
           <h2 className="text-lg font-bold text-black truncate font-mono">Teacher Workspace</h2>
@@ -16,23 +17,23 @@ export default function TeacherSidebar() {
       {/* Main Navigation */}
       <nav className="flex-1 px-4 space-y-2">
         <a className="flex items-center space-x-3 px-4 py-3 border-2 border-black bg-black text-white font-bold font-mono transition-none" href="#">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>dashboard</span>
+          <AppIcon name="dashboard" className="" style={{ fontVariationSettings: "'FILL' 1" }} />
           <span>Dashboard</span>
         </a>
         <a className="flex items-center space-x-3 px-4 py-3 border-2 border-transparent text-black font-bold font-mono hover:bg-black hover:text-white transition-none" href="/ai-workspace">
-          <span className="material-symbols-outlined">workspace_premium</span>
+          <AppIcon name="workspace_premium" className="" />
           <span>AI Workspace</span>
         </a>
         <a className="flex items-center space-x-3 px-4 py-3 border-2 border-transparent text-black font-bold font-mono hover:bg-black hover:text-white transition-none" href="#">
-          <span className="material-symbols-outlined">quiz</span>
+          <AppIcon name="quiz" className="" />
           <span>Question Bank</span>
         </a>
         <a className="flex items-center space-x-3 px-4 py-3 border-2 border-transparent text-black font-bold font-mono hover:bg-black hover:text-white transition-none" href="#">
-          <span className="material-symbols-outlined">construction</span>
+          <AppIcon name="construction" className="" />
           <span>Exam Builder</span>
         </a>
         <a className="flex items-center space-x-3 px-4 py-3 border-2 border-transparent text-black font-bold font-mono hover:bg-black hover:text-white transition-none" href="#">
-          <span className="material-symbols-outlined">bar_chart</span>
+          <AppIcon name="bar_chart" className="" />
           <span>Reports</span>
         </a>
       </nav>
@@ -40,11 +41,11 @@ export default function TeacherSidebar() {
       {/* Footer Navigation */}
       <div className="mt-8 px-4 space-y-2">
         <a className="flex items-center space-x-3 px-4 py-2 border-2 border-transparent text-black font-bold font-mono hover:bg-black hover:text-white transition-none" href="#">
-          <span className="material-symbols-outlined">settings</span>
+          <AppIcon name="settings" className="" />
           <span>Settings</span>
         </a>
         <a className="flex items-center space-x-3 px-4 py-2 border-2 border-transparent text-black font-bold font-mono hover:bg-black hover:text-white transition-none" href="#">
-          <span className="material-symbols-outlined">help</span>
+          <AppIcon name="help" className="" />
           <span>Support</span>
         </a>
       </div>

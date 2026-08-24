@@ -1,11 +1,12 @@
+import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 
 export function SpaceExamHeader() {
   return (
     <header className="w-full flex items-center justify-between px-container-padding-desktop h-20 max-w-[1200px] mx-auto sticky top-0 z-10 bg-white text-black">
       <div className="flex items-center gap-4">
-        <button type="button" className="bg-white text-black p-3 rounded-full hover:bg-gray-50 transition-colors border border-black">
-          <span className="material-symbols-outlined font-label-bold text-label-bold" data-icon="close">close</span>
+        <button type="button" className="bg-white text-black p-3 rounded-full hover:bg-white transition-colors border border-black">
+          <AppIcon name="close" className="font-label-bold text-label-bold" data-icon="close" />
         </button>
         <h1 className="font-headline-md text-headline-md text-black tracking-tight">Thử thách Không gian</h1>
       </div>

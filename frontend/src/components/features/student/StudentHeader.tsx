@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
+
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -29,7 +31,7 @@ export default function StudentHeader() {
             }`}
             href="/student/home"
           >
-            <span className="material-symbols-outlined" aria-hidden="true">home</span>
+            <AppIcon name="home" className="" aria-hidden="true" />
             <span className="hidden sm:inline">Trang chủ</span>
           </Link>
 
@@ -39,7 +41,7 @@ export default function StudentHeader() {
             }`}
             href="/student/profile"
           >
-            <span className="material-symbols-outlined" aria-hidden="true">person</span>
+            <AppIcon name="person" className="" aria-hidden="true" />
             <span className="hidden sm:inline">Trang cá nhân</span>
           </Link>
         </nav>
@@ -52,7 +54,7 @@ export default function StudentHeader() {
               {profile?.avatar_url ? (
                 <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" />
               ) : (
-                <span className="material-symbols-outlined text-xl text-black">person</span>
+                <AppIcon name="person" className="size-5 text-black" />
               )}
             </div>
           </div>
@@ -62,7 +64,7 @@ export default function StudentHeader() {
             className="w-12 h-12 flex items-center justify-center bg-white border-4 border-black text-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-all"
             title="Đăng xuất"
           >
-            <span className="material-symbols-outlined">logout</span>
+            <AppIcon name="logout" className="" />
           </button>
         </div>
       </div>

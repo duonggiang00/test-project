@@ -214,7 +214,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                     boxShadow: "4px 4px 0 0 rgba(0,0,0,1)"
                   }}
                   itemStyle={{ color: "#000000", fontWeight: "bold" }}
-                  cursor={{ fill: "#f0f0f0" }}
+                  cursor={{ fill: "#ffffff" }}
                 />
                 <Bar
                   dataKey="count"

@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 
 interface MissionTaskItemProps {
@@ -13,9 +14,7 @@ export default function MissionTaskItem({ title, current, total, isCompleted }: 
   return (
     <div className="flex items-center gap-4 bg-white p-3 border-2 border-black hover:bg-black hover:text-white transition-none group cursor-pointer">
       <div className={`w-8 h-8 flex items-center justify-center shrink-0 bg-white border-2 border-black group-hover:border-white`}>
-        <span className={`material-symbols-outlined text-black group-hover:text-white font-bold`}>
-          {isCompleted ? 'check' : ''}
-        </span>
+        <AppIcon name={isCompleted ? 'check' : ''} className={`text-black group-hover:text-white font-bold`} />
       </div>
       <div className="flex-grow">
         <p className="font-bold text-black group-hover:text-white font-mono">{title}</p>

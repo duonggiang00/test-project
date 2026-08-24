@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
+
 import React, { useCallback, useState } from "react";
 import { Loader2 } from "lucide-react";
 import GenerationJobReview from "./GenerationJobReview";
@@ -390,7 +392,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
     return (
       <div className="flex-1 p-8 flex items-center justify-center bg-white border-4 border-black m-4 shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
         <div className="text-center font-mono opacity-50 text-black">
-          <span className="material-symbols-outlined text-6xl mb-4 block">auto_awesome</span>
+          <AppIcon name="auto_awesome" className="size-16 mb-4 block" />
           <p className="font-bold text-lg uppercase">Generative UI Area</p>
           <p className="text-sm mt-2">Dữ liệu AI sinh ra sẽ được hiển thị và chỉnh sửa tại đây.</p>
         </div>
@@ -558,9 +560,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                                 </>
                               ) : (
                                 <>
-                                  <span className="material-symbols-outlined text-base font-bold">
-                                    {opt.is_correct ? "check_box" : "check_box_outline_blank"}
-                                  </span>
+                                  <AppIcon name={opt.is_correct ? "check_box" : "check_box_outline_blank"} className="size-4 font-bold" />
                                   {opt.content}
                                 </>
                               )}
@@ -588,7 +588,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                               <li key={j} className="font-mono text-sm font-bold flex gap-2">
                                 <span>-</span>
                                 <span>{pair.left}</span>
-                                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                <AppIcon name="arrow_forward" className="size-4" />
                                 <span>{pair.right}</span>
                               </li>
                             ))}

@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
+
 import WelcomeBanner from "@/components/features/student-home/WelcomeBanner";
 import FeaturedExamList from "@/components/features/student-home/FeaturedExamList";
 import { useProfile } from "@/hooks/useProfile";
@@ -58,7 +60,7 @@ export default function StudentHomePage() {
               className="group flex flex-col bg-white border-4 border-black p-6 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-all"
             >
               <div className="w-12 h-12 bg-black text-white flex items-center justify-center mb-4 border-2 border-black group-hover:bg-white group-hover:text-black transition-colors">
-                <span className="material-symbols-outlined">auto_stories</span>
+                <AppIcon name="auto_stories" className="" />
               </div>
               <h2 className="font-mono text-xl font-black uppercase mb-2 line-clamp-2">
                 {topic.name}
@@ -67,7 +69,7 @@ export default function StudentHomePage() {
                 {topic.description || "Chưa có mô tả"}
               </p>
               <div className="flex items-center text-sm font-mono font-bold uppercase text-black mt-auto">
-                Vào học ngay <span className="material-symbols-outlined ml-1">arrow_forward</span>
+                Vào học ngay <AppIcon name="arrow_forward" className="ml-1" />
               </div>
             </Link>
           ))}

@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 
 interface DashboardStatCardProps {
@@ -25,11 +26,11 @@ export default function DashboardStatCard({
     <div className="bg-white border-4 border-black p-5 flex flex-col justify-between shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
       <div className="flex justify-between items-start mb-4">
         <div className="w-10 h-10 flex items-center justify-center border-2 border-black bg-white text-black">
-          <span className="material-symbols-outlined">{icon}</span>
+          <AppIcon name={icon} className="" />
         </div>
         {trend && (
           <span className="text-xs font-bold flex items-center px-2 py-1 border-2 border-black bg-white text-black font-mono">
-            <span className="material-symbols-outlined text-[14px] mr-1">{trend.icon}</span> {trend.value}
+            <AppIcon name={trend.icon} className="size-3.5 mr-1" /> {trend.value}
           </span>
         )}
       </div>

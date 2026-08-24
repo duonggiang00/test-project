@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/app-icon";
+
 import { useState } from "react";
 import Link from "next/link";
 import { useTopics, createTopic, updateTopic, deleteTopic } from "@/hooks/useTopics";
@@ -64,7 +66,7 @@ export default function TopicsPage() {
       closeModal();
     } catch (error) {
       logBackendError("Topic save failed", error);
-      toast.add({ title: "Thông báo", description: "An error occurred", type: "error" });
+      toast.add({ title: "Error", description: "An error occurred", type: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -77,7 +79,7 @@ export default function TopicsPage() {
         mutate();
       } catch (error) {
         logBackendError("Topic delete failed", error);
-        toast.add({ title: "Thông báo", description: "Failed to delete topic", type: "error" });
+        toast.add({ title: "Error", description: "Failed to delete topic", type: "error" });
       }
     }
   };
@@ -87,7 +89,7 @@ export default function TopicsPage() {
       <header className="mb-8 flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b-4 border-black pb-4">
         <div>
           <h1 className="text-3xl font-bold uppercase tracking-tight mb-2">Topics Management</h1>
-          <p className="text-black font-mono">Quản lý các chủ đề và danh mục.</p>
+          <p className="text-black font-mono">Manage learning topics and categories.</p>
         </div>
         <Button data-testid="add-topic-button" onClick={() => openModal()} className="border-4 border-black bg-white text-black hover:bg-black hover:text-white transition-colors rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] font-mono font-bold">
           <Plus className="w-5 h-5 mr-2 stroke-[3]" />
@@ -98,7 +100,7 @@ export default function TopicsPage() {
       <section className="border-4 border-black p-4 mb-8 bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
         <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-black font-bold">search</span>
+            <AppIcon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-black font-bold" />
             <Input 
               data-testid="search-topic-input"
               value={search}
@@ -143,7 +145,7 @@ export default function TopicsPage() {
               </TableRow>
             ) : (
               topics.map((topic) => (
-                <TableRow key={topic.id} className="border-b-4 border-black hover:bg-gray-100 transition-colors">
+                <TableRow key={topic.id} className="border-b-4 border-black hover:bg-white transition-colors">
                   <TableCell className="font-bold border-r-4 border-black p-4">{topic.name}</TableCell>
                   <TableCell className="border-r-4 border-black p-4">{topic.description || <span className="text-black italic">No description</span>}</TableCell>
                   <TableCell className="p-4">

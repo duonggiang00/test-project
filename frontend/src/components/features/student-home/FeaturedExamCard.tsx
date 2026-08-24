@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 import Link from 'next/link';
 
@@ -43,9 +44,7 @@ export default function FeaturedExamCard({
       {/* Top Header: Badge & Icon */}
       <div className="flex justify-between items-start">
         <div className="w-14 h-14 bg-white border-4 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
-          <span className="material-symbols-outlined text-3xl text-black">
-            {isSubmitted ? "task_alt" : icon}
-          </span>
+          <AppIcon name={isSubmitted ? "task_alt" : icon} className="size-8 text-black" />
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="bg-white text-black border-2 border-black font-mono font-bold text-xs px-3 py-1 uppercase">
@@ -81,11 +80,11 @@ export default function FeaturedExamCard({
       <div className="flex items-center justify-between pt-4 border-t-4 border-black mt-auto">
         <div className="flex gap-4 text-black font-mono font-bold text-xs uppercase">
           <span className="flex items-center gap-1">
-            <span className="material-symbols-outlined text-sm">schedule</span> {durationMinutes} Phút
+            <AppIcon name="schedule" className="size-4" /> {durationMinutes} Phút
           </span>
           {questionCount > 0 && (
             <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">help_outline</span> {questionCount} Câu
+              <AppIcon name="help_outline" className="size-4" /> {questionCount} Câu
             </span>
           )}
         </div>

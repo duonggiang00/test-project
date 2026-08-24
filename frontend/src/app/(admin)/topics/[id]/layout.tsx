@@ -25,7 +25,7 @@ export default function TopicDetailLayout({ children }: { children: React.ReactN
       <div className="flex flex-col">
         <div 
           className={`flex items-center gap-2 py-2 px-2 cursor-pointer border-l-4 transition-colors ${
-            isCurrent ? "border-black bg-black text-white font-bold" : "border-transparent hover:bg-gray-100 text-black"
+            isCurrent ? "border-black bg-black text-white font-bold" : "border-transparent hover:bg-white text-black"
           }`}
           style={{ paddingLeft: `${level * 1.5 + 0.5}rem` }}
         >

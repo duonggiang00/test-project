@@ -49,7 +49,7 @@ export default function MatchingBuilder({ pairs, onChange }: MatchingBuilderProp
       </div>
 
       {pairs.length === 0 ? (
-        <div className="border-4 border-black border-dashed p-8 text-center font-mono uppercase text-gray-500">
+        <div className="border-4 border-black border-dashed p-8 text-center font-mono uppercase text-black">
           No matching pairs added yet.
         </div>
       ) : (
@@ -86,7 +86,7 @@ export default function MatchingBuilder({ pairs, onChange }: MatchingBuilderProp
               <button
                 type="button"
                 onClick={() => handleRemovePair(index)}
-                className="mt-8 flex items-center justify-center border-4 border-black bg-white p-2 font-mono font-bold uppercase text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-100 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
+                className="mt-8 flex items-center justify-center border-4 border-black bg-white p-2 font-mono font-bold uppercase text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-white hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
                 title="Remove Pair"
               >
                 <Trash2 size={20} />

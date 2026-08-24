@@ -1,3 +1,4 @@
+import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 import DashboardStatCard from './DashboardStatCard';
 import RecentExamsList from './RecentExamsList';
@@ -15,10 +16,10 @@ export default function TeacherDashboardScreen() {
         </div>
         <div className="flex items-center gap-3">
           <button className="p-2 border-4 border-black bg-white text-black hover:bg-black hover:text-white transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-            <span className="material-symbols-outlined">download</span>
+            <AppIcon name="download" className="" />
           </button>
           <button className="px-4 py-2 bg-black text-white font-bold flex items-center gap-2 border-4 border-black hover:bg-white hover:text-black transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)] uppercase tracking-tight">
-            <span className="material-symbols-outlined text-[18px]">filter_list</span>
+            <AppIcon name="filter_list" className="size-[18px]" />
             Lọc Dữ Liệu
           </button>
         </div>

@@ -190,7 +190,7 @@ function ExamsPageContent() {
       <div className="border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] bg-white">
         <Table>
           <TableHeader>
-            <TableRow className="border-b-4 border-black hover:bg-transparent bg-gray-50">
+            <TableRow className="border-b-4 border-black hover:bg-transparent bg-white">
               <TableHead className="text-black font-bold uppercase font-mono tracking-widest border-r-4 border-black">Title</TableHead>
               <TableHead className="text-black font-bold uppercase font-mono tracking-widest border-r-4 border-black">Topic</TableHead>
               <TableHead className="text-black font-bold uppercase font-mono tracking-widest border-r-4 border-black">Duration</TableHead>
@@ -215,7 +215,7 @@ function ExamsPageContent() {
               exams.map((exam) => {
                 const topicName = topics.find((t) => t.id === exam.topic_id)?.name || "-";
                 return (
-                  <TableRow key={exam.id} data-testid={`exam-row-${exam.title}`} className="border-b-4 border-black hover:bg-gray-100 transition-colors">
+                  <TableRow key={exam.id} data-testid={`exam-row-${exam.title}`} className="border-b-4 border-black hover:bg-white transition-colors">
                     <TableCell className="border-r-4 border-black font-bold text-lg">{exam.title}</TableCell>
                     <TableCell className="border-r-4 border-black font-mono">{topicName}</TableCell>
                     <TableCell className="border-r-4 border-black font-mono">{exam.duration_minutes} MINS</TableCell>
@@ -367,7 +367,7 @@ function ExamsPageContent() {
                 type="button"
                 variant="outline"
                 onClick={() => handleModalOpenChange(false)}
-                className="px-8 py-3 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-gray-100 text-black"
+                className="px-8 py-3 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-white text-black"
               >
                 Cancel
               </Button>
@@ -398,7 +398,7 @@ function ExamsPageContent() {
               <Button
                 variant="outline"
                 onClick={() => setDeletingExamId(null)}
-                className="px-6 py-2 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-gray-100 text-black"
+                className="px-6 py-2 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-white text-black"
                 disabled={isDeleting}
               >
                 Hủy
