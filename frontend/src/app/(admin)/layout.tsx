@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/lib/store";
 import { Sidebar } from "@/components/features/admin/Sidebar";
@@ -65,9 +66,13 @@ export default function AdminLayout({
         {/* Mobile Header */}
         <header className="md:hidden sticky top-0 w-full z-30 bg-white border-b-4 border-black px-4 h-14 flex items-center justify-between">
           <h1 className="text-base font-bold text-black font-mono">Teacher Workspace</h1>
-          <button className="w-9 h-9 border-2 border-black flex items-center justify-center hover:bg-black hover:text-white transition-none">
-            <span className="material-symbols-outlined text-lg">menu</span>
-          </button>
+          <Link
+            href="/exams"
+            aria-label="Open Exam Builder"
+            className="min-h-11 border-2 border-black bg-black px-3 font-mono text-xs font-bold text-white flex items-center justify-center hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-black"
+          >
+            EXAMS
+          </Link>
         </header>
         <main className="flex-1 overflow-y-auto bg-gray-50">
           {children}

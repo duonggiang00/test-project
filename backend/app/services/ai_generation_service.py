@@ -73,6 +73,14 @@ _TRANSITION_AUDIT_ACTIONS: dict[str, str] = {
     "failed": "ai.generation.failed",
 }
 
+# The only status a reviewer may edit `draft_payload` from. Editing is not a
+# state transition (status is unchanged), so it deliberately sits outside
+# `ALLOWED_TRANSITIONS`/`transition()` rather than being modeled as a
+# same-status transition -- `_validate_ai_generation_transition` already
+# refuses a `{before, after}` pair where the two are equal, and that refusal
+# is intentional for the actual state machine, so edits get their own path.
+_DRAFT_EDITABLE_STATUS = "awaiting_review"
+
 
 class AIGenerationService:
     @staticmethod
@@ -270,6 +278,55 @@ class AIGenerationService:
             operation=override_operation,
             changes={"status": {"before": previous_status, "after": target_status}},
             metadata={"use_case": job.use_case, **(audit_metadata or {})},
+            request_id=request_id,
+        )
+        return job
+
+    @staticmethod
+    def commit_draft_edit(
+        db: Session,
+        job: AIGenerationJob,
+        *,
+        actor: User,
+        draft_payload: Any,
+        expected_version: int | None = None,
+        request_id: str | None = None,
+    ) -> AIGenerationJob:
+        """Replace `draft_payload` while the job stays `awaiting_review`.
+
+        Only reachable before a reviewer approves or rejects: once a
+        decision is recorded, the draft is frozen, matching the "content
+        always comes from the reviewed draft" invariant `publish` depends
+        on. Uses the same optimistic-concurrency (`version`) and row-lock
+        discipline as `commit_transition`, and records exactly one audit
+        event atomically with the change.
+        """
+        if job.status != _DRAFT_EDITABLE_STATUS:
+            raise AppException(
+                status_code=409,
+                error_code="AI_JOB_INVALID_TRANSITION",
+            )
+        if expected_version is not None and job.version != expected_version:
+            raise AppException(
+                status_code=409,
+                error_code="AI_JOB_VERSION_CONFLICT",
+            )
+
+        job.draft_payload = draft_payload
+        job.version = job.version + 1
+        db.flush()
+
+        AuthorizationService.commit_with_audit(
+            db,
+            actor=actor,
+            action="ai.generation.draft_edited",
+            entity_type="ai_generation_job",
+            entity_id=job.id,
+            owner_id=job.owner_id,
+            permission=Permission.APPROVE_OWNED_AI_CONTENT,
+            operation="update",
+            changes={},
+            metadata={"use_case": job.use_case},
             request_id=request_id,
         )
         return job

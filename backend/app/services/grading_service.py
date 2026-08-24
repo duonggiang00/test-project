@@ -69,18 +69,29 @@ class GradingService:
         question.metadata_json: {"blanks": [{"blank_index": 0, "acceptable_answers": ["apple", "quả táo"]}, ...]}
         answer_data: {"blanks": {"0": "apple", "1": "orange"}}
         """
-        expected_blanks = question.metadata_json.get("blanks", [])
+        metadata: dict[str, Any] = (
+            question.metadata_json if isinstance(question.metadata_json, dict) else {}
+        )
+        expected_blanks = metadata.get("blanks", [])
         provided_blanks = answer_data.get("blanks", {})
         
-        if not expected_blanks:
+        if (
+            not isinstance(expected_blanks, list)
+            or not expected_blanks
+            or not isinstance(provided_blanks, dict)
+        ):
             return 0.0
             
         points_per_blank = float(question.points) / len(expected_blanks)
         score = 0.0
         
         for expected in expected_blanks:
+            if not isinstance(expected, dict):
+                return 0.0
             blank_idx = str(expected.get("blank_index"))
             acceptable = expected.get("acceptable_answers", [])
+            if not isinstance(acceptable, list):
+                return 0.0
             
             provided_val = str(provided_blanks.get(blank_idx, "")).strip().lower()
             
@@ -101,22 +112,58 @@ class GradingService:
         question.metadata_json: {"pairs": [{"left": "Cat", "right": "Animal"}, {"left": "Apple", "right": "Fruit"}]}
         answer_data: {"matches": [{"left": "Cat", "right": "Animal"}, {"left": "Apple", "right": "Vegetable"}]}
         """
-        expected_pairs = question.metadata_json.get("pairs", [])
+        metadata: dict[str, Any] = (
+            question.metadata_json if isinstance(question.metadata_json, dict) else {}
+        )
+        raw_expected_pairs = metadata.get("pairs", [])
         provided_matches = answer_data.get("matches", [])
         
-        if not expected_pairs:
+        if not isinstance(raw_expected_pairs, list) or not raw_expected_pairs:
             return 0.0
-            
+
+        expected_pairs: list[tuple[str, str]] = []
+        expected_lefts: set[str] = set()
+        expected_rights: set[str] = set()
+        for pair in raw_expected_pairs:
+            if not isinstance(pair, dict):
+                return 0.0
+            left = pair.get("left")
+            right = pair.get("right")
+            if not isinstance(left, str) or not isinstance(right, str):
+                return 0.0
+            if left in expected_lefts or right in expected_rights:
+                return 0.0
+            expected_lefts.add(left)
+            expected_rights.add(right)
+            expected_pairs.append((left, right))
+
+        if not isinstance(provided_matches, list):
+            return 0.0
+        if len(provided_matches) > len(expected_pairs):
+            return 0.0
+
+        provided_pairs: list[tuple[str, str]] = []
+        provided_lefts: set[str] = set()
+        provided_rights: set[str] = set()
+        for match in provided_matches:
+            if not isinstance(match, dict):
+                return 0.0
+            left = match.get("left")
+            right = match.get("right")
+            if not isinstance(left, str) or not isinstance(right, str):
+                return 0.0
+            if left not in expected_lefts or right not in expected_rights:
+                return 0.0
+            if left in provided_lefts or right in provided_rights:
+                return 0.0
+            provided_lefts.add(left)
+            provided_rights.add(right)
+            provided_pairs.append((left, right))
+
         points_per_pair = float(question.points) / len(expected_pairs)
-        score = 0.0
-        
-        for expected in expected_pairs:
-            for match in provided_matches:
-                if match.get("left") == expected.get("left") and match.get("right") == expected.get("right"):
-                    score += points_per_pair
-                    break
-                    
-        return float(score)
+        expected_pair_set = set(expected_pairs)
+        correct_count = sum(pair in expected_pair_set for pair in provided_pairs)
+        return float(correct_count * points_per_pair)
 
     @classmethod
     def grade_question(cls, question: Question, answer_data: Dict[str, Any]) -> float:

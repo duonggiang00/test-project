@@ -10,6 +10,7 @@ export interface FeaturedExamCardProps {
   questionCount?: number;
   submissionStatus?: string | null;
   totalScore?: number | null;
+  maxScore?: number;
   icon?: string;
   className?: string;
 }
@@ -23,6 +24,7 @@ export default function FeaturedExamCard({
   questionCount = 0,
   submissionStatus,
   totalScore,
+  maxScore,
   icon = "description",
   className = "",
 }: FeaturedExamCardProps) {
@@ -40,7 +42,7 @@ export default function FeaturedExamCard({
     >
       {/* Top Header: Badge & Icon */}
       <div className="flex justify-between items-start">
-        <div className="w-14 h-14 bg-gray-200 border-4 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
+        <div className="w-14 h-14 bg-white border-4 border-black flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
           <span className="material-symbols-outlined text-3xl text-black">
             {isSubmitted ? "task_alt" : icon}
           </span>
@@ -89,7 +91,8 @@ export default function FeaturedExamCard({
         </div>
         {isSubmitted && totalScore !== null && totalScore !== undefined && (
           <div className="font-mono font-black text-lg text-black">
-            {totalScore} <span className="text-xs uppercase font-bold">Điểm</span>
+            {totalScore}{maxScore ? ` / ${maxScore}` : ""}{" "}
+            <span className="text-xs uppercase font-bold">Điểm</span>
           </div>
         )}
       </div>
@@ -110,4 +113,3 @@ export default function FeaturedExamCard({
     </article>
   );
 }
-

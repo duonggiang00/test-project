@@ -217,23 +217,38 @@ export interface StudentExamList {
   title: string;
   description: string | null;
   duration_minutes: number;
+  max_score?: number;
   submission_status: string | null;
   total_score: number | null;
   topic_name?: string;
   question_count?: number;
 }
 
+export interface StudentFillInBlankInteractionMetadata {
+  blank_count: number;
+}
+
+export interface StudentMatchingInteractionMetadata {
+  left_options: string[];
+  right_options: string[];
+}
+
+export type StudentQuestionInteractionMetadata =
+  | StudentFillInBlankInteractionMetadata
+  | StudentMatchingInteractionMetadata;
+
 export interface StudentExamDetail {
   id: string;
   title: string;
   description: string | null;
   duration_minutes: number;
+  remaining_seconds?: number;
   questions: Array<{
     id: string;
     content: string;
     points: number;
     question_type?: string;
-    metadata_json?: Record<string, unknown> | null;
+    metadata_json?: StudentQuestionInteractionMetadata | Record<string, unknown> | null;
     options: Array<{
       id: string;
       content: string;

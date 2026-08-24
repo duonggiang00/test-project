@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     AI_MODEL_QUESTION_GENERATION: str = ""
     AI_MODEL_FLASHCARD_GENERATION: str = ""
     AI_MODEL_TOPIC_BRIEF_GENERATION: str = ""
+    # Material chat/retrieval is retained for later work but is not part of
+    # the active MVP surface. Both RAG endpoints fail closed unless an
+    # operator explicitly enables this server-side flag.
+    RAG_ENABLED: bool = False
 
     # Per-model token pricing for the §2.4 `estimated_cost` audit field
     # (AI-003), as a JSON object:

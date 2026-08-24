@@ -360,6 +360,24 @@ def _validate_ai_generation_transition(
         _reject_invalid_action_payload()
 
 
+def _validate_ai_generation_draft_edit(
+    changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    """A reviewer's edit to `draft_payload`. Unlike a status transition, this
+    action carries no `changes` -- the edited business content (questions,
+    flashcards, brief text) is exactly what `ai_restricted_payloads`/§2.4
+    keep out of the audit record for the same reason a rendered prompt is
+    kept out: it is not a safe scalar projection. Only `use_case` is safe to
+    record here, same as `ai.generation.awaiting_review`.
+    """
+    if changes:
+        _reject_invalid_action_payload()
+    use_case = metadata.get("use_case")
+    if use_case is not None and use_case not in _AI_USE_CASES:
+        _reject_invalid_action_payload()
+
+
 def _validate_no_extra_payload(
     _changes: dict[str, JsonValue],
     _metadata: dict[str, JsonValue],
@@ -805,6 +823,21 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             )
             for action, metadata_fields in _AI_METADATA_BY_ACTION.items()
         },
+        # A reviewer's edit to `draft_payload` while a job sits
+        # `awaiting_review` (AI-002 draft editing). Status is unchanged, so
+        # unlike the family above this carries no `changes` at all -- see
+        # `_validate_ai_generation_draft_edit`.
+        "ai.generation.draft_edited": AuditActionPolicy(
+            entity_types=frozenset({"ai_generation_job"}),
+            success_roles=frozenset({"admin", "teacher"}),
+            denied_roles=frozenset({"admin", "teacher"}),
+            failure_roles=frozenset({"admin", "teacher"}),
+            owner_requirement="required",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=_AI_BASE_METADATA,
+            validate_payload=_validate_ai_generation_draft_edit,
+        ),
         # A chat turn is a provider call against one authorized material, so
         # the event names the material rather than a generation job -- chat
         # produces no publishable draft and therefore no job. It carries the

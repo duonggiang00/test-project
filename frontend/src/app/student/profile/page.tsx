@@ -9,7 +9,9 @@ import PasswordForm from "@/components/features/student-profile/PasswordForm";
 
 export default function StudentProfilePage() {
   const { profile, isLoading: isProfileLoading } = useProfile();
-  const { exams, isLoading: isExamsLoading } = useStudentExams();
+  const { exams, pagination, isLoading: isExamsLoading } = useStudentExams({
+    size: 100,
+  });
   const [isMounted, setIsMounted] = useState(false);
   const mountedRef = useRef(false);
 
@@ -31,8 +33,17 @@ export default function StudentProfilePage() {
   const completedExams = exams.filter((e) => e.submission_status === "submitted");
   const completedCount = completedExams.length;
 
-  const totalScoreSum = completedExams.reduce((acc, curr) => acc + (curr.total_score || 0), 0);
-  const averageScore = completedCount > 0 ? (totalScoreSum / completedCount).toFixed(1) : "0";
+  const normalizedScoreSum = completedExams.reduce((acc, curr) => {
+    if (!curr.max_score || curr.total_score === null) return acc;
+    return acc + (curr.total_score / curr.max_score) * 100;
+  }, 0);
+  const scoredExamCount = completedExams.filter(
+    (exam) => exam.max_score && exam.total_score !== null,
+  ).length;
+  const averageScore = scoredExamCount > 0
+    ? (normalizedScoreSum / scoredExamCount).toFixed(1)
+    : "0";
+  const isSummaryPartial = pagination.pages > 1;
 
 
 
@@ -48,7 +59,9 @@ export default function StudentProfilePage() {
         {/* Stat 1: Total Completed Exams */}
         <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4 border-b-4 border-black pb-4">
-            <span className="font-mono text-lg font-bold uppercase">Bài thi hoàn thành</span>
+            <span className="font-mono text-lg font-bold uppercase">
+              {isSummaryPartial ? "Bài thi hoàn thành gần đây" : "Bài thi hoàn thành"}
+            </span>
             <div className="w-10 h-10 border-2 border-black flex items-center justify-center">
               <span className="material-symbols-outlined text-black">task_alt</span>
             </div>
@@ -56,7 +69,9 @@ export default function StudentProfilePage() {
           <div>
             <div className="text-5xl font-black text-black">{completedCount}</div>
             <p className="font-mono text-sm text-gray-500 uppercase mt-2">
-              Trên tổng số {exams.length} bài thi được giao
+              {isSummaryPartial
+                ? `Trong ${exams.length} bài thi gần nhất`
+                : `Trên ${pagination.total} bài thi đang công bố`}
             </p>
           </div>
         </div>
@@ -70,9 +85,9 @@ export default function StudentProfilePage() {
             </div>
           </div>
           <div>
-            <div className="text-5xl font-black text-black">{averageScore}</div>
+            <div className="text-5xl font-black text-black">{averageScore}%</div>
             <p className="font-mono text-sm text-gray-500 uppercase mt-2">
-              Dựa trên {completedCount} bài thi đã chấm
+              Chuẩn hóa theo tổng điểm của {scoredExamCount} bài
             </p>
           </div>
         </div>
@@ -103,7 +118,7 @@ export default function StudentProfilePage() {
         <div className="flex items-center justify-between mb-6 border-b-4 border-black pb-4">
           <h2 className="font-mono text-2xl font-black uppercase flex items-center gap-3">
             <span className="material-symbols-outlined text-black text-3xl">history_edu</span>
-            Lịch sử thi đã hoàn thành
+            {isSummaryPartial ? "Lịch sử thi gần đây" : "Lịch sử thi đã hoàn thành"}
           </h2>
           <span className="px-3 py-1 bg-black text-white font-mono font-bold text-sm uppercase border-2 border-black">
             {completedCount} bài thi
@@ -155,7 +170,7 @@ export default function StudentProfilePage() {
                     </div>
                   )}
                   <Link
-                    href={`/student/exams/${exam.id}/result`}
+                    href={`/student/exam/${exam.id}/result`}
                     className="px-4 py-2 bg-white text-black font-mono font-bold uppercase border-2 border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-all text-sm flex items-center gap-1"
                   >
                     Xem kết quả

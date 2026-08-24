@@ -21,6 +21,7 @@ from app.schemas.ai_generation import (
     FlashcardDraft,
     PublishJobRequest,
     QuestionDraft,
+    UpdateDraftRequest,
 )
 from app.schemas.material import (
     MaterialDetailResponse, GenerateQuestionsRequest,
@@ -852,6 +853,67 @@ class MaterialService:
         return MaterialService._review_decision(
             db, job_id, current_user, "rejected", expected_version
         )
+
+    @staticmethod
+    def update_generation_job_draft(
+        db: Session,
+        job_id: UUID,
+        current_user: User,
+        request: UpdateDraftRequest,
+    ) -> AIGenerationJob:
+        """A reviewer reshapes a draft -- edit, clear, or add items -- before
+        deciding on it.
+
+        Only reachable while the job is `awaiting_review`:
+        `AIGenerationService.commit_draft_edit` refuses any other status, so
+        an approved draft can never be edited out from under its approval,
+        and `publish` still reads exclusively from whatever `draft_payload`
+        was last saved here.
+        """
+        job = AIGenerationService.get_job_for_review(
+            db, job_id, current_user, lock=True
+        )
+        if job.use_case == "question_generation":
+            if request.questions is None:
+                raise AppException(
+                    status_code=422, error_code="AI_DRAFT_FIELD_MISMATCH"
+                )
+            draft_payload = {
+                "questions": [q.model_dump() for q in request.questions]
+            }
+        elif job.use_case == "flashcard_generation":
+            if request.flashcards is None:
+                raise AppException(
+                    status_code=422, error_code="AI_DRAFT_FIELD_MISMATCH"
+                )
+            draft_payload = {
+                "flashcards": [f.model_dump() for f in request.flashcards]
+            }
+        elif job.use_case == "topic_brief_generation":
+            if request.content is None:
+                raise AppException(
+                    status_code=422, error_code="AI_DRAFT_FIELD_MISMATCH"
+                )
+            draft_payload = {"content": request.content, "title": request.title}
+        else:
+            raise AppException(
+                status_code=422, error_code="AI_DRAFT_FIELD_MISMATCH"
+            )
+
+        try:
+            return AIGenerationService.commit_draft_edit(
+                db,
+                job,
+                actor=current_user,
+                draft_payload=draft_payload,
+                expected_version=request.expected_version,
+            )
+        except Exception:
+            # Release the row lock taken by `get_job_for_review(lock=True)`
+            # instead of leaving the request's transaction open behind a
+            # refused edit, matching `_review_decision`'s same handling.
+            db.rollback()
+            raise
 
     # ------------------------------------------------------------------
     # Publication (AI-002) -- the only writer of live AI content

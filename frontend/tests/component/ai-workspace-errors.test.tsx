@@ -70,6 +70,8 @@ function mockSelectableMaterial(): void {
 }
 
 describe("AI workspace stream failures", () => {
+  const originalRagEnabled = process.env.NEXT_PUBLIC_RAG_ENABLED;
+
   beforeAll(() => {
     Object.assign(globalThis, { TextDecoder, TextEncoder });
     Object.defineProperty(Element.prototype, "scrollIntoView", {
@@ -80,6 +82,7 @@ describe("AI workspace stream failures", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_RAG_ENABLED = "false";
     mockedUseMaterials.mockReturnValue({
       materials: [],
       isLoading: false,
@@ -102,7 +105,30 @@ describe("AI workspace stream failures", () => {
     });
   });
 
+  afterAll(() => {
+    if (originalRagEnabled === undefined) {
+      delete process.env.NEXT_PUBLIC_RAG_ENABLED;
+    } else {
+      process.env.NEXT_PUBLIC_RAG_ENABLED = originalRagEnabled;
+    }
+  });
+
+  test("hides material chat while preserving content generation", () => {
+    mockSelectableMaterial();
+    render(<AIWorkspacePage />);
+
+    expect(screen.getByText("Content Studio")).toBeVisible();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Send material question/i })).not.toBeInTheDocument();
+    expect(mockedOpenAiChatStream).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Source material"));
+    expect(screen.getByRole("button", { name: /Sinh C.u H.i/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /T.o Flashcards/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /T.o D.n ./i })).toBeVisible();
+  });
+
   test("reports a sanitized provider error event immediately", async () => {
+    process.env.NEXT_PUBLIC_RAG_ENABLED = "true";
     mockSelectableMaterial();
     const bytes = new TextEncoder().encode(
       'data: {"error":"AI_PROVIDER_UNAVAILABLE",' +
@@ -120,7 +146,7 @@ describe("AI workspace stream failures", () => {
 
     render(<AIWorkspacePage />);
     fireEvent.click(screen.getByText("Source material"));
-    const input = screen.getByPlaceholderText("Nhập yêu cầu chat...");
+    const input = screen.getByPlaceholderText("Enter a material question...");
     fireEvent.change(input, { target: { value: "Create a quiz" } });
     fireEvent.submit(input.closest("form") as HTMLFormElement);
 
@@ -133,13 +159,14 @@ describe("AI workspace stream failures", () => {
   });
 
   test("requires a selected material before sending chat", () => {
+    process.env.NEXT_PUBLIC_RAG_ENABLED = "true";
     render(<AIWorkspacePage />);
 
     const input = screen.getByRole("textbox");
     const form = input.closest("form") as HTMLFormElement;
 
     expect(
-      screen.getByText(/Select a material before starting AI chat/i),
+      screen.getByText(/Select a material before starting material chat/i),
     ).toBeVisible();
     expect(input).toBeDisabled();
     expect(form.querySelector('button[type="submit"]')).toBeDisabled();

@@ -19,11 +19,12 @@ test('Student can take an exam and view the result', {
   await adminDashboard.createTopic(topicTitle, 'E2E Testing Topic');
   await adminDashboard.gotoExams();
   await adminDashboard.createExam(examTitle, 'E2E Testing Exam', 60, topicTitle);
-  await adminDashboard.openExamBuilder(examTitle);
   await examBuilder.addQuestion('What is 2+2?', 'SINGLE_CHOICE', 10, [
     { content: '4', isCorrect: true },
     { content: '5', isCorrect: false }
   ]);
+  await adminDashboard.gotoExams();
+  await adminDashboard.publishExam(examTitle);
   await adminContext.close();
 
   // 2. Create a student context to take the exam

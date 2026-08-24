@@ -731,13 +731,13 @@ def test_each_transition_emits_exactly_one_correctly_shaped_event(client, db):
     by_action = {event.action: event.event_metadata for event in events}
 
     processing = by_action["ai.generation.processing"]
-    assert processing["prompt_version"] == "question_generation-v1"
+    assert processing["prompt_version"] == "question_generation-v3"
     assert processing["provider"] == "openrouter"
     assert processing["model"]
     assert processing["context_source_ids"]
 
     generated = by_action["ai.generation.generated"]
-    assert generated["prompt_version"] == "question_generation-v1"
+    assert generated["prompt_version"] == "question_generation-v3"
     assert "input_tokens" in generated
     assert "output_tokens" in generated
     # Honest when unpriced: no `AI_TOKEN_PRICING` entry means an explicit
@@ -828,6 +828,53 @@ def test_a_rolled_back_publish_writes_neither_rows_nor_an_event(client, db):
     assert _transition_events(db, job_id, "ai.generation.published") == []
     assert len(_transition_events(db, job_id)) == before
     assert _job(db, job_id).status == "approved"
+
+
+def test_publish_rejects_fill_draft_with_mismatched_blank_contract(client, db):
+    owner = create_teacher(client, db)
+    material = _material_with_chunk(db, owner["id"])
+    actor = _actor(db, owner)
+    job = AIGenerationService.create_job(
+        db,
+        owner_id=owner["id"],
+        material_id=material.id,
+        use_case="question_generation",
+    )
+    AIGenerationService.commit_transition(db, job, "processing", actor=actor)
+    AIGenerationService.commit_transition(
+        db,
+        job,
+        "generated",
+        actor=actor,
+        draft_payload={
+            "questions": [
+                {
+                    "type": "FILL_IN_BLANK",
+                    "content": "This draft has no canonical token.",
+                    "metadata_json": {
+                        "blanks": [
+                            {
+                                "blank_index": 0,
+                                "acceptable_answers": ["answer"],
+                            }
+                        ]
+                    },
+                }
+            ]
+        },
+    )
+    AIGenerationService.commit_transition(db, job, "awaiting_review", actor=actor)
+    AIGenerationService.commit_transition(db, job, "approved", actor=actor)
+
+    response = client.post(
+        f"/ai/generation-jobs/{job.id}/publish",
+        headers=owner["headers"],
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error_code"] == "AI_DRAFT_INVALID"
+    assert _question_count(db, material.id) == 0
+    assert _job(db, job.id).status == "approved"
 
 
 # ---------------------------------------------------------------------------

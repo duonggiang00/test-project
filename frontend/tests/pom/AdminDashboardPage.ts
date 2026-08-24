@@ -41,7 +41,7 @@ export class AdminDashboardPage {
     await row.getByTestId('delete-topic-button').click();
   }
 
-  async createExam(title: string, description: string, duration: number, topicName?: string, isPublished: boolean = true) {
+  async createExam(title: string, description: string, duration: number, topicName?: string) {
     await this.page.getByTestId('add-exam-button').click();
     await this.page.getByTestId('exam-title-input').fill(title);
     await this.page.getByTestId('exam-description-input').fill(description);
@@ -50,15 +50,25 @@ export class AdminDashboardPage {
     }
     await this.page.getByTestId('exam-duration-input').fill(duration.toString());
     
-    const publishCheckbox = this.page.getByTestId('exam-published-checkbox');
-    if (isPublished) {
-      await publishCheckbox.check();
-    } else {
-      await publishCheckbox.uncheck();
-    }
-    
+    await expect(this.page.getByTestId('exam-published-checkbox')).toBeHidden();
     await this.page.getByTestId('save-exam-button').click();
-    await expect(this.page.getByTestId('save-exam-button')).toBeHidden();
+    await this.page.waitForURL(/\/exams\/[^/?]+$/);
+  }
+
+  async createDraftFromOpenForm(
+    title: string,
+    description: string,
+    duration: number,
+    topicName: string,
+  ) {
+    await expect(this.page.getByRole('heading', { name: 'Create Exam Draft' })).toBeVisible();
+    await expect(this.page.getByTestId('exam-published-checkbox')).toBeHidden();
+    await this.page.getByTestId('exam-title-input').fill(title);
+    await this.page.getByTestId('exam-description-input').fill(description);
+    await this.page.getByTestId('exam-topic-select').selectOption({ label: topicName });
+    await this.page.getByTestId('exam-duration-input').fill(duration.toString());
+    await this.page.getByTestId('save-exam-button').click();
+    await this.page.waitForURL(/\/exams\/[^/?]+$/);
   }
 
   async deleteExam(examTitle: string) {
@@ -80,5 +90,14 @@ export class AdminDashboardPage {
     await this.page.getByTestId('search-exam-input').fill(examTitle);
     const row = this.page.getByTestId(`exam-row-${examTitle}`).first();
     await row.getByTestId('exam-builder-link').click();
+  }
+
+  async publishExam(examTitle: string) {
+    await this.page.getByTestId('search-exam-input').fill(examTitle);
+    const row = this.page.getByTestId(`exam-row-${examTitle}`).first();
+    await row.getByTestId('edit-exam-button').click();
+    await this.page.getByTestId('exam-published-checkbox').check();
+    await this.page.getByTestId('save-exam-button').click();
+    await expect(this.page.getByTestId('save-exam-button')).toBeHidden();
   }
 }

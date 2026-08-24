@@ -2,23 +2,23 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "ffaf66eb9dd90750b6a994cbf83cee221fc6186d",
-    "source_commit_timestamp": "2026-08-20T13:25:40+07:00",
-    "source_tree_sha256": "db9c688c11de859a5d961a66026cba13ea6780381ec37cdb6a8a40cc412732b9",
-    "relevant_file_count": 356,
+    "source_commit": "f387210ac3f6ed22464f47a8c247f60590cb95be",
+    "source_commit_timestamp": "2026-08-20T14:06:31+07:00",
+    "source_tree_sha256": "363ee949722cef97bf22b253db41917e63f463b9d99779d28f8c387a8ea07478",
+    "relevant_file_count": 374,
     "alembic_heads": [
       "b6d4f0a17c53"
     ]
   },
   "summary": {
     "sqlalchemy_models": 18,
-    "pydantic_schemas": 72,
-    "fastapi_routes": 71,
+    "pydantic_schemas": 77,
+    "fastapi_routes": 72,
     "next_pages": 25,
     "frontend_hooks": 15,
     "frontend_services": 2,
-    "backend_test_functions": 295,
-    "frontend_test_calls": 97
+    "backend_test_functions": 310,
+    "frontend_test_calls": 118
   },
   "backend": {
     "models": [
@@ -1905,6 +1905,53 @@
         "module": "app.schemas.ai_generation"
       },
       {
+        "class": "TopicBriefDraft",
+        "fields": [
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "title",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.ai_generation"
+      },
+      {
+        "class": "UpdateDraftRequest",
+        "fields": [
+          {
+            "name": "expected_version",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "questions",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "flashcards",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "content",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "title",
+            "required": false,
+            "type": "Optional"
+          }
+        ],
+        "module": "app.schemas.ai_generation"
+      },
+      {
         "class": "AnalyticsOverviewResponse",
         "fields": [
           {
@@ -3216,6 +3263,21 @@
             "type": "int"
           },
           {
+            "name": "topic_name",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "question_count",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "name": "max_score",
+            "required": false,
+            "type": "float"
+          },
+          {
             "name": "submission_status",
             "required": false,
             "type": "Optional"
@@ -3248,6 +3310,11 @@
           },
           {
             "name": "duration_minutes",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "remaining_seconds",
             "required": true,
             "type": "int"
           },
@@ -3357,6 +3424,33 @@
         "module": "app.schemas.student"
       },
       {
+        "class": "StudentFillInBlankMetadataResponse",
+        "fields": [
+          {
+            "name": "blank_count",
+            "required": true,
+            "type": "int"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "StudentMatchingMetadataResponse",
+        "fields": [
+          {
+            "name": "left_options",
+            "required": true,
+            "type": "List"
+          },
+          {
+            "name": "right_options",
+            "required": true,
+            "type": "List"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
         "class": "StudentOptionResponse",
         "fields": [
           {
@@ -3398,12 +3492,33 @@
           {
             "name": "metadata_json",
             "required": false,
-            "type": "Optional"
+            "type": "Union"
           },
           {
             "name": "options",
             "required": true,
             "type": "List"
+          }
+        ],
+        "module": "app.schemas.student"
+      },
+      {
+        "class": "StudentResultOptionResponse",
+        "fields": [
+          {
+            "name": "id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "is_correct",
+            "required": true,
+            "type": "bool"
           }
         ],
         "module": "app.schemas.student"
@@ -3912,6 +4027,7 @@
         "dependencies": [
           "app.api.deps.get_current_active_teacher",
           "app.api.deps.get_current_user",
+          "app.api.endpoints.ai_studio.require_rag_enabled",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
@@ -3977,6 +4093,21 @@
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
+        "endpoint": "app.api.endpoints.ai_studio.update_generation_job_draft",
+        "methods": [
+          "PATCH"
+        ],
+        "name": "update_generation_job_draft",
+        "path": "/ai/generation-jobs/{job_id}/draft",
+        "response_model": "AIGenerationJobResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_teacher",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
         "endpoint": "app.api.endpoints.ai_studio.publish_generation_job",
         "methods": [
           "POST"
@@ -4004,6 +4135,7 @@
         "dependencies": [
           "app.api.deps.get_current_active_teacher",
           "app.api.deps.get_current_user",
+          "app.api.endpoints.ai_studio.require_rag_enabled",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
@@ -5207,6 +5339,7 @@
           "resetPassword",
           "submitExam",
           "updateExam",
+          "updateGenerationJobDraft",
           "updateQuestion",
           "updateStudentRole",
           "updateSubmissionGrade",
@@ -5321,6 +5454,24 @@
             "line": 72,
             "markers": [],
             "name": "test_main_app_propagates_and_exposes_request_id_contract"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/contract/test_rag_feature_flag.py",
+        "tests": [
+          {
+            "line": 8,
+            "markers": [],
+            "name": "test_rag_is_disabled_by_default"
+          },
+          {
+            "line": 28,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_disabled_rag_routes_fail_before_authentication"
           }
         ],
         "tier": "integration"
@@ -5441,12 +5592,17 @@
             "name": "test_a_rolled_back_publish_writes_neither_rows_nor_an_event"
           },
           {
-            "line": 838,
+            "line": 833,
+            "markers": [],
+            "name": "test_publish_rejects_fill_draft_with_mismatched_blank_contract"
+          },
+          {
+            "line": 885,
             "markers": [],
             "name": "test_creating_a_grade_suggestion_changes_no_awarded_points"
           },
           {
-            "line": 906,
+            "line": 953,
             "markers": [],
             "name": "test_generating_a_topic_kit_creates_drafts_not_live_content"
           }
@@ -5512,12 +5668,12 @@
         "path": "tests/test_ai_studio.py",
         "tests": [
           {
-            "line": 8,
+            "line": 16,
             "markers": [],
             "name": "test_process_document"
           },
           {
-            "line": 34,
+            "line": 42,
             "markers": [],
             "name": "test_chat_prompt_injection"
           }
@@ -6223,14 +6379,45 @@
             "name": "test_start_exam"
           },
           {
-            "line": 14,
+            "line": 16,
+            "markers": [],
+            "name": "test_start_exam_returns_only_safe_interaction_metadata"
+          },
+          {
+            "line": 85,
+            "markers": [],
+            "name": "test_available_exam_metadata_is_derived_from_the_exam"
+          },
+          {
+            "line": 105,
             "markers": [],
             "name": "test_submit_exam"
           },
           {
-            "line": 39,
+            "line": 130,
             "markers": [],
             "name": "test_submit_without_start"
+          },
+          {
+            "line": 144,
+            "markers": [],
+            "name": "test_submit_rejects_duplicate_question_answers"
+          },
+          {
+            "line": 171,
+            "markers": [],
+            "name": "test_result_counts_and_returns_an_unanswered_question"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
+        "path": "tests/test_student_concurrency.py",
+        "tests": [
+          {
+            "line": 18,
+            "markers": [],
+            "name": "test_concurrent_start_and_submit_are_idempotent_and_serialized"
           }
         ],
         "tier": "integration"
@@ -6999,6 +7186,42 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_grading_structured_answers.py",
+        "tests": [
+          {
+            "line": 38,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_matching_rejects_cartesian_product_answer_attack"
+          },
+          {
+            "line": 64,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_matching_malformed_or_non_bijective_answers_score_zero"
+          },
+          {
+            "line": 72,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_matching_keeps_valid_partial_credit"
+          },
+          {
+            "line": 88,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_fill_in_blank_malformed_answers_score_zero_without_raising"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_material_ai_generation.py",
         "tests": [
           {
@@ -7213,6 +7436,38 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_question_draft_contract.py",
+        "tests": [
+          {
+            "line": 22,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_valid_canonical_fill_draft_is_accepted"
+          },
+          {
+            "line": 43,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_invalid_fill_draft_token_contract_is_rejected"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_question_generation_prompt.py",
+        "tests": [
+          {
+            "line": 4,
+            "markers": [],
+            "name": "test_fill_in_blank_prompt_uses_the_canonical_placeholder_contract"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_test_database.py",
         "tests": [
           {
@@ -7290,7 +7545,7 @@
       {
         "path": "frontend/tests/component/ai-workspace-errors.test.tsx",
         "tier": "component",
-        "test_count": 4
+        "test_count": 5
       },
       {
         "path": "frontend/tests/component/auth-error-localization.test.tsx",
@@ -7306,6 +7561,16 @@
         "path": "frontend/tests/component/button.states.test.tsx",
         "tier": "component",
         "test_count": 2
+      },
+      {
+        "path": "frontend/tests/component/exam-builder-flow.test.tsx",
+        "tier": "component",
+        "test_count": 5
+      },
+      {
+        "path": "frontend/tests/component/exam-creation-flow.test.tsx",
+        "tier": "component",
+        "test_count": 4
       },
       {
         "path": "frontend/tests/component/featured-exam-list.states.test.tsx",
@@ -7330,10 +7595,25 @@
       {
         "path": "frontend/tests/component/profile-error-localization.test.tsx",
         "tier": "component",
-        "test_count": 2
+        "test_count": 3
       },
       {
         "path": "frontend/tests/component/student-exam-errors.test.tsx",
+        "tier": "component",
+        "test_count": 4
+      },
+      {
+        "path": "frontend/tests/component/student-flashcard-accessibility.test.tsx",
+        "tier": "component",
+        "test_count": 4
+      },
+      {
+        "path": "frontend/tests/component/student-flow-navigation.test.tsx",
+        "tier": "component",
+        "test_count": 2
+      },
+      {
+        "path": "frontend/tests/component/student-profile-summary.test.tsx",
         "tier": "component",
         "test_count": 1
       },

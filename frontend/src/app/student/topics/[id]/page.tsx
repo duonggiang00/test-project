@@ -8,6 +8,7 @@ import { useTopicDecks } from "@/hooks/useFlashcards";
 import { useStudentExams } from "@/hooks/useStudentExams";
 import { Button } from "@/components/ui/button";
 import { Search, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function StudentTopicDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -46,6 +47,14 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
 
   return (
     <div className="p-4 md:p-8 font-mono max-w-5xl mx-auto flex flex-col gap-8 w-full">
+      <nav aria-label="Điều hướng chủ đề">
+        <Link
+          href="/student/home"
+          className="inline-flex min-h-11 items-center border-4 border-black bg-white px-4 py-2 font-black uppercase shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-black"
+        >
+          &larr; Trang chủ Student
+        </Link>
+      </nav>
       <div className="border-4 border-black p-6 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
         <h1 className="text-3xl font-black uppercase mb-4 border-b-4 border-black pb-4">
           {topic.name}
@@ -129,22 +138,31 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
           </div>
         ) : exams && exams.length > 0 ? (
           <div className="flex flex-col gap-4">
-            {exams.map((exam) => (
-              <div key={exam.id} className="border-4 border-black p-4 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-gray-50 transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-                <div>
-                  <h3 className="font-black text-xl uppercase mb-1">{exam.title}</h3>
-                  <div className="flex gap-4 text-sm font-bold uppercase">
-                    <span className="bg-black text-white px-2 py-1">{exam.duration_minutes} PHÚT</span>
+            {exams.map((exam) => {
+              const isSubmitted = exam.submission_status === "submitted";
+              const isInProgress = exam.submission_status === "in_progress";
+
+              return (
+                <div key={exam.id} className="border-4 border-black p-4 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+                  <div>
+                    <h3 className="font-black text-xl uppercase mb-1">{exam.title}</h3>
+                    <div className="flex gap-4 text-sm font-bold uppercase">
+                      <span className="bg-black text-white px-2 py-1">{exam.duration_minutes} PHÚT</span>
+                    </div>
                   </div>
+                  <Button
+                    onClick={() => router.push(
+                      isSubmitted
+                        ? `/student/exam/${exam.id}/result`
+                        : `/student/exam/${exam.id}`,
+                    )}
+                    className="border-4 border-black bg-white text-black hover:bg-black hover:text-white font-black uppercase transition-all rounded-none w-full md:w-auto"
+                  >
+                    {isSubmitted ? "XEM KẾT QUẢ" : isInProgress ? "TIẾP TỤC LÀM BÀI" : "BẮT ĐẦU LÀM BÀI"}
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => router.push(`/student/exam/${exam.id}`)}
-                  className="border-4 border-black bg-white text-black hover:bg-black hover:text-white font-black uppercase transition-all rounded-none w-full md:w-auto"
-                >
-                  LÀM BÀI
-                </Button>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Pagination Controls */}
             {pagination && pagination.pages > 1 && (

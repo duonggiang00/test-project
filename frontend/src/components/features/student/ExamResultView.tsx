@@ -236,6 +236,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
 
           {(result.answers || []).map((ans, idx) => {
             const isCorrect = ans.is_correct;
+            const isUnanswered = !ans.answer_data;
             const qType = (ans.question_type || "").toUpperCase();
 
             return (
@@ -260,6 +261,10 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                     {isCorrect ? (
                       <span className="flex items-center gap-1 font-bold border-2 border-black px-3 py-1 bg-black text-white text-sm uppercase">
                         <CheckCircle size={16} /> Đúng
+                      </span>
+                    ) : isUnanswered ? (
+                      <span className="flex items-center gap-1 font-bold border-2 border-dashed border-black px-3 py-1 bg-white text-black text-sm uppercase">
+                        <XCircle size={16} /> Chưa trả lời
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 font-bold border-2 border-black px-3 py-1 bg-white text-black text-sm uppercase">
@@ -308,7 +313,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                               )}
                               {isOptCorrect && (
                                 <span className={`text-xs uppercase font-bold border-2 px-2 py-0.5 ${
-                                  isSelected ? "border-white text-white bg-black" : "border-black text-black bg-gray-100"
+                                  isSelected ? "border-white text-white bg-black" : "border-black text-black bg-white"
                                 }`}>
                                   Đáp án đúng
                                 </span>
@@ -338,13 +343,13 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                               <div className="flex flex-wrap gap-2 items-center text-sm">
                                 <span className="font-bold uppercase">Lựa chọn của bạn:</span>
                                 <span className="border-2 border-black px-3 py-1 font-bold bg-white">
-                                  {studentAns || <span className="italic text-gray-500">Chưa trả lời</span>}
+                                  {studentAns || <span className="italic text-black">Chưa trả lời</span>}
                                 </span>
                               </div>
                               {acceptable.length > 0 && (
                                 <div className="flex flex-wrap gap-2 items-center text-sm">
                                   <span className="font-bold uppercase">Đáp án đúng:</span>
-                                  <span className="border-2 border-black px-3 py-1 font-bold bg-gray-100">
+                                  <span className="border-2 border-dashed border-black px-3 py-1 font-bold bg-white">
                                     {acceptable.join(" / ")}
                                   </span>
                                 </div>

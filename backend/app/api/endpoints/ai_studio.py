@@ -6,8 +6,11 @@ from app.schemas.ai_generation import (
     AIGenerationJobResponse,
     PublishJobRequest,
     ReviewDecisionRequest,
+    UpdateDraftRequest,
 )
 from app.core.security_guardrails import MAX_MESSAGES
+from app.core.config import settings
+from app.core.exceptions import AppException
 from app.api.deps import get_current_active_teacher
 from app.models.user import User
 from pydantic import BaseModel, field_validator
@@ -33,7 +36,20 @@ class ChatRequest(BaseModel):
 
 router = APIRouter()
 
-@router.post("/process-document", response_model=ProcessDocumentResponse)
+
+def require_rag_enabled() -> None:
+    """Fail closed before authentication, retrieval, or provider access."""
+    if not settings.RAG_ENABLED:
+        raise AppException(
+            status_code=404,
+            error_code="FEATURE_NOT_AVAILABLE",
+        )
+
+@router.post(
+    "/process-document",
+    response_model=ProcessDocumentResponse,
+    dependencies=[Depends(require_rag_enabled)],
+)
 def process_document(
     request: ProcessDocumentRequest,
     db: Session = Depends(get_db),
@@ -46,7 +62,7 @@ def process_document(
     )
     return ProcessDocumentResponse(message="Processed successfully", chunks_created=chunks_created)
 
-@router.post("/chat")
+@router.post("/chat", dependencies=[Depends(require_rag_enabled)])
 async def chat(
     request: ChatRequest,
     db: Session = Depends(get_db),
@@ -139,6 +155,24 @@ def reject_generation_job(
         job_id,
         current_user,
         expected_version=(request or ReviewDecisionRequest()).expected_version,
+    )
+
+
+@router.patch(
+    "/generation-jobs/{job_id}/draft",
+    response_model=AIGenerationJobResponse,
+)
+def update_generation_job_draft(
+    job_id: UUID,
+    request: UpdateDraftRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_teacher),
+):
+    return MaterialService.update_generation_job_draft(
+        db,
+        job_id,
+        current_user,
+        request,
     )
 
 

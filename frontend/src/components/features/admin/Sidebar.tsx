@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/topics", label: "Topic Hub", icon: "folder_special" },
   { href: "/ai-workspace", label: "AI Workspace", icon: "workspace_premium" },
   { href: "/questions", label: "Question Bank", icon: "quiz" },
+  { href: "/exams", label: "Exam Builder", icon: "description" },
   { href: "/reports", label: "Reports", icon: "bar_chart" },
   { href: "/history", label: "History", icon: "history" },
   { href: "/students", label: "Students", icon: "group" },

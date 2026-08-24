@@ -32,6 +32,7 @@ interface Message {
 }
 
 export default function AIWorkspacePage() {
+  const ragEnabled = process.env.NEXT_PUBLIC_RAG_ENABLED === "true";
   const { materials, isLoading, mutate } = useMaterials(5000);
   const { topics } = useTopics({ size: 100 });
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
@@ -43,7 +44,12 @@ export default function AIWorkspacePage() {
   const [isDeleting, setIsDeleting] = useState(false);
   
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Xin chào! Chọn một tài liệu ở cột bên trái để AI tự động sinh câu hỏi và flashcard, hoặc trò chuyện trực tiếp tại đây." }
+    {
+      role: "assistant",
+      content: ragEnabled
+        ? "Select a material to generate learning content or start a material chat."
+        : "Select a material, then generate Questions, Flashcards, or a Topic Brief for review.",
+    },
   ]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -210,7 +216,7 @@ export default function AIWorkspacePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isStreaming || !activeMaterial) return;
+    if (!ragEnabled || !input.trim() || isStreaming || !activeMaterial) return;
 
     const userMessage: Message = { role: "user", content: input };
     setMessages(prev => [...prev, userMessage]);
@@ -398,10 +404,12 @@ export default function AIWorkspacePage() {
         </div>
       </div>
 
-      {/* CỘT GIỮA: AI CHAT (RIGHT PANE Part 1) */}
+      {/* CENTER: content generation activity; material chat is feature-gated. */}
       <div className="w-full md:w-1/3 flex flex-col border-r-4 border-black border-b-4 md:border-b-0 min-h-[500px]">
         <div className="p-4 border-b-4 border-black bg-black text-white flex justify-between items-center">
-          <h2 className="text-xl font-bold font-mono uppercase">AI Studio</h2>
+          <h2 className="text-xl font-bold font-mono uppercase">
+            {ragEnabled ? "AI Studio" : "Content Studio"}
+          </h2>
           <span className="material-symbols-outlined font-bold">smart_toy</span>
         </div>
 
@@ -450,13 +458,17 @@ export default function AIWorkspacePage() {
           )}
         </div>
 
-        {/* Khung chat */}
+        {/* Generation activity. User-authored chat messages appear only when enabled. */}
         <div className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-4">
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[90%] p-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] ${msg.role === "user" ? "bg-white text-black" : "bg-black text-white"}`}>
                 <div className="font-bold font-mono mb-1 uppercase text-xs border-b-2 border-current pb-1">
-                  {msg.role === "user" ? user?.full_name || "You" : "AI Assistant"}
+                  {msg.role === "user"
+                    ? user?.full_name || "You"
+                    : ragEnabled
+                      ? "AI Assistant"
+                      : "Generation activity"}
                 </div>
                 <div className="font-mono text-sm whitespace-pre-wrap">
                   {msg.content}
@@ -472,33 +484,37 @@ export default function AIWorkspacePage() {
           [WARNING] AI có thể sinh kết quả sai.
         </div>
 
-        {/* Khung nhập chat */}
-        {!activeMaterial && (
-          <div className="border-t-4 border-black px-4 py-2 font-mono text-xs font-bold uppercase">
-            [REQUIRED] Select a material before starting AI chat.
-          </div>
+        {ragEnabled && (
+          <>
+            {!activeMaterial && (
+              <div className="border-t-4 border-black px-4 py-2 font-mono text-xs font-bold uppercase">
+                [REQUIRED] Select a material before starting material chat.
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="p-3 bg-white border-t-4 border-black flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isStreaming || !activeMaterial}
+                placeholder={
+                  activeMaterial
+                    ? "Enter a material question..."
+                    : "Select a material to enable chat"
+                }
+                className="flex-1 p-2 border-4 border-black font-mono focus:outline-none disabled:bg-gray-200"
+              />
+              <button
+                type="submit"
+                aria-label="Send material question"
+                disabled={isStreaming || !activeMaterial || !input.trim()}
+                className="px-4 border-4 border-black bg-black text-white font-bold font-mono hover:bg-white hover:text-black transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50 flex items-center justify-center"
+              >
+                {isStreaming ? <Loader2 className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5" />}
+              </button>
+            </form>
+          </>
         )}
-        <form onSubmit={handleSubmit} className="p-3 bg-white border-t-4 border-black flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={isStreaming || !activeMaterial}
-            placeholder={
-              activeMaterial
-                ? "Nhập yêu cầu chat..."
-                : "Select a material to enable chat"
-            }
-            className="flex-1 p-2 border-4 border-black font-mono focus:outline-none disabled:bg-gray-200"
-          />
-          <button 
-            type="submit" 
-            disabled={isStreaming || !activeMaterial || !input.trim()}
-            className="px-4 border-4 border-black bg-black text-white font-bold font-mono hover:bg-white hover:text-black transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50 flex items-center justify-center"
-          >
-            {isStreaming ? <Loader2 className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5" />}
-          </button>
-        </form>
       </div>
 
       {/* CỘT PHẢI: GENERATIVE UI (RIGHT PANE Part 2) */}

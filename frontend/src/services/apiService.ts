@@ -195,8 +195,11 @@ export const generateMaterialTopicBrief = async (materialId: string) => {
 // The `/materials/{id}/save-*` routes these replaced were removed with the
 // review state machine. Publishing is the only writer of AI-generated rows
 // and it reads its content from the job's reviewed `draft_payload`, so no
-// request here carries generated content -- only placement and the
-// optimistic-concurrency guard.
+// publish request here carries generated content -- only placement and the
+// optimistic-concurrency guard. `updateGenerationJobDraft` below is the one
+// deliberate exception: it edits `draft_payload` itself, and the backend
+// only accepts it while the job is still `awaiting_review`, so publish's
+// "content always comes from the reviewed draft" guarantee still holds.
 
 export interface AIGenerationJob {
   id: string;
@@ -274,6 +277,48 @@ export const publishGenerationJob = async (
   const response = await api.post(`/ai/generation-jobs/${jobId}/publish`, {
     title: payload.title ?? null,
     topic_id: payload.topic_id ?? null,
+    expected_version: expectedVersion ?? null,
+  });
+  return response.data;
+};
+
+/** One question inside an edited `question_generation` draft. */
+export interface QuestionDraftPayload {
+  type: string;
+  content: string;
+  points: number;
+  difficulty?: string | null;
+  source_reference?: string | null;
+  explanation?: string | null;
+  options: { content: string; is_correct: boolean }[];
+  metadata_json?: Record<string, unknown> | null;
+}
+
+/** One flashcard inside an edited `flashcard_generation` draft. */
+export interface FlashcardDraftPayload {
+  term: string;
+  definition: string;
+  source_reference?: string | null;
+  explanation?: string | null;
+}
+
+/**
+ * A reviewer's edit to one job's `draft_payload`. Exactly one of
+ * `questions`/`flashcards`/`content` is sent, matching the job's
+ * `use_case` -- the backend rejects any other combination.
+ */
+export type UpdateGenerationJobDraftPayload =
+  | { questions: QuestionDraftPayload[] }
+  | { flashcards: FlashcardDraftPayload[] }
+  | { content: string; title?: string | null };
+
+export const updateGenerationJobDraft = async (
+  jobId: string,
+  payload: UpdateGenerationJobDraftPayload,
+  expectedVersion?: number,
+): Promise<AIGenerationJob> => {
+  const response = await api.patch(`/ai/generation-jobs/${jobId}/draft`, {
+    ...payload,
     expected_version: expectedVersion ?? null,
   });
   return response.data;

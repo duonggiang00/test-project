@@ -6,15 +6,17 @@ import Image from "next/image";
 import { toast } from "@/components/ui/toast";
 import { getBackendErrorMessage } from "@/lib/errors";
 
+const emptyProfileDraft = {
+  full_name: "",
+  phone_number: "",
+  date_of_birth: "",
+  bio: "",
+};
+
 export default function ProfileForm() {
   const { profile, mutate } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    full_name: profile?.full_name || "",
-    phone_number: profile?.phone_number || "",
-    date_of_birth: profile?.date_of_birth || "",
-    bio: profile?.bio || "",
-  });
+  const [formData, setFormData] = useState(emptyProfileDraft);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,7 +67,15 @@ export default function ProfileForm() {
         </h2>
         {!isEditing && (
           <button
-            onClick={() => setIsEditing(true)}
+            onClick={() => {
+              setFormData({
+                full_name: profile.full_name || "",
+                phone_number: profile.phone_number || "",
+                date_of_birth: profile.date_of_birth || "",
+                bio: profile.bio || "",
+              });
+              setIsEditing(true);
+            }}
             className="px-4 py-2 bg-black text-white font-mono font-bold uppercase border-2 border-black hover:bg-white hover:text-black transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)]"
           >
             Chỉnh sửa

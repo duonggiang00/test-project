@@ -253,7 +253,7 @@ test('student registration returns to login with a one-time success notice', {
 
 test('admin flow: create and delete topic, exam, and question (MOCKED)', {
   tag: '@owner-frontend',
-}, async ({ page }) => {
+}, async ({ page }, testInfo) => {
   await page.route('**/api/proxy/**', async route => {
     await route.fulfill({
       status: 501,
@@ -320,9 +320,27 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
   await page.getByRole('heading', { name: /Dashboard/i }).waitFor();
 
   // --- MOCK STATE ---
-  let mockTopics: Record<string, unknown>[] = [{ id: "t1", name: "Existing Topic", description: "Old" }];
+  const isMobile = testInfo.project.name === 'mobile-chrome';
+  let mockTopics: Record<string, unknown>[] = [
+    ...(isMobile ? [{ id: 'mock-topic-id', name: 'E2E Topic', description: 'E2E Topic Description' }] : []),
+    { id: "t1", name: "Existing Topic", description: "Old" },
+  ];
   let mockExams: Record<string, unknown>[] = [];
-  let mockQuestions: Record<string, unknown>[] = [];
+  let mockExamQuestions: Record<string, unknown>[] = [];
+  const mockQuestionBank: Record<string, unknown>[] = [{
+    id: 'bank-question-id',
+    content: 'Which tool runs browser tests?',
+    points: 5,
+    question_type: 'SINGLE_CHOICE',
+    difficulty: 'MEDIUM',
+    topic_id: 'mock-topic-id',
+    is_ai_generated: false,
+    options: [
+      { id: 'bank-option-1', content: 'Playwright', is_correct: true },
+      { id: 'bank-option-2', content: 'Alembic', is_correct: false },
+    ],
+  }];
+  let createdExamPayload: Record<string, unknown> | null = null;
 
   // --- API INTERCEPTION ---
   await page.route('**/api/proxy/topics**', async route => {
@@ -336,6 +354,20 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
       mockTopics = mockTopics.filter(t => t.name !== 'E2E Topic');
       await route.fulfill({ status: 200, json: { message: "Deleted" } });
     } else if (method === 'GET') {
+      const requestUrl = new URL(route.request().url());
+      if (requestUrl.pathname.endsWith('/mock-topic-id')) {
+        await route.fulfill({
+          status: 200,
+          json: {
+            id: 'mock-topic-id',
+            name: 'E2E Topic',
+            description: 'E2E Topic Description',
+            parent_id: null,
+            brief_content: null,
+          },
+        });
+        return;
+      }
       await route.fulfill({ status: 200, json: { items: mockTopics, total: mockTopics.length, page: 1, size: 50, pages: 1 } });
     } else {
       await route.continue();
@@ -345,7 +377,19 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
   await page.route('**/api/proxy/exams**', async route => {
     const method = route.request().method();
     const requestUrl = new URL(route.request().url());
-    if (method === 'POST' && requestUrl.pathname.endsWith('/questions')) {
+    if (method === 'POST' && requestUrl.pathname.endsWith('/questions/bulk')) {
+      const data = JSON.parse(route.request().postData() || '{}');
+      const selectedQuestions = mockQuestionBank.filter(question =>
+        (data.question_ids as string[]).includes(question.id as string),
+      );
+      mockExamQuestions = [
+        ...mockExamQuestions,
+        ...selectedQuestions.filter(question =>
+          !mockExamQuestions.some(existing => existing.id === question.id),
+        ),
+      ];
+      await route.fulfill({ status: 200, json: { message: 'Questions assigned' } });
+    } else if (method === 'POST' && requestUrl.pathname.endsWith('/questions')) {
       const data = JSON.parse(route.request().postData() || '{}');
       const newQuestion = {
         id: 'mock-question-id',
@@ -359,20 +403,32 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
           ...option,
         })),
       };
-      mockQuestions = [newQuestion, ...mockQuestions];
+      mockExamQuestions = [newQuestion, ...mockExamQuestions];
       await route.fulfill({ status: 201, json: newQuestion });
     } else if (method === 'POST') {
       const data = JSON.parse(route.request().postData() || '{}');
-      const newExam = { id: "mock-exam-id", title: data.title, description: data.description, topic_id: data.topic_id, duration_minutes: data.duration_minutes };
+      createdExamPayload = data;
+      const newExam = {
+        id: "mock-exam-id",
+        title: data.title,
+        description: data.description,
+        topic_id: data.topic_id,
+        duration_minutes: data.duration_minutes,
+        is_published: data.is_published,
+      };
       mockExams = [newExam, ...mockExams];
       await route.fulfill({ status: 201, json: newExam });
     } else if (method === 'DELETE') {
-      mockExams = mockExams.filter(e => e.title !== 'E2E Exam');
+      if (requestUrl.pathname.includes('/questions/')) {
+        mockExamQuestions = mockExamQuestions.filter(question => question.id !== 'mock-question-id');
+      } else {
+        mockExams = mockExams.filter(e => e.title !== 'E2E Exam');
+      }
       await route.fulfill({ status: 200, json: { message: "Deleted" } });
     } else if (method === 'GET' && requestUrl.pathname.endsWith('/mock-exam-id')) {
       await route.fulfill({
         status: 200,
-        json: { ...mockExams[0], questions: mockQuestions },
+        json: { ...mockExams[0], questions: mockExamQuestions },
       });
     } else if (method === 'GET') {
       await route.fulfill({ status: 200, json: { items: mockExams, total: mockExams.length, page: 1, size: 50, pages: 1 } });
@@ -386,13 +442,14 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
     if (method === 'POST') {
       const data = JSON.parse(route.request().postData() || '{}');
       const newQuestion = { id: "mock-question-id", content: data.content, options: data.options };
-      mockQuestions = [newQuestion, ...mockQuestions];
+      mockExamQuestions = [newQuestion, ...mockExamQuestions];
       await route.fulfill({ status: 201, json: newQuestion });
     } else if (method === 'DELETE') {
-      mockQuestions = mockQuestions.filter(q => q.content !== 'What is Playwright?');
+      mockExamQuestions = mockExamQuestions.filter(q => q.content !== 'What is Playwright?');
       await route.fulfill({ status: 200, json: { message: "Deleted" } });
     } else if (method === 'GET') {
-      await route.fulfill({ status: 200, json: { items: mockQuestions, total: mockQuestions.length, page: 1, size: 50, pages: 1 } });
+      const allQuestions = [...mockExamQuestions, ...mockQuestionBank];
+      await route.fulfill({ status: 200, json: { items: allQuestions, total: allQuestions.length, page: 1, size: 50, pages: 1 } });
     } else {
       await route.continue();
     }
@@ -401,31 +458,78 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
   const adminPage = new AdminDashboardPage(page);
   const builderPage = new ExamBuilderPage(page);
 
-  // Initialize AdminDashboardPage and go to /topics
-  await adminPage.gotoTopics();
-  await expect(page.getByTestId('add-topic-button')).toBeVisible();
+  await page.route('**/api/proxy/materials**', route => route.fulfill({
+    status: 200,
+    json: { items: [], total: 0, page: 1, size: 50, pages: 0 },
+  }));
+  await page.route('**/api/proxy/flashcards/topics/mock-topic-id/decks', route => route.fulfill({
+    status: 200,
+    json: [],
+  }));
+
+  // Start from dashboard navigation instead of entering /exams directly.
+  if (isMobile) {
+    await page.getByRole('link', { name: 'Open Exam Builder' }).click();
+    await page.waitForURL('/exams');
+    await page.getByTestId('add-exam-button').click();
+  } else {
+    await page.getByRole('link', { name: 'Topic Hub' }).click();
+    await page.waitForURL('/topics');
+    await expect(page.getByTestId('add-topic-button')).toBeVisible();
+    await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+    await expect(page).toHaveScreenshot('topics-page.png', {
+      animations: 'disabled',
+      caret: 'hide',
+      fullPage: true,
+    });
+
+    await adminPage.createTopic('E2E Topic', 'E2E Topic Description', 'keyboard');
+    const topicRow = page.locator('tr', { hasText: 'E2E Topic' }).first();
+    await topicRow.getByTestId('manage-topic-button').click();
+    await page.waitForURL('/topics/mock-topic-id');
+    await page.getByRole('tab', { name: 'Exams' }).click();
+    await page.getByRole('button', { name: 'Create Exam' }).click();
+    await expect(page).toHaveURL(/\/exams\?topic_id=mock-topic-id&create=1$/);
+  }
+
   await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
-  await expect(page).toHaveScreenshot('topics-page.png', {
+  await expect(page).toHaveScreenshot('exam-create-draft.png', {
     animations: 'disabled',
     caret: 'hide',
     fullPage: true,
   });
-
-  // Create a topic 'E2E Topic'
-  await adminPage.createTopic('E2E Topic', 'E2E Topic Description', 'keyboard');
-
-  // Go to /exams and create an exam 'E2E Exam'
-  await adminPage.gotoExams();
-  await adminPage.createExam('E2E Exam', 'E2E Exam Description', 60, 'E2E Topic');
-
-  // Open the exam builder for 'E2E Exam'
-  await adminPage.openExamBuilder('E2E Exam');
+  await adminPage.createDraftFromOpenForm('E2E Exam', 'E2E Exam Description', 60, 'E2E Topic');
+  expect(createdExamPayload).toMatchObject({
+    title: 'E2E Exam',
+    topic_id: 'mock-topic-id',
+    is_published: false,
+  });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  await expect(page).toHaveScreenshot('exam-builder-empty.png', {
+    animations: 'disabled',
+    caret: 'hide',
+    fullPage: true,
+  });
 
   // Use ExamBuilderPage to add 1 multiple choice question
   await builderPage.addQuestion('What is Playwright?', 'SINGLE_CHOICE', 10, [
     { content: 'A testing framework', isCorrect: true },
     { content: 'A playwright', isCorrect: false }
   ]);
+
+  // Assign an existing question from the Topic-scoped Question Bank.
+  await page.getByRole('tab', { name: 'Ngân Hàng Câu Hỏi' }).click();
+  const bankQuestion = page.getByTestId('question-bank-item-bank-question-id');
+  await expect(bankQuestion).toContainText('Which tool runs browser tests?');
+  await bankQuestion.getByRole('checkbox', { name: 'Select question: Which tool runs browser tests?' }).check();
+  await page.getByRole('button', { name: 'Thêm vào Bài thi (1)' }).click();
+  await page.getByRole('tab', { name: /Câu Hỏi Đề Thi/ }).click();
+  await expect(page.getByText('What is Playwright?')).toBeVisible();
+  await expect(page.getByText('Which tool runs browser tests?')).toBeVisible();
 
   // Delete the question
   await builderPage.deleteQuestion('What is Playwright?');
@@ -434,7 +538,9 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
   await adminPage.gotoExams();
   await adminPage.deleteExam('E2E Exam');
 
-  // Go back and delete the 'E2E Topic'
-  await adminPage.gotoTopics();
-  await adminPage.deleteTopic('E2E Topic');
+  if (!isMobile) {
+    // The mobile path uses the existing Topic fixture and needs no Topic cleanup.
+    await adminPage.gotoTopics();
+    await adminPage.deleteTopic('E2E Topic');
+  }
 });

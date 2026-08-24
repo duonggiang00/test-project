@@ -24,7 +24,7 @@ export default function FeaturedExamList() {
       <section data-testid="featured-exams-error" className="flex flex-col items-center justify-center p-12 border-4 border-black bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] min-h-[300px]">
         <span className="material-symbols-outlined text-6xl text-black mb-4">error</span>
         <p className="font-mono font-bold text-black text-xl uppercase">Không thể tải danh sách bài thi</p>
-        <p className="font-mono text-sm text-gray-500 uppercase mt-2">Vui lòng thử lại sau.</p>
+        <p className="font-mono text-sm text-black uppercase mt-2">Vui lòng thử lại sau.</p>
       </section>
     );
   }
@@ -42,7 +42,7 @@ export default function FeaturedExamList() {
         <div data-testid="featured-exams-empty" className="bg-white border-4 border-dashed border-black p-12 text-center flex flex-col items-center justify-center min-h-[250px]">
           <span className="material-symbols-outlined text-6xl text-black mb-4">task_alt</span>
           <p className="text-xl font-bold text-black uppercase">Bạn chưa có bài thi nào.</p>
-          <p className="text-sm text-gray-500 uppercase mt-2">Hãy quay lại sau nhé!</p>
+          <p className="text-sm text-black uppercase mt-2">Hãy quay lại sau nhé!</p>
         </div>
       ) : (
         <div className="flex flex-col gap-6">
@@ -58,6 +58,7 @@ export default function FeaturedExamList() {
                 questionCount={exam.question_count || 0}
                 submissionStatus={exam.submission_status}
                 totalScore={exam.total_score}
+                maxScore={exam.max_score}
               />
             ))}
           </div>

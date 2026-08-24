@@ -96,4 +96,31 @@ describe("profile error localization", () => {
     );
     expect(container.textContent).not.toContain("canary");
   });
+
+  test("starts editing from the latest loaded profile values", () => {
+    mockedUseProfile.mockReturnValue({
+      profile: {
+        id: "user-1",
+        email: "student@example.test",
+        role: "student",
+        full_name: "Nguyen Student",
+        phone_number: "0912345678",
+        date_of_birth: "2005-01-02",
+        bio: "Current profile biography",
+        avatar_url: null,
+      } as never,
+      user: undefined,
+      isLoading: false,
+      isError: undefined,
+      mutate: jest.fn(),
+    });
+
+    render(<ProfileForm />);
+    fireEvent.click(screen.getByRole("button", { name: "Chỉnh sửa" }));
+
+    expect(screen.getByDisplayValue("Nguyen Student")).toBeVisible();
+    expect(screen.getByDisplayValue("0912345678")).toBeVisible();
+    expect(screen.getByDisplayValue("2005-01-02")).toBeVisible();
+    expect(screen.getByDisplayValue("Current profile biography")).toBeVisible();
+  });
 });

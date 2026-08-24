@@ -11,9 +11,9 @@ export default function LandingPage() {
           <PlayStudyBrand />
         </Link>
         <nav className="hidden md:flex gap-6 items-center">
-          <Link href="#features" className="text-base font-bold font-mono tracking-widest uppercase hover:underline underline-offset-4">
+          {/* <Link href="#features" className="text-base font-bold font-mono tracking-widest uppercase hover:underline underline-offset-4">
             Tính Năng
-          </Link>
+          </Link> */}
           <div className="flex gap-4">
             <Link 
               href="/login" 
@@ -36,7 +36,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center justify-center w-full px-6 text-center mt-24 mb-24">
         <div className="inline-flex items-center gap-2 px-6 py-3 border-4 border-black text-base font-bold mb-12 uppercase tracking-widest bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
-          <span>Nền tảng Giáo dục AI Thế hệ Mới</span>
+          <span>Nền tảng Giáo dục Online</span>
         </div>
         
         <h2 className="text-5xl md:text-7xl font-bold tracking-widest leading-tight mb-8 uppercase font-mono">

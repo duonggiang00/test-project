@@ -8,7 +8,9 @@ export interface MatchPair {
 }
 
 interface BrutalistMatchingUIProps {
-  pairs: MatchPair[];
+  pairs?: MatchPair[];
+  leftOptions?: string[];
+  rightOptions?: string[];
   currentMatches: MatchPair[];
   onChange: (newMatches: MatchPair[]) => void;
   /** Khi true: không cho click, hiển thị đúng/sai qua màu line */
@@ -18,13 +20,16 @@ interface BrutalistMatchingUIProps {
 }
 
 type LineData = { x1: number; y1: number; x2: number; y2: number };
+const EMPTY_MATCHES: MatchPair[] = [];
 
 export default function BrutalistMatchingUI({
-  pairs,
+  pairs = EMPTY_MATCHES,
+  leftOptions: providedLeftOptions,
+  rightOptions: providedRightOptions,
   currentMatches,
   onChange,
   readOnly = false,
-  correctMatches = [],
+  correctMatches = EMPTY_MATCHES,
 }: BrutalistMatchingUIProps) {
   const [selectedItem, setSelectedItem] = useState<{
     side: "left" | "right";
@@ -32,16 +37,20 @@ export default function BrutalistMatchingUI({
   } | null>(null);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const leftRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
-  const rightRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+  const leftRefs = React.useRef<Array<HTMLElement | null>>([]);
+  const rightRefs = React.useRef<Array<HTMLElement | null>>([]);
 
   const [studentLines, setStudentLines] = useState<LineData[]>([]);
   const [correctLines, setCorrectLines] = useState<LineData[]>([]);
 
-  const leftOptions = pairs.map((p) => p.left);
+  const leftOptions = React.useMemo(
+    () => providedLeftOptions ?? pairs.map((pair) => pair.left),
+    [pairs, providedLeftOptions],
+  );
   const rightOptions = React.useMemo(() => {
-    return [...pairs].map((p) => p.right).sort((a, b) => a.localeCompare(b));
-  }, [pairs]);
+    const options = providedRightOptions ?? pairs.map((pair) => pair.right);
+    return [...options].sort((a, b) => a.localeCompare(b));
+  }, [pairs, providedRightOptions]);
 
   /** Tính toán line dựa trên danh sách matches */
   const computeLines = React.useCallback(
@@ -50,8 +59,10 @@ export default function BrutalistMatchingUI({
       const containerRect = containerRef.current.getBoundingClientRect();
       return matches
         .map((match) => {
-          const leftEl = leftRefs.current[match.left];
-          const rightEl = rightRefs.current[match.right];
+          const leftIndex = leftOptions.indexOf(match.left);
+          const rightIndex = rightOptions.indexOf(match.right);
+          const leftEl = leftRefs.current[leftIndex];
+          const rightEl = rightRefs.current[rightIndex];
           if (leftEl && rightEl) {
             const lRect = leftEl.getBoundingClientRect();
             const rRect = rightEl.getBoundingClientRect();
@@ -66,7 +77,7 @@ export default function BrutalistMatchingUI({
         })
         .filter(Boolean) as LineData[];
     },
-    []
+    [leftOptions, rightOptions]
   );
 
   const updateLines = React.useCallback(() => {
@@ -90,7 +101,14 @@ export default function BrutalistMatchingUI({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     updateLines();
     window.addEventListener("resize", updateLines);
-    return () => window.removeEventListener("resize", updateLines);
+    const resizeObserver = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(updateLines);
+    if (containerRef.current) resizeObserver?.observe(containerRef.current);
+    return () => {
+      window.removeEventListener("resize", updateLines);
+      resizeObserver?.disconnect();
+    };
   }, [updateLines]);
 
   React.useEffect(() => {
@@ -155,10 +173,11 @@ export default function BrutalistMatchingUI({
   });
 
   return (
-    <div className="relative w-full overflow-hidden" ref={containerRef}>
+    <div className="relative w-full" ref={containerRef}>
       {/* SVG overlay */}
       <svg
-        className="absolute inset-0 w-full h-full pointer-events-none z-10"
+        aria-hidden="true"
+        className="absolute inset-0 hidden h-full w-full pointer-events-none z-10 md:block"
         style={{ overflow: "visible" }}
       >
         {/* Lines đáp án đúng (khi student sai) — vẽ trước để student line đè lên */}
@@ -172,7 +191,6 @@ export default function BrutalistMatchingUI({
             stroke="black"
             strokeWidth="3"
             strokeDasharray="6 3"
-            opacity="0.35"
             className="transition-all duration-300"
           />
         ))}
@@ -199,46 +217,64 @@ export default function BrutalistMatchingUI({
         })}
       </svg>
 
-      <div className="flex flex-col md:flex-row justify-between gap-8 md:gap-24 relative z-20">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-24 relative z-20">
         {/* Left Column */}
-        <div className="flex-1 space-y-4">
+        <div
+          aria-label="Left options"
+          className="flex min-w-0 flex-col gap-4"
+          role="group"
+        >
+          <p className="border-b-4 border-black pb-2 font-mono text-sm font-black uppercase tracking-widest">
+            Vế trái
+          </p>
           {leftOptions.map((text, i) => {
             const isSelected =
               selectedItem?.side === "left" && selectedItem.text === text;
             const isMatched = currentMatches.some((m) => m.left === text);
 
             let className =
-              "p-4 border-4 border-black font-bold font-mono text-lg transition-colors duration-200";
+              "min-h-14 w-full p-4 text-left border-4 border-black font-bold font-mono text-lg transition-colors duration-200 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-black";
             if (readOnly) {
               className += " cursor-default select-none";
               className += isMatched
-                ? " bg-gray-100 text-black"
+                ? " bg-white text-black border-dashed"
                 : " bg-white text-black";
             } else {
               className += " cursor-pointer";
               if (isSelected) className += " bg-black text-white";
               else if (isMatched)
-                className += " bg-gray-100 text-black border-dashed";
-              else className += " bg-white text-black hover:bg-gray-100";
+                className += " bg-white text-black border-dashed";
+              else className += " bg-white text-black hover:border-dashed";
             }
 
             return (
-              <div
+              <button
+                type="button"
                 key={`left-${i}`}
                 ref={(el) => {
-                  leftRefs.current[text] = el;
+                  leftRefs.current[i] = el;
                 }}
                 onClick={() => handleItemClick("left", text)}
+                disabled={readOnly}
+                aria-pressed={isSelected}
+                aria-label={`Left option: ${text}${isMatched ? ", matched" : ""}`}
                 className={className}
               >
                 {text}
-              </div>
+              </button>
             );
           })}
         </div>
 
         {/* Right Column */}
-        <div className="flex-1 space-y-4">
+        <div
+          aria-label="Right options"
+          className="flex min-w-0 flex-col gap-4"
+          role="group"
+        >
+          <p className="border-b-4 border-black pb-2 font-mono text-sm font-black uppercase tracking-widest">
+            Vế phải
+          </p>
           {rightOptions.map((text, i) => {
             const isSelected =
               selectedItem?.side === "right" && selectedItem.text === text;
@@ -246,28 +282,32 @@ export default function BrutalistMatchingUI({
             const icon = getRightIcon(text);
 
             let className =
-              "relative p-4 border-4 border-black font-bold font-mono text-lg transition-colors duration-200";
+              "relative min-h-14 w-full p-4 text-left border-4 border-black font-bold font-mono text-lg transition-colors duration-200 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-black";
             if (readOnly) {
               className += " cursor-default select-none pr-10";
               if (icon === "correct") className += " bg-black text-white";
               else if (icon === "wrong")
-                className += " bg-gray-100 text-black border-dashed";
+                className += " bg-white text-black border-dashed";
               else className += " bg-white text-black";
             } else {
               className += " cursor-pointer";
               if (isSelected) className += " bg-black text-white";
               else if (isMatched)
-                className += " bg-gray-100 text-black border-dashed";
-              else className += " bg-white text-black hover:bg-gray-100";
+                className += " bg-white text-black border-dashed";
+              else className += " bg-white text-black hover:border-dashed";
             }
 
             return (
-              <div
+              <button
+                type="button"
                 key={`right-${i}`}
                 ref={(el) => {
-                  rightRefs.current[text] = el;
+                  rightRefs.current[i] = el;
                 }}
                 onClick={() => handleItemClick("right", text)}
+                disabled={readOnly}
+                aria-pressed={isSelected}
+                aria-label={`Right option: ${text}${isMatched ? ", matched" : ""}`}
                 className={className}
               >
                 {text}
@@ -282,15 +322,63 @@ export default function BrutalistMatchingUI({
                     ✗
                   </span>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
 
+      <div
+        aria-live="polite"
+        className="mt-6 border-4 border-black p-4 font-mono md:hidden"
+        data-testid="mobile-matching-summary"
+      >
+        <p className="border-b-2 border-black pb-2 text-sm font-black uppercase tracking-widest">
+          Các cặp đã nối
+        </p>
+        {currentMatches.length === 0 ? (
+          <p className="pt-3 text-sm font-bold">Chưa có cặp nào.</p>
+        ) : (
+          <ul className="space-y-2 pt-3">
+            {currentMatches.map((match, index) => (
+              <li
+                className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-2 border-black p-2 text-sm font-bold"
+                key={`${match.left}-${match.right}-${index}`}
+              >
+                <span className="break-words">{match.left}</span>
+                <span aria-hidden="true">→</span>
+                <span className="break-words text-right">{match.right}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {readOnly && correctMatches.length > 0 && (
+          <div
+            className="mt-4 border-t-4 border-black pt-4"
+            data-testid="mobile-correct-matches"
+          >
+            <p className="border-b-2 border-black pb-2 text-sm font-black uppercase tracking-widest">
+              Đáp án đúng
+            </p>
+            <ul className="space-y-2 pt-3">
+              {correctMatches.map((match, index) => (
+                <li
+                  className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-2 border-dashed border-black p-2 text-sm font-bold"
+                  key={`correct-${match.left}-${match.right}-${index}`}
+                >
+                  <span className="break-words">{match.left}</span>
+                  <span aria-hidden="true">→</span>
+                  <span className="break-words text-right">{match.right}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
       {/* Help text — chỉ hiện khi đang làm bài */}
       {!readOnly && (
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-black">
           <p>Bấm chọn một ô ở bên này và bấm tiếp một ô ở bên kia để nối.</p>
           <p>
             Bấm vào ô đang chọn để hủy chọn, hoặc nối lại một ô mới để tự động
@@ -310,7 +398,7 @@ export default function BrutalistMatchingUI({
           </span>
           <span className="flex items-center gap-2">
             <svg width="32" height="8">
-              <line x1="0" y1="4" x2="32" y2="4" stroke="black" strokeWidth="2" strokeDasharray="4 2" opacity="0.35" />
+              <line x1="0" y1="4" x2="32" y2="4" stroke="black" strokeWidth="2" strokeDasharray="4 2" />
             </svg>
             Đáp án đúng (gợi ý)
           </span>

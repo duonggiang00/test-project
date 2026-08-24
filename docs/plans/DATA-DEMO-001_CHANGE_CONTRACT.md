@@ -44,7 +44,7 @@ Approval evidence: The owner approved the complete `demo-standard-v1` implementa
   - `backend/fixtures/demo_standard_v1/`
   - `backend/scripts/seed_demo_data.py`
   - focused unit and PostgreSQL integration tests
-  - `backend/seed_detailed_data.py` deprecation wrapper
+  - The former `backend/seed_detailed_data.py` deprecation wrapper was retired from the active tree on 2026-08-20 and archived under `.legacy-archive/non-runtime-artifacts-20260820/legacy-backend-scripts/`; the supported entry point remains `python -m scripts.seed_demo_data`.
   - `docs/handoffs/DATA-DEMO-001.md`
 - API/event/schema impact:
   - No API or event change.

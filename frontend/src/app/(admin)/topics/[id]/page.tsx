@@ -352,7 +352,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
         <TabsContent value="exams" className="border-4 border-black p-6 bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold uppercase">Topic Exams</h2>
-            <Button onClick={() => router.push(`/exams?topic_id=${topicId}`)} className="border-4 border-black rounded-none bg-white text-black hover:bg-black hover:text-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] font-bold uppercase">
+            <Button onClick={() => router.push(`/exams?topic_id=${topicId}&create=1`)} className="border-4 border-black rounded-none bg-white text-black hover:bg-black hover:text-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] font-bold uppercase">
               <Plus className="w-4 h-4 mr-2 stroke-[3]" /> Create Exam
             </Button>
           </div>

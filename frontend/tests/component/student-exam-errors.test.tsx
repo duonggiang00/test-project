@@ -24,11 +24,6 @@ jest.mock("../../src/hooks/useConfirm", () => ({
   }),
 }));
 
-jest.mock(
-  "../../src/components/features/student/BrutalistMatchingUI",
-  () => () => null,
-);
-
 jest.mock("../../src/components/ui/toast", () => ({
   toast: { add: jest.fn() },
 }));
@@ -46,7 +41,16 @@ describe("student exam submission errors", () => {
         id: "exam-1",
         title: "Contract exam",
         duration_minutes: 30,
-        questions: [],
+        remaining_seconds: 300,
+        questions: [
+          {
+            id: "question-1",
+            content: "Choose one",
+            points: 1,
+            question_type: "SINGLE_CHOICE",
+            options: [{ id: "option-1", content: "Answer" }],
+          },
+        ],
       } as never,
       isLoading: false,
       isError: undefined,
@@ -87,5 +91,194 @@ describe("student exam submission errors", () => {
       }),
     );
     expect(JSON.stringify(mockedToast.mock.calls)).not.toContain("canary");
+  });
+
+  test("uses backend remaining time and confirms before discarding answers", async () => {
+    const params = Promise.resolve({ id: "exam-1" });
+    await act(async () => {
+      render(
+        <Suspense fallback={<div>Loading</div>}>
+          <StudentExamTakingPage params={params} />
+        </Suspense>,
+      );
+      await params;
+    });
+
+    expect(screen.getByText("05:00")).toBeVisible();
+    fireEvent.click(screen.getByTestId("option-question-1-option-1"));
+
+    confirm.mockResolvedValueOnce(false);
+    fireEvent.click(screen.getByRole("button", { name: /THOÁT BÀI THI/i }));
+    await waitFor(() => expect(confirm).toHaveBeenCalledTimes(1));
+    expect(push).not.toHaveBeenCalled();
+
+    confirm.mockResolvedValueOnce(true);
+    fireEvent.click(screen.getByRole("button", { name: /THOÁT BÀI THI/i }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/student/home"));
+  });
+
+  test("answers legacy blanks and safe matching options without answer-key metadata", async () => {
+    mockedUseTakeExam.mockReturnValue({
+      exam: {
+        id: "exam-1",
+        title: "Question type contract exam",
+        duration_minutes: 30,
+        remaining_seconds: 300,
+        questions: [
+          {
+            id: "fill-legacy",
+            content: "Legacy answer: ___.",
+            points: 1,
+            question_type: "FILL_IN_BLANK",
+            metadata_json: { blank_count: 1 },
+            options: [],
+          },
+          {
+            id: "fill-canonical",
+            content: "Canonical [BLANK] and [BLANK].",
+            points: 2,
+            question_type: "FILL_IN_BLANK",
+            metadata_json: { blank_count: 2 },
+            options: [],
+          },
+          {
+            id: "matching-1",
+            content: "Match each concept.",
+            points: 2,
+            question_type: "MATCHING",
+            metadata_json: {
+              left_options: ["One", "Two"],
+              right_options: ["Second", "First"],
+            },
+            options: [],
+          },
+        ],
+      } as never,
+      isLoading: false,
+      isError: undefined,
+    });
+    mockedSubmitExam.mockResolvedValue({} as never);
+
+    const params = Promise.resolve({ id: "exam-1" });
+    await act(async () => {
+      render(
+        <Suspense fallback={<div>Loading</div>}>
+          <StudentExamTakingPage params={params} />
+        </Suspense>,
+      );
+      await params;
+    });
+
+    fireEvent.change(screen.getByLabelText("Ô trống 1 của câu 1"), {
+      target: { value: "legacy value" },
+    });
+    fireEvent.change(screen.getByLabelText("Ô trống 1 của câu 2"), {
+      target: { value: "first value" },
+    });
+    fireEvent.change(screen.getByLabelText("Ô trống 2 của câu 2"), {
+      target: { value: "second value" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Left option: One" }));
+    fireEvent.click(screen.getByRole("button", { name: "Right option: First" }));
+    expect(screen.getByTestId("mobile-matching-summary")).toHaveTextContent(
+      "One→First",
+    );
+
+    fireEvent.click(screen.getByTestId("submit-exam-button"));
+
+    await waitFor(() => expect(mockedSubmitExam).toHaveBeenCalledTimes(1));
+    expect(mockedSubmitExam).toHaveBeenCalledWith(
+      "exam-1",
+      expect.objectContaining({
+        answers: expect.arrayContaining([
+          expect.objectContaining({
+            question_id: "fill-legacy",
+            answer_data: { blanks: { 0: "legacy value" } },
+          }),
+          expect.objectContaining({
+            question_id: "fill-canonical",
+            answer_data: {
+              blanks: { 0: "first value", 1: "second value" },
+            },
+          }),
+          expect.objectContaining({
+            question_id: "matching-1",
+            answer_data: { matches: [{ left: "One", right: "First" }] },
+          }),
+        ]),
+      }),
+    );
+  });
+
+  test("does not auto-submit again while a manual submission is pending", async () => {
+    jest.useFakeTimers();
+    mockedUseTakeExam.mockReturnValue({
+      exam: {
+        id: "exam-1",
+        title: "Last second exam",
+        duration_minutes: 30,
+        remaining_seconds: 1,
+        questions: [],
+      } as never,
+      isLoading: false,
+      isError: undefined,
+    });
+    let resolveSubmission: (() => void) | undefined;
+    mockedSubmitExam.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSubmission = () => resolve({} as never);
+      }),
+    );
+
+    try {
+      const params = Promise.resolve({ id: "exam-1" });
+      let rerender: ReturnType<typeof render>["rerender"] | undefined;
+      await act(async () => {
+        const view = render(
+          <Suspense fallback={<div>Loading</div>}>
+            <StudentExamTakingPage params={params} />
+          </Suspense>,
+        );
+        rerender = view.rerender;
+        await params;
+      });
+
+      fireEvent.click(screen.getByTestId("submit-exam-button"));
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(mockedSubmitExam).toHaveBeenCalledTimes(1);
+
+      mockedUseTakeExam.mockReturnValue({
+        exam: {
+          id: "exam-1",
+          title: "Last second exam",
+          duration_minutes: 30,
+          remaining_seconds: 0,
+          questions: [],
+        } as never,
+        isLoading: false,
+        isError: undefined,
+      });
+      await act(async () => {
+        rerender?.(
+          <Suspense fallback={<div>Loading</div>}>
+            <StudentExamTakingPage params={params} />
+          </Suspense>,
+        );
+      });
+
+      await act(async () => {
+        jest.advanceTimersByTime(1_000);
+      });
+      expect(mockedSubmitExam).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        resolveSubmission?.();
+        await Promise.resolve();
+      });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

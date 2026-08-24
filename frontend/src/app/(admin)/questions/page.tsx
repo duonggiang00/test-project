@@ -11,6 +11,7 @@ import FillInBlankBuilder, { BlankAnswer } from "@/components/features/admin/Fil
 import { toast } from "@/components/ui/toast";
 import { useConfirm } from "@/hooks/useConfirm";
 import { logBackendError } from "@/lib/errors";
+import { toCanonicalDifficulty, toCanonicalQuestionType } from "@/lib/questionEnums";
 
 function QuestionsContent() {
   const searchParams = useSearchParams();
@@ -29,8 +30,8 @@ function QuestionsContent() {
   // Form State
   const [content, setContent] = useState("");
   const [points, setPoints] = useState(1);
-  const [questionType, setQuestionType] = useState<QuestionType>("multiple_choice");
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>("medium");
+  const [questionType, setQuestionType] = useState<QuestionType>("MULTIPLE_CHOICE");
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>("MEDIUM");
   const [options, setOptions] = useState<{ content: string; is_correct: boolean }[]>([
     { content: "", is_correct: true },
     { content: "", is_correct: false },
@@ -46,8 +47,8 @@ function QuestionsContent() {
       setEditingQuestionId(q.id);
       setContent(q.content);
       setPoints(q.points);
-      setQuestionType(q.question_type || "SINGLE_CHOICE");
-      setDifficulty(q.difficulty || "MEDIUM");
+      setQuestionType(toCanonicalQuestionType(q.question_type));
+      setDifficulty(toCanonicalDifficulty(q.difficulty));
       setOptions(q.options.length ? q.options.map((opt) => ({ content: opt.content, is_correct: opt.is_correct })) : [
         { content: "", is_correct: true },
       ]);
@@ -153,8 +154,8 @@ function QuestionsContent() {
       const data = {
         content,
         points,
-        question_type: questionType,
-        difficulty,
+        question_type: toCanonicalQuestionType(questionType),
+        difficulty: toCanonicalDifficulty(difficulty),
         options: finalOptions,
         metadata_json: finalMetadata,
       };
@@ -385,13 +386,14 @@ function QuestionsContent() {
                 <div className="space-y-3">
                   <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black">Difficulty</label>
                   <select
+                    data-testid="global-question-difficulty-select"
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
                     className="w-full border-4 border-black p-3 focus:outline-none focus:ring-4 focus:ring-black/20 font-mono uppercase text-sm bg-white font-bold"
                   >
-                    <option value="easy">EASY</option>
-                    <option value="medium">MEDIUM</option>
-                    <option value="hard">HARD</option>
+                    <option value="EASY">EASY</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HARD">HARD</option>
                   </select>
                 </div>
                 <div className="space-y-3">

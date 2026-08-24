@@ -21,7 +21,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (isMounted) {
       if (!user) {
-        router.replace("/");
+        router.replace("/login");
       } else if (user.role !== "student") {
         router.replace("/dashboard");
       }

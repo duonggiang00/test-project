@@ -25,7 +25,9 @@ export class StudentExamPage {
   async selectExamByTitle(title: string) {
     const examHeading = this.page.getByRole('heading', { name: title });
     const examRow = examHeading.locator('..').locator('..');
-    await examRow.getByRole('button', { name: /^LÀM BÀI$/i }).click();
+    await examRow.getByRole('button', {
+      name: /^(BẮT ĐẦU LÀM BÀI|TIẾP TỤC LÀM BÀI|BẮT ĐẦU|TIẾP TỤC THI)$/i,
+    }).click();
   }
 
   /**
@@ -45,7 +47,7 @@ export class StudentExamPage {
   /**
    * Answers a FILL_IN_BLANK question.
    * 
-   * @param questionId The ID of the question
+   * @param questionId The ID of the question (retained for POM compatibility)
    * @param blankIndex The zero-based index of the blank
    * @param answer The string to fill into the blank
    */
@@ -62,8 +64,13 @@ export class StudentExamPage {
    * @param rightSide The right string to select from the dropdown
    */
   async answerMatchingQuestion(questionId: string, leftSide: string, rightSide: string) {
-    const matchSelect = this.page.getByTestId(`match-${questionId}-${leftSide}`);
-    await matchSelect.selectOption(rightSide);
+    void questionId;
+    await this.page.getByRole('button', {
+      name: new RegExp(`^Left option: ${leftSide}`),
+    }).click();
+    await this.page.getByRole('button', {
+      name: new RegExp(`^Right option: ${rightSide}`),
+    }).click();
   }
 
   /**

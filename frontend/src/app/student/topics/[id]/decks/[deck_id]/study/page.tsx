@@ -20,7 +20,7 @@ export default function StudyDeckPage({ params }: { params: Promise<{ id: string
   if (isError) {
     return (
       <div className="p-8 font-mono">
-        <p className="text-xl font-bold uppercase text-red-600">ĐÃ XẢY RA LỖI KHI TẢI THẺ.</p>
+        <p role="alert" className="text-xl font-bold uppercase border-4 border-dashed border-black p-4">ĐÃ XẢY RA LỖI KHI TẢI THẺ.</p>
         <Button onClick={() => router.push(`/student/topics/${id}`)} className="mt-4 border-4 border-black rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,1)]">QUAY LẠI</Button>
       </div>
     );
@@ -84,8 +84,11 @@ export default function StudyDeckPage({ params }: { params: Promise<{ id: string
       </div>
 
       <div className="w-full aspect-[4/3] md:aspect-[16/9] [perspective:1000px] mb-12">
-        <div
-          className={`relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] cursor-pointer ${
+        <button
+          type="button"
+          aria-label={isFlipped ? "Card answer revealed" : "Reveal card answer"}
+          aria-pressed={isFlipped}
+          className={`relative block w-full h-full transition-transform duration-700 [transform-style:preserve-3d] cursor-pointer focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-black ${
             isFlipped ? "[transform:rotateY(180deg)]" : ""
           }`}
           onClick={() => !isFlipped && setIsFlipped(true)}
@@ -106,7 +109,7 @@ export default function StudyDeckPage({ params }: { params: Promise<{ id: string
             <span className="absolute top-4 left-4 font-black uppercase text-xl border-b-4 border-black pb-1">MẶT SAU</span>
             <p className="text-xl md:text-4xl font-bold break-words">{currentCard.back_content}</p>
           </div>
-        </div>
+        </button>
       </div>
 
       {isFlipped && (

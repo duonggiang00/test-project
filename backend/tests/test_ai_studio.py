@@ -2,8 +2,16 @@ from fastapi.testclient import TestClient
 from app.main import app
 import uuid
 from sqlalchemy import select
+import pytest
+
+from app.core.config import settings
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def enable_rag_for_legacy_regressions(monkeypatch):
+    monkeypatch.setattr(settings, "RAG_ENABLED", True)
 
 def test_process_document(client, db, test_teacher):
     # First create a mock material

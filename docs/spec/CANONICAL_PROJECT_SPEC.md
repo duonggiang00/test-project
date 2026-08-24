@@ -2,7 +2,7 @@
 
 Status: Approved  
 Approved date: 2026-08-05  
-Last decision update: 2026-08-09
+Last decision update: 2026-08-21
 Product stage: MVP with real users  
 Primary development environment: Windows
 
@@ -23,14 +23,17 @@ Current code wins when it differs from a historical PRD. This rule does not conv
 
 ## 2. Product scope
 
-All existing product modules are official scope and remain under active development:
+All existing product modules are official scope and remain under active development,
+subject to the temporary RAG/chat suspension recorded in Section 9.5:
 
 - Authentication and user management.
 - Topic and material management.
 - Exam and question management.
 - Student exam flow.
 - Flashcards and spaced repetition.
-- AI Studio, retrieval-augmented generation, and chatbot functionality.
+- AI Studio content generation for questions, flashcards, and topic briefs.
+- Retrieval-augmented generation and material chat are retained for future work
+  but are temporarily disabled in the active MVP surface.
 - AI-assisted grading.
 - Analytics and reporting.
 - Password reset.
@@ -66,6 +69,10 @@ Authorization must be expressed through named permission and ownership policies 
 - Frontend route guards, redirects, and hidden controls are user-experience measures only.
 - Every sensitive read and every mutation must enforce role, ownership, and tenant boundaries on the backend.
 - Negative authorization tests must cover anonymous, student, owner teacher, non-owner teacher, and admin access.
+- A Student exam-start response must expose only the interaction data required
+  to answer a question. It must not include option correctness, acceptable
+  fill-in answers, or correct matching pairs. Correct answers may be returned
+  only through the authorized result contract after that Student has submitted.
 
 ### 3.4 Canonical redirects
 
@@ -225,7 +232,7 @@ Critical UI flows must support:
 
 There is no formal WCAG conformance target at this stage, but semantic HTML, keyboard operability, visible focus, and accessible names remain expected engineering quality.
 
-## 9. AI and RAG
+## 9. AI content generation
 
 ### 9.1 Provider and model selection
 
@@ -279,6 +286,19 @@ AI regression evaluation must measure:
 - Token usage and cost.
 
 No golden dataset currently exists. An admin is responsible for approving the reference answers. The initial target is a small, high-quality dataset before expanding coverage.
+
+### 9.5 Temporary RAG and material-chat suspension
+
+- RAG and material chat are not part of the active MVP surface until the owner
+  explicitly re-enables them.
+- Backend access is disabled by default through `RAG_ENABLED=false`; frontend
+  chat presentation is disabled by default through
+  `NEXT_PUBLIC_RAG_ENABLED=false`.
+- Upload, content extraction, document chunk persistence, question generation,
+  flashcard generation, topic-brief generation, and human review remain active.
+- The existing retrieval implementation and historical engineering evidence are
+  retained so the capability can be resumed without deleting data or rewriting
+  history.
 
 ## 10. Testing and CI
 

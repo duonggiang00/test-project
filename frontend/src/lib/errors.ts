@@ -54,6 +54,7 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   NO_CHUNKS_FOUND: "No processed document content is available yet.",
 
   // AI and dependencies
+  FEATURE_NOT_AVAILABLE: "This feature is not currently available.",
   AI_PROVIDER_UNAVAILABLE: "The AI service is currently unavailable. Try again later.",
   AI_REQUEST_TIMEOUT: "The AI request timed out. Try again.",
   AI_OUTPUT_INVALID: "The AI returned an invalid response. Try again.",

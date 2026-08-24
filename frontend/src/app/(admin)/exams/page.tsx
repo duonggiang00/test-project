@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Plus, Edit, Trash, FileText } from "lucide-react";
 import { useExams, createExam, updateExam, deleteExam } from "@/hooks/useExams";
 import type { Exam } from "@/types";
@@ -25,10 +26,17 @@ import {
 import { toast } from "@/components/ui/toast";
 import { logBackendError } from "@/lib/errors";
 
-export default function ExamsPage() {
+function ExamsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedTopicId = searchParams.get("topic_id") || "";
+  const createIntentKey = searchParams.get("create") === "1"
+    ? `${requestedTopicId}:create`
+    : null;
+  const [dismissedCreateIntent, setDismissedCreateIntent] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [topicId, setTopicId] = useState("");
+  const [topicId, setTopicId] = useState(requestedTopicId);
 
   const { exams, pagination, isLoading, mutate } = useExams({
     page,
@@ -50,8 +58,26 @@ export default function ExamsPage() {
     description: "",
     duration_minutes: 45,
     is_published: false,
-    topic_id: "",
+    topic_id: requestedTopicId,
   });
+
+  const shouldOpenFromQuery = createIntentKey !== null
+    && dismissedCreateIntent !== createIntentKey;
+
+  const clearCreateIntent = () => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("create");
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `/exams?${nextQuery}` : "/exams");
+  };
+
+  const handleModalOpenChange = (open: boolean) => {
+    setIsModalOpen(open);
+    if (!open && shouldOpenFromQuery) {
+      setDismissedCreateIntent(createIntentKey);
+      clearCreateIntent();
+    }
+  };
 
   const handleOpenCreate = () => {
     setEditingExamId(null);
@@ -60,7 +86,7 @@ export default function ExamsPage() {
       description: "",
       duration_minutes: 45,
       is_published: false,
-      topic_id: "",
+      topic_id: topicId,
     });
     setIsModalOpen(true);
   };
@@ -102,17 +128,20 @@ export default function ExamsPage() {
     try {
       const payload = {
         ...formData,
+        is_published: editingExamId ? formData.is_published : false,
         topic_id: formData.topic_id ? formData.topic_id : null,
       };
 
       if (editingExamId) {
         await updateExam(editingExamId, payload);
+        setIsModalOpen(false);
+        toast.add({ title: "Success", description: "Exam updated.", type: "success" });
+        await mutate();
       } else {
-        await createExam(payload);
+        const createdExam = await createExam(payload);
+        toast.add({ title: "Draft created", description: "Add questions before publishing.", type: "success" });
+        router.push(`/exams/${createdExam.id}`);
       }
-      setIsModalOpen(false);
-      toast.add({ title: "Thành công", description: "Đã lưu bài thi", type: "success" });
-      mutate();
     } catch (error) {
       logBackendError("Exam save failed", error);
       toast.add({ title: "Lỗi", description: "Lỗi khi lưu bài thi", type: "error" });
@@ -255,11 +284,11 @@ export default function ExamsPage() {
         </div>
       </div>
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog open={isModalOpen || shouldOpenFromQuery} onOpenChange={handleModalOpenChange}>
         <DialogContent className="border-4 border-black bg-white rounded-none sm:max-w-[600px] text-black shadow-[16px_16px_0_0_rgba(0,0,0,1)] p-0 max-h-[90vh] overflow-y-auto">
           <DialogHeader className="p-6 border-b-4 border-black bg-white">
             <DialogTitle className="text-2xl font-bold uppercase tracking-widest font-mono text-black">
-              {editingExamId ? "Edit Exam" : "Add Exam"}
+              {editingExamId ? "Edit Exam" : "Create Exam Draft"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="p-6 space-y-6 bg-white">
@@ -314,24 +343,30 @@ export default function ExamsPage() {
               />
             </div>
 
-            <label className="flex items-center gap-3 pt-2 cursor-pointer select-none">
-              <input
-                data-testid="exam-published-checkbox"
-                type="checkbox"
-                checked={formData.is_published}
-                onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                className="w-6 h-6 accent-black cursor-pointer border-4 border-black rounded-none"
-              />
-              <span className="font-bold text-sm uppercase tracking-widest font-mono">
-                Published
-              </span>
-            </label>
+            {editingExamId ? (
+              <label className="flex items-center gap-3 pt-2 cursor-pointer select-none">
+                <input
+                  data-testid="exam-published-checkbox"
+                  type="checkbox"
+                  checked={formData.is_published}
+                  onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+                  className="w-6 h-6 accent-black cursor-pointer border-4 border-black rounded-none"
+                />
+                <span className="font-bold text-sm uppercase tracking-widest font-mono">
+                  Published
+                </span>
+              </label>
+            ) : (
+              <p className="border-4 border-dashed border-black p-4 font-mono text-sm font-bold uppercase">
+                [DRAFT] Add and review questions before publishing this exam.
+              </p>
+            )}
 
             <div className="flex justify-end gap-4 pt-6 border-t-4 border-black mt-6">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => handleModalOpenChange(false)}
                 className="px-8 py-3 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-gray-100 text-black"
               >
                 Cancel
@@ -343,7 +378,7 @@ export default function ExamsPage() {
                 className="px-8 py-3 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-black text-white hover:bg-white hover:text-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] disabled:opacity-50 disabled:hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:hover:translate-x-0 disabled:hover:translate-y-0"
               >
                 {isSubmitting && <Loader2 className="w-5 h-5 mr-3 animate-spin" />}
-                {editingExamId ? "Update" : "Create"}
+                {editingExamId ? "Update" : "Create Draft"}
               </Button>
             </div>
           </form>
@@ -382,5 +417,19 @@ export default function ExamsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function ExamsPage() {
+  return (
+    <Suspense
+      fallback={(
+        <div className="min-h-screen bg-white p-8 text-black font-mono font-bold uppercase">
+          Loading Exam Builder...
+        </div>
+      )}
+    >
+      <ExamsPageContent />
+    </Suspense>
   );
 }

@@ -457,6 +457,9 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
     test_teacher,
     monkeypatch,
 ):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "RAG_ENABLED", True)
     other_teacher = create_teacher(client, db)
     owned_material = StudyMaterial(
         uploader_id=test_teacher["id"],

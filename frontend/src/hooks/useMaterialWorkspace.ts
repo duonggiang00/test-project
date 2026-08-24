@@ -7,8 +7,10 @@ import {
   getGenerationJob,
   publishGenerationJob,
   rejectGenerationJob,
+  updateGenerationJobDraft,
   type AIGenerationJob,
   type PublishGenerationJobPayload,
+  type UpdateGenerationJobDraftPayload,
 } from "@/services/apiService";
 import {
   availableReviewActions,
@@ -88,6 +90,16 @@ export interface GenerationJobReview {
   approve: () => Promise<boolean>;
   reject: () => Promise<boolean>;
   publish: (payload?: PublishGenerationJobPayload) => Promise<boolean>;
+  /**
+   * Saves an edited draft while the job is still `awaiting_review`. Resolves
+   * to the updated job on success, `null` if there was nothing to save yet
+   * (no job loaded, or a save already in flight), and rethrows on a refused
+   * or failed request so the caller can show its own error message.
+   */
+  updateDraft: (
+    payload: UpdateGenerationJobDraftPayload,
+  ) => Promise<AIGenerationJob | null>;
+  isSavingDraft: boolean;
   reload: () => Promise<unknown>;
 }
 
@@ -163,6 +175,35 @@ export function useGenerationJobReview(
     [run],
   );
 
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+
+  const updateDraft = useCallback(
+    async (
+      payload: UpdateGenerationJobDraftPayload,
+    ): Promise<AIGenerationJob | null> => {
+      if (!jobId || !data || isSavingDraft) return null;
+      setIsSavingDraft(true);
+      try {
+        const updated = await updateGenerationJobDraft(
+          jobId,
+          payload,
+          data.version,
+        );
+        await mutate(updated, { revalidate: false });
+        return updated;
+      } catch (caught) {
+        // A refused/failed edit may still mean the version moved (e.g. a
+        // stale panel), so refresh from the server rather than leaving the
+        // form pointed at an edit that never landed.
+        await mutate();
+        throw caught;
+      } finally {
+        setIsSavingDraft(false);
+      }
+    },
+    [data, isSavingDraft, jobId, mutate],
+  );
+
   return {
     job: data,
     isLoading,
@@ -172,6 +213,8 @@ export function useGenerationJobReview(
     approve,
     reject,
     publish,
+    updateDraft,
+    isSavingDraft,
     reload: mutate,
   };
 }

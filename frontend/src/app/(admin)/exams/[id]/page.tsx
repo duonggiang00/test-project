@@ -16,6 +16,7 @@ import { notFound } from "next/navigation";
 import { toast } from "@/components/ui/toast";
 import { useConfirm } from "@/hooks/useConfirm";
 import { logBackendError } from "@/lib/errors";
+import { toCanonicalDifficulty, toCanonicalQuestionType } from "@/lib/questionEnums";
 
 export default function ExamDetailPage({
   params,
@@ -30,11 +31,25 @@ export default function ExamDetailPage({
 
   // Global questions for "Ngân Hàng Câu Hỏi"
   const [globalPage, setGlobalPage] = useState(1);
-  const [globalTopicId, setGlobalTopicId] = useState("");
+  const [globalTopicId, setGlobalTopicId] = useState<string | null>(null);
   const { topics: globalTopics } = useTopics({ size: 100 });
-  const { questions: globalQuestions, pagination: globalPagination, isLoading: isLoadingGlobal } = useQuestions({ page: globalPage, size: 10, topic_id: globalTopicId || undefined });
+  const effectiveGlobalTopicId = globalTopicId ?? exam?.topic_id ?? "";
+  const {
+    questions: globalQuestions,
+    pagination: globalPagination,
+    isLoading: isLoadingGlobal,
+    mutate: mutateGlobalQuestions,
+  } = useQuestions({
+    page: globalPage,
+    size: 10,
+    topic_id: effectiveGlobalTopicId || undefined,
+  });
   const [selectedGlobalQuestionIds, setSelectedGlobalQuestionIds] = useState<string[]>([]);
   const [isAddingBulk, setIsAddingBulk] = useState(false);
+  const existingQuestionIds = new Set(questions.map((question) => question.id));
+  const availableGlobalQuestions = globalQuestions.filter(
+    (question) => !existingQuestionIds.has(question.id),
+  );
 
   const toggleGlobalQuestionSelect = (id: string) => {
     setSelectedGlobalQuestionIds(prev => 
@@ -49,7 +64,7 @@ export default function ExamDetailPage({
       await bulkAddQuestionsToExam(exam!.id, selectedGlobalQuestionIds);
       toast.add({ title: "Thành công", description: `Đã thêm ${selectedGlobalQuestionIds.length} câu hỏi vào đề thi.`, type: "success" });
       setSelectedGlobalQuestionIds([]);
-      mutate();
+      await Promise.all([mutate(), mutateGlobalQuestions()]);
     } catch (error) {
       logBackendError("Exam question bulk add failed", error);
       toast.add({ title: "Lỗi", description: "Không thể thêm câu hỏi", type: "error" });
@@ -63,8 +78,8 @@ export default function ExamDetailPage({
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [points, setPoints] = useState(1);
-  const [questionType, setQuestionType] = useState<QuestionType>("multiple_choice");
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>("medium");
+  const [questionType, setQuestionType] = useState<QuestionType>("MULTIPLE_CHOICE");
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>("MEDIUM");
   const [options, setOptions] = useState<{ content: string; is_correct: boolean }[]>([
     { content: "", is_correct: true },
     { content: "", is_correct: false },
@@ -92,8 +107,8 @@ export default function ExamDetailPage({
       setEditingQuestionId(q.id);
       setContent(q.content);
       setPoints(q.points);
-      setQuestionType(q.question_type || "SINGLE_CHOICE");
-      setDifficulty(q.difficulty || "MEDIUM");
+      setQuestionType(toCanonicalQuestionType(q.question_type));
+      setDifficulty(toCanonicalDifficulty(q.difficulty));
       setOptions(q.options.length ? q.options.map((opt) => ({ content: opt.content, is_correct: opt.is_correct })) : [
         { content: "", is_correct: true },
       ]);
@@ -131,7 +146,9 @@ export default function ExamDetailPage({
   const handleOptionChange = (index: number, field: "content" | "is_correct", value: string | boolean) => {
     const newOptions = [...options];
     if (field === "is_correct") {
-      const isSingleChoice = questionType === "single_choice" || questionType === "true_false";
+      const isSingleChoice = questionType === "SINGLE_CHOICE"
+        || questionType === "single_choice"
+        || questionType === "true_false";
       if (isSingleChoice && value === true) {
         newOptions.forEach((opt, i) => {
           opt.is_correct = i === index;
@@ -199,8 +216,8 @@ export default function ExamDetailPage({
       const data = {
         content,
         points,
-        question_type: questionType,
-        difficulty,
+        question_type: toCanonicalQuestionType(questionType),
+        difficulty: toCanonicalDifficulty(difficulty),
         options: finalOptions,
         metadata_json: finalMetadata,
         exam_id: exam.id,
@@ -390,9 +407,10 @@ export default function ExamDetailPage({
             <TabsContent value="question_bank" className="m-0 outline-none">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div className="flex gap-4 items-center bg-white p-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex-1">
-                  <label className="font-mono text-sm font-bold uppercase text-black whitespace-nowrap">Lọc theo Chủ đề:</label>
+                  <label htmlFor="exam-question-bank-topic-filter" className="font-mono text-sm font-bold uppercase text-black whitespace-nowrap">Lọc theo Chủ đề:</label>
                   <select
-                    value={globalTopicId}
+                    id="exam-question-bank-topic-filter"
+                    value={effectiveGlobalTopicId}
                     onChange={(e) => { setGlobalTopicId(e.target.value); setGlobalPage(1); }}
                     className="border-4 border-black p-2 font-mono uppercase text-sm font-bold bg-white focus:outline-none w-full"
                   >
@@ -413,17 +431,19 @@ export default function ExamDetailPage({
 
               {isLoadingGlobal ? (
                 <div className="flex justify-center items-center py-20"><Loader2 className="animate-spin text-black w-8 h-8" /></div>
-              ) : globalQuestions.length === 0 ? (
+              ) : availableGlobalQuestions.length === 0 ? (
                 <div className="p-16 border-4 border-dashed border-black text-center bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
-                  <p className="font-bold uppercase font-mono tracking-widest text-lg text-black mb-4">Không tìm thấy câu hỏi nào.</p>
+                  <p className="font-bold uppercase font-mono tracking-widest text-lg text-black mb-4">No available questions found.</p>
+                  <p className="font-mono text-sm font-bold">Create a new question in this exam or choose another Topic filter.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {globalQuestions.map((q) => (
-                    <div key={q.id} className="border-4 border-black p-6 bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex gap-4 items-start">
+                <div className="space-y-6" data-testid="question-bank-list">
+                  {availableGlobalQuestions.map((q) => (
+                    <div key={q.id} data-testid={`question-bank-item-${q.id}`} className="border-4 border-black p-6 bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex gap-4 items-start">
                       <div className="pt-1">
                         <input 
                           type="checkbox"
+                          aria-label={`Select question: ${q.content}`}
                           checked={selectedGlobalQuestionIds.includes(q.id)}
                           onChange={() => toggleGlobalQuestionSelect(q.id)}
                           className="w-6 h-6 border-4 border-black accent-black cursor-pointer"
@@ -523,13 +543,14 @@ export default function ExamDetailPage({
                 <div className="space-y-3">
                   <label className="block text-sm font-bold uppercase tracking-widest font-mono">Độ khó</label>
                   <select
+                    data-testid="exam-question-difficulty-select"
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
                     className="w-full border-4 border-black p-4 focus:outline-none focus:ring-4 focus:ring-black/20 uppercase font-mono text-sm font-bold bg-white"
                   >
-                    <option value="easy">DỄ</option>
-                    <option value="medium">TRUNG BÌNH</option>
-                    <option value="hard">KHÓ</option>
+                    <option value="EASY">DỄ</option>
+                    <option value="MEDIUM">TRUNG BÌNH</option>
+                    <option value="HARD">KHÓ</option>
                   </select>
                 </div>
                 <div className="space-y-3">
