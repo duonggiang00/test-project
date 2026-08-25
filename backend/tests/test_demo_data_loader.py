@@ -9,13 +9,14 @@ from alembic.script import ScriptDirectory
 from sqlalchemy import delete, select, text
 
 from app.core.file_storage import LocalFileStorage
-from app.core.security import create_access_token, get_password_hash
+from app.core.security import get_password_hash
 from app.demo_data.fixture import load_demo_fixture, stable_uuid
 from app.demo_data.loader import DemoDataError, DemoDataManager
 from app.models.flashcard import FlashcardProgress
 from app.models.submission import Submission
 from app.models.topic import Topic
 from app.models.user import User
+from app.services.auth_session_service import AuthSessionService
 
 
 def _current_repository_head() -> str:
@@ -64,8 +65,10 @@ def demo_accounts(db):
     return accounts
 
 
-def _headers(user: User) -> dict[str, str]:
-    return {"Authorization": f"Bearer {create_access_token(user.id)}"}
+def _headers(db, user: User) -> dict[str, str]:
+    tokens = AuthSessionService.issue(db, user, remember_me=False)
+    db.commit()
+    return {"Authorization": f"Bearer {tokens['access_token']}"}
 
 
 @pytest.mark.integration
@@ -127,14 +130,14 @@ def test_demo_dataset_lifecycle_and_api_contracts(client, db, demo_accounts) -> 
         str(stable_uuid(fixture.manifest.namespace, "exam", item.key))
         for item in fixture.exams
     }
-    teacher_topics = client.get("/topics", headers=_headers(teacher))
-    admin_topics = client.get("/topics", headers=_headers(admin))
+    teacher_topics = client.get("/topics", headers=_headers(db, teacher))
+    admin_topics = client.get("/topics", headers=_headers(db, admin))
     assert teacher_topics.status_code == 200
     assert admin_topics.status_code == 200
     assert dataset_topic_ids <= {item["id"] for item in teacher_topics.json()["items"]}
     assert dataset_topic_ids <= {item["id"] for item in admin_topics.json()["items"]}
 
-    student_exams = client.get("/student/exams", headers=_headers(student))
+    student_exams = client.get("/student/exams", headers=_headers(db, student))
     assert student_exams.status_code == 200
     visible_exam_ids = {item["id"] for item in student_exams.json()["items"]}
     published_exam_ids = {
@@ -145,8 +148,8 @@ def test_demo_dataset_lifecycle_and_api_contracts(client, db, demo_accounts) -> 
     assert published_exam_ids <= visible_exam_ids
     assert visible_exam_ids.isdisjoint(draft_exam_ids)
 
-    overview = client.get("/analytics/overview", headers=_headers(teacher))
-    score_stats = client.get("/analytics/score-stats", headers=_headers(teacher))
+    overview = client.get("/analytics/overview", headers=_headers(db, teacher))
+    score_stats = client.get("/analytics/score-stats", headers=_headers(db, teacher))
     assert overview.status_code == score_stats.status_code == 200
     assert overview.json()["total_exams"] == 6
     assert overview.json()["total_submissions"] == 15
@@ -154,7 +157,10 @@ def test_demo_dataset_lifecycle_and_api_contracts(client, db, demo_accounts) -> 
     assert sum(count > 0 for count in distribution.values()) >= 4
 
     math_exam_id = stable_uuid(fixture.manifest.namespace, "exam", "math-published")
-    started = client.get(f"/student/exams/{math_exam_id}/start", headers=_headers(api_student))
+    started = client.get(
+        f"/student/exams/{math_exam_id}/start",
+        headers=_headers(db, api_student),
+    )
     assert started.status_code == 200
     assert all(
         "is_correct" not in option
@@ -165,13 +171,17 @@ def test_demo_dataset_lifecycle_and_api_contracts(client, db, demo_accounts) -> 
     material_id = stable_uuid(
         fixture.manifest.namespace, "material", "math-limits-text"
     )
-    owner_download = client.get(f"/materials/{material_id}/download", headers=_headers(teacher))
-    admin_download = client.get(f"/materials/{material_id}/download", headers=_headers(admin))
+    owner_download = client.get(
+        f"/materials/{material_id}/download", headers=_headers(db, teacher)
+    )
+    admin_download = client.get(
+        f"/materials/{material_id}/download", headers=_headers(db, admin)
+    )
     denied_download = client.get(
-        f"/materials/{material_id}/download", headers=_headers(other_teacher)
+        f"/materials/{material_id}/download", headers=_headers(db, other_teacher)
     )
     missing_download = client.get(
-        f"/materials/{uuid4()}/download", headers=_headers(other_teacher)
+        f"/materials/{uuid4()}/download", headers=_headers(db, other_teacher)
     )
     assert owner_download.status_code == 200
     assert admin_download.status_code == 200
@@ -180,7 +190,7 @@ def test_demo_dataset_lifecycle_and_api_contracts(client, db, demo_accounts) -> 
 
     lesson_topic_id = stable_uuid(fixture.manifest.namespace, "topic", "math-limits")
     decks = client.get(
-        f"/flashcards/topics/{lesson_topic_id}/decks", headers=_headers(student)
+        f"/flashcards/topics/{lesson_topic_id}/decks", headers=_headers(db, student)
     )
     assert decks.status_code == 200
     assert len(decks.json()) == 1
@@ -188,7 +198,7 @@ def test_demo_dataset_lifecycle_and_api_contracts(client, db, demo_accounts) -> 
     review = client.post(
         f"/flashcards/student/cards/{card_id}/review",
         json={"rating": "EASY"},
-        headers=_headers(api_student),
+        headers=_headers(db, api_student),
     )
     assert review.status_code == 200
     assert review.json()["box_level"] == 2
@@ -214,6 +224,45 @@ def test_demo_dataset_lifecycle_and_api_contracts(client, db, demo_accounts) -> 
     assert reset.counts["topics"] == 9
     assert db.get(Topic, unrelated_topic.id) is not None
     assert manager.plan().items[0].create == 9
+
+
+@pytest.mark.integration
+def test_canonical_account_plan_query_budget_does_not_scale_with_input(
+    db,
+    tmp_path: Path,
+    monkeypatch,
+    assert_num_queries,
+) -> None:
+    fixture = load_demo_fixture()
+    manager = DemoDataManager(
+        fixture,
+        db,
+        LocalFileStorage(tmp_path / "uploads", namespace=fixture.manifest.dataset_id),
+        database_url="postgresql://test:test@localhost/playstudy_test",
+        environment="test",
+    )
+    small_specs = manager._canonical_account_specs()
+    large_specs = small_specs + tuple(
+        (
+            f"student-{index}",
+            f"query-budget-{index}@example.invalid",
+            f"Query Budget Student {index}",
+        )
+        for index in range(30)
+    )
+
+    monkeypatch.setattr(manager, "_canonical_account_specs", lambda: small_specs)
+    db.expire_all()
+    with assert_num_queries(1) as small_result:
+        manager._canonical_account_plan()
+
+    monkeypatch.setattr(manager, "_canonical_account_specs", lambda: large_specs)
+    db.expire_all()
+    with assert_num_queries(1) as large_result:
+        manager._canonical_account_plan()
+
+    assert small_result.count == 1
+    assert large_result.count == small_result.count
 
 
 class FailingStorage(LocalFileStorage):

@@ -322,16 +322,9 @@ def test_http_protocol_headers_are_preserved_but_other_headers_are_dropped():
 
 
 def test_production_login_invalid_credentials_keep_bearer_challenge():
-    class MissingUserQuery:
-        def filter(self, *_args):
-            return self
-
-        def first(self):
-            return None
-
     class MissingUserSession:
-        def query(self, *_args):
-            return MissingUserQuery()
+        def scalar(self, _statement):
+            return None
 
     def override_get_db():
         yield MissingUserSession()

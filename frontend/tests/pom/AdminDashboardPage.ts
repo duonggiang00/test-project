@@ -13,6 +13,7 @@ export class AdminDashboardPage {
 
   async gotoExams() {
     await this.page.goto('/exams');
+    await expect(this.page).toHaveURL(/\/exams$/);
   }
 
   async createTopic(

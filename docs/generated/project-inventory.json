@@ -2,23 +2,23 @@
   "schema_version": 1,
   "generator_version": "1.0.0",
   "provenance": {
-    "source_commit": "b659c6e563f5e233a8c3e34d9ae611cb0a13a947",
-    "source_commit_timestamp": "2026-08-24T16:44:08+07:00",
-    "source_tree_sha256": "7d9d8e5d8d87df62e83c9998d3f7d4ac72743b754d5e191c938337e16b7a4bd9",
-    "relevant_file_count": 383,
+    "source_commit": "29d696c5263b8a1c1a282a1453a25cdf162fd881",
+    "source_commit_timestamp": "2026-08-24T16:56:02+07:00",
+    "source_tree_sha256": "4da2018bef811496de46dc1f43736e0202df16176c8f55953e0c6e598c0c0817",
+    "relevant_file_count": 401,
     "alembic_heads": [
-      "b6d4f0a17c53"
+      "a74c9d2e6f10"
     ]
   },
   "summary": {
-    "sqlalchemy_models": 18,
-    "pydantic_schemas": 77,
-    "fastapi_routes": 72,
+    "sqlalchemy_models": 19,
+    "pydantic_schemas": 79,
+    "fastapi_routes": 75,
     "next_pages": 25,
-    "frontend_hooks": 15,
+    "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 310,
-    "frontend_test_calls": 118
+    "backend_test_functions": 322,
+    "frontend_test_calls": 132
   },
   "backend": {
     "models": [
@@ -1065,6 +1065,98 @@
         "table": "questions"
       },
       {
+        "class": "RefreshSession",
+        "columns": [
+          {
+            "foreign_keys": [],
+            "name": "id",
+            "nullable": false,
+            "primary_key": true,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "family_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "users.id"
+            ],
+            "name": "user_id",
+            "nullable": false,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "token_hash",
+            "nullable": false,
+            "primary_key": false,
+            "type": "VARCHAR(64)",
+            "unique": true
+          },
+          {
+            "foreign_keys": [],
+            "name": "remember_me",
+            "nullable": false,
+            "primary_key": false,
+            "type": "BOOLEAN",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "created_at",
+            "nullable": false,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "expires_at",
+            "nullable": false,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "rotated_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "revoked_at",
+            "nullable": true,
+            "primary_key": false,
+            "type": "DATETIME",
+            "unique": false
+          },
+          {
+            "foreign_keys": [
+              "refresh_sessions.id"
+            ],
+            "name": "replaced_by_id",
+            "nullable": true,
+            "primary_key": false,
+            "type": "UUID",
+            "unique": false
+          }
+        ],
+        "module": "app.models.refresh_session",
+        "relationships": [],
+        "table": "refresh_sessions"
+      },
+      {
         "class": "StudyMaterial",
         "columns": [
           {
@@ -1640,6 +1732,14 @@
             "nullable": true,
             "primary_key": false,
             "type": "VARCHAR(20)",
+            "unique": false
+          },
+          {
+            "foreign_keys": [],
+            "name": "is_active",
+            "nullable": false,
+            "primary_key": false,
+            "type": "BOOLEAN",
             "unique": false
           },
           {
@@ -3556,12 +3656,49 @@
         "module": "app.schemas.student"
       },
       {
+        "class": "LogoutResponse",
+        "fields": [
+          {
+            "name": "message",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.token"
+      },
+      {
+        "class": "RefreshTokenRequest",
+        "fields": [
+          {
+            "name": "refresh_token",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.token"
+      },
+      {
         "class": "Token",
         "fields": [
           {
             "name": "access_token",
             "required": true,
             "type": "str"
+          },
+          {
+            "name": "refresh_token",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "name": "access_expires_in",
+            "required": true,
+            "type": "int"
+          },
+          {
+            "name": "refresh_expires_in",
+            "required": true,
+            "type": "int"
           },
           {
             "name": "token_type",
@@ -3581,6 +3718,16 @@
         "fields": [
           {
             "name": "user_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "session_family_id",
+            "required": false,
+            "type": "Optional"
+          },
+          {
+            "name": "token_type",
             "required": false,
             "type": "Optional"
           }
@@ -3899,6 +4046,11 @@
             "name": "id",
             "required": true,
             "type": "UUID"
+          },
+          {
+            "name": "is_active",
+            "required": true,
+            "type": "bool"
           },
           {
             "name": "created_at",
@@ -4234,6 +4386,33 @@
       },
       {
         "dependencies": [
+          "app.db.session.get_db"
+        ],
+        "endpoint": "app.api.endpoints.auth.logout",
+        "methods": [
+          "POST"
+        ],
+        "name": "logout",
+        "path": "/auth/logout",
+        "response_model": "LogoutResponse"
+      },
+      {
+        "dependencies": [
+          "app.api.deps.get_current_active_user",
+          "app.api.deps.get_current_user",
+          "app.db.session.get_db",
+          "fastapi.security.oauth2.OAuth2PasswordBearer"
+        ],
+        "endpoint": "app.api.endpoints.auth.logout_all",
+        "methods": [
+          "POST"
+        ],
+        "name": "logout_all",
+        "path": "/auth/logout-all",
+        "response_model": "LogoutResponse"
+      },
+      {
+        "dependencies": [
           "app.api.deps.get_current_active_user",
           "app.api.deps.get_current_user",
           "app.db.session.get_db",
@@ -4291,6 +4470,18 @@
         "name": "update_password",
         "path": "/auth/me/password",
         "response_model": "None"
+      },
+      {
+        "dependencies": [
+          "app.db.session.get_db"
+        ],
+        "endpoint": "app.api.endpoints.auth.refresh",
+        "methods": [
+          "POST"
+        ],
+        "name": "refresh",
+        "path": "/auth/refresh",
+        "response_model": "Token"
       },
       {
         "dependencies": [
@@ -5191,6 +5382,12 @@
         ]
       },
       {
+        "file": "frontend/src/hooks/useCurrentUser.ts",
+        "exports": [
+          "useCurrentUser"
+        ]
+      },
+      {
         "file": "frontend/src/hooks/useExamHistory.ts",
         "exports": [
           "useExamHistory",
@@ -5350,11 +5547,23 @@
     ],
     "bff_routes": [
       {
+        "file": "frontend/src/app/api/auth/csrf/route.ts",
+        "methods": []
+      },
+      {
         "file": "frontend/src/app/api/auth/login/route.ts",
         "methods": []
       },
       {
+        "file": "frontend/src/app/api/auth/logout-all/route.ts",
+        "methods": []
+      },
+      {
         "file": "frontend/src/app/api/auth/logout/route.ts",
+        "methods": []
+      },
+      {
+        "file": "frontend/src/app/api/auth/refresh/route.ts",
         "methods": []
       },
       {
@@ -5420,12 +5629,12 @@
             "name": "test_production_login_invalid_credentials_keep_bearer_challenge"
           },
           {
-            "line": 361,
+            "line": 354,
             "markers": [],
             "name": "test_invalid_request_ids_are_replaced_and_requests_do_not_share_ids"
           },
           {
-            "line": 376,
+            "line": 369,
             "markers": [],
             "name": "test_rate_limit_handler_uses_the_canonical_envelope"
           }
@@ -5748,6 +5957,54 @@
         "tier": "integration"
       },
       {
+        "path": "tests/test_auth_sessions.py",
+        "tests": [
+          {
+            "line": 43,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_login_refresh_rotation_and_replay_revocation"
+          },
+          {
+            "line": 101,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_logout_and_password_change_revoke_sessions"
+          },
+          {
+            "line": 134,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_concurrent_refresh_rotates_once_without_revoking_family"
+          },
+          {
+            "line": 163,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_logout_all_revokes_each_device_family"
+          },
+          {
+            "line": 183,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_inactive_user_cannot_login_or_refresh"
+          },
+          {
+            "line": 207,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_concurrent_duplicate_registration_returns_one_conflict"
+          }
+        ],
+        "tier": "integration"
+      },
+      {
         "path": "tests/test_authorization_concurrency.py",
         "tests": [
           {
@@ -5817,7 +6074,7 @@
             "name": "test_teacher_and_admin_cannot_use_student_self_service_routes"
           },
           {
-            "line": 454,
+            "line": 473,
             "markers": [],
             "name": "test_ai_chat_context_is_limited_to_the_authorized_material"
           }
@@ -5910,14 +6167,21 @@
         "path": "tests/test_demo_data_loader.py",
         "tests": [
           {
-            "line": 72,
+            "line": 75,
             "markers": [
               "integration"
             ],
             "name": "test_demo_dataset_lifecycle_and_api_contracts"
           },
           {
-            "line": 232,
+            "line": 230,
+            "markers": [
+              "integration"
+            ],
+            "name": "test_canonical_account_plan_query_budget_does_not_scale_with_input"
+          },
+          {
+            "line": 281,
             "markers": [
               "integration"
             ],
@@ -6779,6 +7043,43 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_auth_service.py",
+        "tests": [
+          {
+            "line": 26,
+            "markers": [],
+            "name": "test_forgot_password_delivers_secret_only_through_boundary"
+          },
+          {
+            "line": 44,
+            "markers": [],
+            "name": "test_forgot_password_does_not_reveal_missing_account"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_auth_session_security.py",
+        "tests": [
+          {
+            "line": 23,
+            "markers": [],
+            "name": "test_access_token_uses_short_ttl_and_session_claims"
+          },
+          {
+            "line": 39,
+            "markers": [],
+            "name": "test_refresh_secret_is_hashed_and_uses_normal_ttl"
+          },
+          {
+            "line": 51,
+            "markers": [],
+            "name": "test_remembered_refresh_session_uses_thirty_day_ttl"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_authorization_policy.py",
         "tests": [
           {
@@ -7495,12 +7796,22 @@
       {
         "path": "frontend/src/app/api/auth/login/route.test.ts",
         "tier": "unit",
-        "test_count": 3
+        "test_count": 5
+      },
+      {
+        "path": "frontend/src/app/api/auth/logout-all/route.test.ts",
+        "tier": "unit",
+        "test_count": 1
+      },
+      {
+        "path": "frontend/src/app/api/auth/logout/route.test.ts",
+        "tier": "unit",
+        "test_count": 2
       },
       {
         "path": "frontend/src/app/api/proxy/[...path]/route.test.ts",
         "tier": "unit",
-        "test_count": 4
+        "test_count": 6
       },
       {
         "path": "frontend/src/hooks/useExams.cache.test.tsx",
@@ -7523,9 +7834,14 @@
         "test_count": 6
       },
       {
+        "path": "frontend/src/lib/server-auth.test.ts",
+        "tier": "unit",
+        "test_count": 5
+      },
+      {
         "path": "frontend/src/lib/store.hydration.test.ts",
         "tier": "unit",
-        "test_count": 1
+        "test_count": 3
       },
       {
         "path": "frontend/src/lib/store.test.ts",

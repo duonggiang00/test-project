@@ -14,6 +14,8 @@ def main() -> int:
         extra_pytest_args = extra_pytest_args[1:]
     pytest_args = extra_pytest_args or [
         "-q",
+        "-p",
+        "no:cacheprovider",
         "-m",
         "integration",
         "--junitxml=reports/integration.xml",

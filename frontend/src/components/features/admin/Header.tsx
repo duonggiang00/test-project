@@ -9,9 +9,8 @@ export function Header() {
   const { user, logout } = useUserStore();
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
+  const handleLogout = async () => {
+    if (await logout()) router.push("/login");
   };
 
   return (

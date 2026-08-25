@@ -1,4 +1,6 @@
 from fastapi import Depends, status
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from app.core.exceptions import AppException
 from fastapi.security import OAuth2PasswordBearer
@@ -8,6 +10,7 @@ from pydantic import ValidationError
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.refresh_session import RefreshSession
 from app.core.config import settings
 from app.core.security import ALGORITHM
 from app.schemas.token import TokenData
@@ -27,8 +30,18 @@ def get_current_user(
             token, settings.SECRET_KEY, algorithms=[ALGORITHM]
         )
         # We stored the user id in the 'sub' field of the payload
-        token_data = TokenData(user_id=payload.get("sub"))
+        token_data = TokenData(
+            user_id=payload.get("sub"),
+            session_family_id=payload.get("sid"),
+            token_type=payload.get("type"),
+        )
     except (JWTError, ValidationError):
+        raise AppException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            error_code="UNAUTHORIZED",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if token_data.token_type != "access" or token_data.session_family_id is None:
         raise AppException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             error_code="UNAUTHORIZED",
@@ -36,11 +49,24 @@ def get_current_user(
         )
     user = db.scalar(
         select(User)
-        .where(User.id == token_data.user_id)
-        .with_for_update(read=True)
+        .join(RefreshSession, RefreshSession.user_id == User.id)
+        .where(
+            User.id == token_data.user_id,
+            User.is_active.is_(True),
+            RefreshSession.family_id == token_data.session_family_id,
+            RefreshSession.rotated_at.is_(None),
+            RefreshSession.revoked_at.is_(None),
+            RefreshSession.expires_at > datetime.now(timezone.utc),
+        )
+        .with_for_update(of=User, read=True)
+        .limit(1)
     )
     if not user:
-        raise AppException(status_code=404, error_code="USER_NOT_FOUND")
+        raise AppException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            error_code="UNAUTHORIZED",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 
 def get_current_active_user(

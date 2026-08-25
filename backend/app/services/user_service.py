@@ -17,6 +17,7 @@ from app.models.submission import Submission
 from app.models.topic import Topic
 from app.core.permissions import Permission, require_permission
 from app.services.authorization_service import AuthorizationService
+from app.services.auth_session_service import AuthSessionService
 
 class UserService:
     @staticmethod
@@ -87,6 +88,13 @@ class UserService:
                 error_code="USER_DELETE_BLOCKED_BY_RETAINED_DATA",
             )
 
+        user.is_active = False
+        AuthSessionService.revoke_all_for_user(
+            db,
+            user,
+            reason="user_disabled",
+            actor=actor,
+        )
         soft_delete(user, actor.id)
         AuthorizationService.commit_with_audit(
             db,
@@ -118,6 +126,7 @@ class UserService:
         deleted_at_before = user.deleted_at
         user.deleted_at = None
         user.deleted_by_id = None
+        user.is_active = True
 
         # Users have no owner concept; passing owner_id=None means
         # evaluate_owned_resource only allows an admin actor here.
@@ -181,7 +190,16 @@ class UserService:
                 error_code="INCORRECT_OLD_PASSWORD",
             )
         current_user.password_hash = get_password_hash(password_data.new_password)
-        db.commit()
+        try:
+            AuthSessionService.revoke_all_for_user(
+                db,
+                current_user,
+                reason="password_change",
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         return {"message": "Password updated successfully"}
 
     @staticmethod

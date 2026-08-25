@@ -58,6 +58,7 @@ EXPECTED_HEAD_TABLES = {
     "options",
     "purge_jobs",
     "questions",
+    "refresh_sessions",
     "study_materials",
     "submission_answers",
     "submissions",

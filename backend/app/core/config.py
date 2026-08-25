@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     BACKEND_CORS_ORIGINS: str = "http://localhost:3000"
     OPENROUTER_API_KEY: str = ""
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REFRESH_TOKEN_REMEMBER_DAYS: int = 30
+    REFRESH_TOKEN_RACE_SECONDS: int = 5
 
     # AI provider/model policy (AI-001). `AI_DEFAULT_MODEL` is the fallback
     # for every use case; each `AI_MODEL_*` field overrides a single use

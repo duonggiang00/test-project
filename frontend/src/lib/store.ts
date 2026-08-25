@@ -3,32 +3,38 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { logBackendError } from './errors';
 
 interface UserState {
-  user: { id: string; email: string; role: string; full_name: string } | null;
+  user: { id: string; email: string; role: string; full_name: string | null } | null;
   setUser: (user: UserState['user']) => void;
-  logout: () => Promise<void>;
+  clearUser: () => void;
+  logout: () => Promise<boolean>;
 }
 
-export const useUserStore = create<UserState>()(
-  persist(
-    (set) => ({
-      user: null,
-      setUser: (user) => set({ user }),
-      logout: async () => {
-        set({ user: null });
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-          await fetch('/api/auth/logout', { method: 'POST' }).catch((error) => {
-            logBackendError('Logout failed', error);
-          });
-        }
-      },
-    }),
-    {
-      name: 'user-storage',
-      storage: createJSONStorage(() => localStorage),
+export const useUserStore = create<UserState>((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+  clearUser: () => set({ user: null }),
+  logout: async () => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const { csrfHeaders } = await import('./csrf');
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: await csrfHeaders(),
+      });
+      if (!response.ok) {
+        logBackendError('Logout failed', await response.json().catch(() => null));
+        return false;
+      }
+      const { mutate } = await import('swr');
+      await mutate('/auth/me', null, { revalidate: false });
+      set({ user: null });
+      return true;
+    } catch (error) {
+      logBackendError('Logout failed', error);
+      return false;
     }
-  )
-);
+  },
+}));
 
 interface ExamState {
   examId: string | null;

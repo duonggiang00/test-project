@@ -246,6 +246,11 @@
             "title": "Password",
             "type": "string"
           },
+          "remember_me": {
+            "default": false,
+            "title": "Remember Me",
+            "type": "boolean"
+          },
           "scope": {
             "default": "",
             "title": "Scope",
@@ -1015,6 +1020,19 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LogoutResponse": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "LogoutResponse",
         "type": "object"
       },
       "MaterialDetailResponse": {
@@ -1886,6 +1904,19 @@
         "title": "QuestionUpdate",
         "type": "object"
       },
+      "RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest",
+        "type": "object"
+      },
       "ResetPasswordRequest": {
         "properties": {
           "new_password": {
@@ -2651,8 +2682,20 @@
       },
       "Token": {
         "properties": {
+          "access_expires_in": {
+            "title": "Access Expires In",
+            "type": "integer"
+          },
           "access_token": {
             "title": "Access Token",
+            "type": "string"
+          },
+          "refresh_expires_in": {
+            "title": "Refresh Expires In",
+            "type": "integer"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
             "type": "string"
           },
           "token_type": {
@@ -2665,6 +2708,9 @@
         },
         "required": [
           "access_token",
+          "refresh_token",
+          "access_expires_in",
+          "refresh_expires_in",
           "token_type",
           "user"
         ],
@@ -3109,6 +3155,10 @@
             "title": "Id",
             "type": "string"
           },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
           "phone_number": {
             "anyOf": [
               {
@@ -3136,6 +3186,7 @@
         "required": [
           "email",
           "id",
+          "is_active",
           "created_at"
         ],
         "title": "UserResponse",
@@ -4280,6 +4331,73 @@
         ]
       }
     },
+    "/auth/logout": {
+      "post": {
+        "operationId": "logout_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout-all": {
+      "post": {
+        "operationId": "logout_all_auth_logout_all_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Logout All",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/auth/me": {
       "get": {
         "operationId": "get_me_auth_me_get",
@@ -4435,6 +4553,47 @@
           }
         ],
         "summary": "Update Password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "refresh_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh",
         "tags": [
           "auth"
         ]

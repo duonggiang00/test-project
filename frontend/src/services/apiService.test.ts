@@ -27,6 +27,13 @@ jest.mock("../lib/api", () => ({
   },
 }));
 
+jest.mock("../lib/csrf", () => ({
+  csrfHeaders: jest.fn().mockResolvedValue({
+    "X-CSRF-Token": "csrf-test-token",
+  }),
+  ensureCsrfToken: jest.fn().mockResolvedValue("csrf-test-token"),
+}));
+
 const mockedDelete = jest.mocked(api.delete);
 const mockedGet = jest.mocked(api.get);
 const mockedPost = jest.mocked(api.post);
@@ -228,7 +235,10 @@ describe("AI workspace transport services", () => {
 
     expect(fetchSpy).toHaveBeenCalledWith("/api/proxy/ai/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": "csrf-test-token",
+      },
       body: JSON.stringify({ messages, material_id: "material-1" }),
     });
   });

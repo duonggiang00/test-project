@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUserStore } from "@/lib/store";
 import { Sidebar } from "@/components/features/admin/Sidebar";
 import { Loader2 } from "lucide-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 /**
  * Admin Layout — protects all routes under (admin)/.
@@ -19,30 +19,21 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { user } = useUserStore();
-  const [isMounted, setIsMounted] = useState(false);
-  // Use ref to avoid triggering the set-state-in-effect lint rule on mount
-  const mountedRef = useRef(false);
+  const { data: user, error } = useCurrentUser();
+  const checkingSession = !user && !error;
 
   useEffect(() => {
-    if (!mountedRef.current) {
-      mountedRef.current = true;
-      setIsMounted(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) return;
+    if (checkingSession) return;
     if (!user) {
-      router.replace("/");
+      router.replace("/login");
     } else if (user.role === "student") {
       // Students are not allowed in the admin/teacher section
       router.replace("/student/home");
     }
-  }, [user, isMounted, router]);
+  }, [user, checkingSession, router]);
 
   // Block render until hydration is complete (prevents localStorage mismatch)
-  if (!isMounted) {
+  if (checkingSession) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white">
         <Loader2 className="h-6 w-6 animate-spin text-black" />

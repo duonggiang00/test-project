@@ -2,7 +2,7 @@
 
 import { NextRequest } from 'next/server';
 
-import { GET } from './route';
+import { GET, POST } from './route';
 
 
 describe('BFF proxy boundary', () => {
@@ -26,7 +26,11 @@ describe('BFF proxy boundary', () => {
       });
     });
     const request = new NextRequest('http://frontend.test/api/proxy/exams?size=10', {
-      headers: { cookie: 'token=cookie-token' },
+      headers: {
+        authorization: 'Bearer browser-controlled-token',
+        cookie: 'access_token=cookie-token; browser_secret=do-not-forward',
+        origin: 'http://frontend.test',
+      },
     });
 
     const response = await GET(request);
@@ -34,6 +38,67 @@ describe('BFF proxy boundary', () => {
     expect(backendFetch).toHaveBeenCalledTimes(1);
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ items: [] });
+  });
+
+  test('rejects cross-origin mutations before contacting the backend', async () => {
+    const backendFetch = jest.spyOn(global, 'fetch');
+    const request = new NextRequest('http://frontend.test/api/proxy/exams', {
+      method: 'POST',
+      body: JSON.stringify({ title: 'Blocked' }),
+      headers: {
+        'content-type': 'application/json',
+        cookie: 'csrf_token=csrf-token',
+        origin: 'https://attacker.example',
+        'x-csrf-token': 'csrf-token',
+      },
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error_code: 'ORIGIN_NOT_ALLOWED' }),
+    );
+    expect(backendFetch).not.toHaveBeenCalled();
+  });
+
+  test('accepts same-origin mutations and strips browser credentials', async () => {
+    process.env.BACKEND_API_URL = 'https://backend.example.test';
+    const backendFetch = jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const backendRequest = input as Request;
+      expect(backendRequest.headers.get('authorization')).toBe('Bearer trusted-access');
+      expect(backendRequest.headers.has('cookie')).toBe(false);
+      expect(backendRequest.headers.has('origin')).toBe(false);
+      expect(backendRequest.headers.has('referer')).toBe(false);
+      expect(backendRequest.headers.has('forwarded')).toBe(false);
+      expect(backendRequest.headers.has('x-forwarded-for')).toBe(false);
+      expect(backendRequest.headers.has('x-real-ip')).toBe(false);
+      expect(backendRequest.headers.has('x-csrf-token')).toBe(false);
+      return new Response(JSON.stringify({ id: 'exam-1' }), {
+        status: 201,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const request = new NextRequest('http://frontend.test/api/proxy/exams', {
+      method: 'POST',
+      body: JSON.stringify({ title: 'Allowed' }),
+      headers: {
+        authorization: 'Bearer hostile-access',
+        'content-type': 'application/json',
+        cookie: 'access_token=trusted-access; csrf_token=csrf-token; hostile=secret',
+        origin: 'http://frontend.test',
+        referer: 'http://frontend.test/dashboard',
+        forwarded: 'for=203.0.113.10;proto=https',
+        'x-forwarded-for': '203.0.113.10',
+        'x-real-ip': '203.0.113.10',
+        'x-csrf-token': 'csrf-token',
+      },
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(201);
+    expect(backendFetch).toHaveBeenCalledTimes(1);
   });
 
   test('rewrites backend redirects to the BFF origin', async () => {
@@ -66,7 +131,7 @@ describe('BFF proxy boundary', () => {
     );
     const request = new NextRequest(
       'http://frontend.test/api/proxy/materials/00000000-0000-0000-0000-000000000001/download',
-      { headers: { cookie: 'token=cookie-token' } },
+      { headers: { cookie: 'access_token=cookie-token' } },
     );
 
     const response = await GET(request);

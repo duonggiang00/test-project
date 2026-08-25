@@ -12,6 +12,16 @@ describe("login BFF error contract", () => {
     jest.restoreAllMocks();
   });
 
+  function csrfHeaders(requestId?: string) {
+    return {
+      "Content-Type": "application/json",
+      Origin: "http://frontend.test",
+      Cookie: "csrf_token=csrf-test-token",
+      "X-CSRF-Token": "csrf-test-token",
+      ...(requestId ? { "X-Request-ID": requestId } : {}),
+    };
+  }
+
   test("preserves a canonical backend failure and correlation headers", async () => {
     process.env.BACKEND_API_URL = "https://backend.example.test";
     const requestId = "8f37b4ca-2014-4cec-aa2d-3f967c27eb8e";
@@ -39,10 +49,7 @@ describe("login BFF error contract", () => {
         email: "teacher@example.test",
         password: "canary-password",
       }),
-      headers: {
-        "Content-Type": "application/json",
-        "X-Request-ID": requestId,
-      },
+      headers: csrfHeaders(requestId),
     });
 
     const response = await POST(request);
@@ -75,10 +82,7 @@ describe("login BFF error contract", () => {
         email: "teacher@example.test",
         password: "canary-password",
       }),
-      headers: {
-        "Content-Type": "application/json",
-        "X-Request-ID": requestId,
-      },
+      headers: csrfHeaders(requestId),
     });
 
     const response = await POST(request);
@@ -100,8 +104,18 @@ describe("login BFF error contract", () => {
       forwardedRequestId = new Headers(init?.headers).get("X-Request-ID");
       return new Response(
         JSON.stringify({
-          access_token: "backend-token",
-          user: { id: "teacher-1", role: "teacher" },
+          access_token: "backend-access-token-with-sufficient-length",
+          refresh_token: "backend-refresh-token-with-sufficient-length-1234567890",
+          access_expires_in: 900,
+          refresh_expires_in: 604800,
+          token_type: "bearer",
+          user: {
+            id: "teacher-1",
+            email: "teacher@example.test",
+            role: "teacher",
+            full_name: null,
+            is_active: true,
+          },
         }),
         {
           status: 200,
@@ -115,7 +129,7 @@ describe("login BFF error contract", () => {
         email: "teacher@example.test",
         password: "test-password",
       }),
-      headers: { "Content-Type": "application/json" },
+      headers: csrfHeaders(),
     });
 
     const response = await POST(request);
@@ -127,7 +141,54 @@ describe("login BFF error contract", () => {
     );
     expect(forwardedRequestId).toBe(responseRequestId);
     await expect(response.json()).resolves.toEqual({
-      user: { id: "teacher-1", role: "teacher" },
+      user: {
+        id: "teacher-1",
+        email: "teacher@example.test",
+        role: "teacher",
+        full_name: null,
+        is_active: true,
+      },
     });
+    const cookies = response.headers.getSetCookie().join(";");
+    expect(cookies).toContain("access_token=backend-access-token");
+    expect(cookies).toContain("refresh_token=backend-refresh-token");
+    expect(cookies).not.toContain("role=");
+  });
+
+  test("rejects a login mutation without same-origin CSRF proof", async () => {
+    const backendFetch = jest.spyOn(global, "fetch");
+    const request = new NextRequest("http://frontend.test/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email: "teacher@example.test",
+        password: "test-password",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error_code: "ORIGIN_NOT_ALLOWED" }),
+    );
+    expect(backendFetch).not.toHaveBeenCalled();
+  });
+
+  test("rejects malformed login input before contacting the backend", async () => {
+    const backendFetch = jest.spyOn(global, "fetch");
+    const request = new NextRequest("http://frontend.test/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email: ["teacher@example.test"], password: 123 }),
+      headers: csrfHeaders(),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error_code: "VALIDATION_ERROR" }),
+    );
+    expect(backendFetch).not.toHaveBeenCalled();
   });
 });

@@ -5,6 +5,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/store';
 import { useProfile } from '@/hooks/useProfile';
 import Image from 'next/image';
@@ -14,6 +15,11 @@ export default function StudentHeader() {
   const { logout } = useUserStore();
   const { profile } = useProfile();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    if (await logout()) router.replace("/login");
+  };
 
   const isHome = pathname === "/student/home" || pathname === "/student";
   const isProfile = pathname === "/student/profile";
@@ -59,7 +65,7 @@ export default function StudentHeader() {
             </div>
           </div>
           <button 
-            onClick={logout}
+            onClick={handleLogout}
             aria-label="Log out"
             className="w-12 h-12 flex items-center justify-center bg-white border-4 border-black text-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-all"
             title="Đăng xuất"

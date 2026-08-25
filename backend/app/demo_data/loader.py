@@ -9,7 +9,7 @@ from uuid import UUID
 
 from alembic.config import Config as AlembicConfig
 from alembic.script import ScriptDirectory
-from sqlalchemy import delete, func, or_, select, text
+from sqlalchemy import delete, func, literal, or_, select, text, union_all
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, selectinload
 
@@ -201,13 +201,20 @@ class DemoDataManager:
         create = 0
         unchanged = 0
         conflict = 0
-        for role, email, full_name in self._canonical_account_specs():
+        specs = self._canonical_account_specs()
+        existing_by_email = {
+            str(account.email): account
+            for account in self.session.scalars(
+                select(User).where(User.email.in_([email for _, email, _ in specs]))
+            ).all()
+        }
+        for role, email, full_name in specs:
             expected_id = stable_uuid(
                 self.fixture.manifest.namespace,
                 "account",
                 role,
             )
-            account = self.session.scalar(select(User).where(User.email == email))
+            account = existing_by_email.get(email)
             if account is None:
                 create += 1
             elif (
@@ -227,13 +234,20 @@ class DemoDataManager:
 
     def _ensure_canonical_accounts(self) -> dict[str, User]:
         accounts: dict[str, User] = {}
-        for role, email, full_name in self._canonical_account_specs():
+        specs = self._canonical_account_specs()
+        existing_by_email = {
+            str(account.email): account
+            for account in self.session.scalars(
+                select(User).where(User.email.in_([email for _, email, _ in specs]))
+            ).all()
+        }
+        for role, email, full_name in specs:
             expected_id = stable_uuid(
                 self.fixture.manifest.namespace,
                 "account",
                 role,
             )
-            account = self.session.scalar(select(User).where(User.email == email))
+            account = existing_by_email.get(email)
             if account is None:
                 account = User(
                     id=expected_id,
@@ -370,13 +384,22 @@ class DemoDataManager:
 
     def _create_students(self, interactive_student: User) -> dict[str, User]:
         students = {"student-primary": interactive_student}
+        analytics_students = [item for item in self.fixture.students if not item.interactive]
+        existing_by_email = {
+            str(student.email): student
+            for student in self.session.scalars(
+                select(User).where(
+                    User.email.in_([item.email for item in analytics_students])
+                )
+            ).all()
+        }
         for item in self.fixture.students:
             if item.interactive:
                 if item.email != interactive_student.email:
                     raise DemoDataError("interactive student fixture does not match the canonical account")
                 continue
             student_id = stable_uuid(self.fixture.manifest.namespace, "student", item.key)
-            existing_email = self.session.scalar(select(User).where(User.email == item.email))
+            existing_email = existing_by_email.get(item.email)
             if existing_email is not None and existing_email.id != student_id:
                 raise DemoDataError("analytics student email is already used by another record")
             student = User(
@@ -693,11 +716,24 @@ class DemoDataManager:
             raise DemoDataError("canonical account verification failed")
         groups = self._identity_groups()
         counts: dict[str, int] = {"canonical_accounts": 3}
-        for entity, (model, ids) in groups.items():
-            count = self.session.scalar(
-                select(func.count()).select_from(model).where(model.id.in_(ids))
+        count_statements = [
+            select(
+                literal(entity).label("entity"),
+                func.count().label("entity_count"),
             )
-            counts[entity] = int(count or 0)
+            .select_from(model)
+            .where(model.id.in_(ids))
+            for entity, (model, ids) in groups.items()
+        ]
+        counts.update(
+            {
+                str(entity): int(count or 0)
+                for entity, count in self.session.execute(
+                    union_all(*count_statements)
+                ).all()
+            }
+        )
+        for entity, (_, ids) in groups.items():
             if counts[entity] != len(ids):
                 raise DemoDataError(f"dataset verification failed for {entity}")
 
@@ -1022,13 +1058,16 @@ class DemoDataManager:
             if actual_cards != expected_cards:
                 raise DemoDataError(f"flashcard content drift detected for {deck_item.key}")
 
-        for student_item in self.fixture.students:
-            if student_item.interactive:
-                student = self.session.scalar(select(User).where(User.email == student_item.email))
-            else:
-                student = self.session.get(
-                    User, stable_uuid(namespace, "student", student_item.key)
+        students_by_email = {
+            str(student.email): student
+            for student in self.session.scalars(
+                select(User).where(
+                    User.email.in_([item.email for item in self.fixture.students])
                 )
+            ).all()
+        }
+        for student_item in self.fixture.students:
+            student = students_by_email.get(student_item.email)
             if student is None or (
                 cast(str, student.email), cast(str, student.full_name), cast(str, student.role)
             ) != (student_item.email, student_item.full_name, "student"):
@@ -1142,7 +1181,9 @@ class DemoDataManager:
             with self.session.begin_nested():
                 for entity in deletion_order:
                     model, ids = groups[entity]
-                    result = self.session.execute(delete(model).where(model.id.in_(ids)))
+                    result = self.session.execute(  # architecture-guard: allow backend.query-in-loop ANTI-PG-SEC-001 -- fixed dependency-order teardown
+                        delete(model).where(model.id.in_(ids))
+                    )
                     deleted[entity] = int(getattr(result, "rowcount", 0) or 0)
             self.session.commit()
         except Exception:

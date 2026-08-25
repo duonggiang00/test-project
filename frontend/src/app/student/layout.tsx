@@ -1,34 +1,29 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { useUserStore } from '@/lib/store';
 import { Loader2 } from 'lucide-react';
 import StudentHeader from '@/components/features/student/StudentHeader';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useUserStore();
-  const [isMounted, setIsMounted] = useState(false);
+  const { data: user, error } = useCurrentUser();
+  const checkingSession = !user && !error;
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isMounted) {
+    if (!checkingSession) {
       if (!user) {
         router.replace("/login");
       } else if (user.role !== "student") {
         router.replace("/dashboard");
       }
     }
-  }, [user, isMounted, router]);
+  }, [user, checkingSession, router]);
 
-  if (!isMounted) {
+  if (checkingSession) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

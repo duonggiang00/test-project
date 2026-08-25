@@ -8,16 +8,44 @@ import {
   getOrCreateRequestId,
   REQUEST_ID_HEADER,
 } from '@/lib/server-errors';
+import {
+  parseBackendTokenPayload,
+  setAuthCookies,
+  setCsrfCookie,
+  newCsrfToken,
+  validateBffMutation,
+} from '@/lib/server-auth';
 
 export async function POST(request: NextRequest) {
+  const rejection = validateBffMutation(request);
+  if (rejection) return rejection;
   const requestId = getOrCreateRequestId(request);
   try {
-    const body = await request.json();
-    const { email, password, rememberMe } = body;
+    const body: unknown = await request.json();
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return canonicalErrorResponse({
+        request,
+        status: 422,
+        errorCode: "VALIDATION_ERROR",
+      });
+    }
+    const { email, password, rememberMe } = body as Record<string, unknown>;
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      (rememberMe !== undefined && typeof rememberMe !== "boolean")
+    ) {
+      return canonicalErrorResponse({
+        request,
+        status: 422,
+        errorCode: "VALIDATION_ERROR",
+      });
+    }
 
     const formData = new URLSearchParams();
     formData.append("username", email);
     formData.append("password", password);
+    formData.append("remember_me", rememberMe ? "true" : "false");
 
     const apiUrl = getBackendUrl();
     
@@ -30,43 +58,30 @@ export async function POST(request: NextRequest) {
       body: formData.toString(),
     });
 
-    const data = await response.json();
+    const data: unknown = await response.json();
 
     if (!response.ok) {
       return forwardBackendError(request, response, data, requestId);
     }
 
-    // Set HttpOnly cookies
-    const res = NextResponse.json({ user: data.user });
+    const tokens = parseBackendTokenPayload(data);
+    if (!tokens) {
+      return canonicalErrorResponse({
+        request,
+        status: 502,
+        errorCode: "AUTH_RESPONSE_INVALID",
+        upstreamRequestId: response.headers.get(REQUEST_ID_HEADER),
+      });
+    }
+
+    const res = NextResponse.json({ user: tokens.user });
     const backendRequestId = canonicalizeRequestId(
       response.headers.get(REQUEST_ID_HEADER),
     ) ?? requestId;
     res.headers.set(REQUEST_ID_HEADER, backendRequestId);
     
-    // 7 days if rememberMe is true, otherwise session cookie (no maxAge)
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      path: "/",
-      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 7 } : {})
-    };
-
-    res.cookies.set({
-      name: "token",
-      value: data.access_token,
-      ...cookieOptions,
-    });
-    
-    res.cookies.set({
-      name: "role",
-      value: data.user.role,
-      httpOnly: false, // role needs to be read by client-side if needed
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      path: "/",
-      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 7 } : {})
-    });
+    setAuthCookies(res, tokens);
+    setCsrfCookie(res, newCsrfToken());
 
     return res;
   } catch {

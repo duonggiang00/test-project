@@ -9,6 +9,7 @@ const logout = jest.fn();
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/student/home",
+  useRouter: () => ({ replace: jest.fn() }),
 }));
 
 jest.mock("../../src/lib/store", () => ({

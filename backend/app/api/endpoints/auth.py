@@ -1,13 +1,13 @@
-from fastapi import APIRouter, Depends, status, UploadFile, File, Request
-from app.core.exceptions import AppException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from app.api.deps import get_current_active_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate, PasswordUpdate, ForgotPasswordRequest, ResetPasswordRequest
-from app.schemas.token import Token
+from app.schemas.token import LogoutResponse, RefreshTokenRequest, Token
 from app.services.auth_service import AuthService
+from app.services.auth_session_service import AuthSessionService
 from app.services.user_service import UserService
 from app.core.rate_limit import limiter
 
@@ -48,8 +48,38 @@ def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db
 
 @router.post("/login", response_model=Token)
 @limiter.limit("5/minute")
-def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
-    return AuthService.login(db, form_data)
+def login(
+    request: Request,
+    db: Session = Depends(get_db),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    remember_me: bool = Form(False),
+):
+    return AuthService.login(db, form_data, remember_me=remember_me)
+
+
+@router.post("/refresh", response_model=Token)
+@limiter.limit("20/minute")
+def refresh(
+    request: Request,
+    payload: RefreshTokenRequest,
+    db: Session = Depends(get_db),
+):
+    return AuthSessionService.refresh(db, payload.refresh_token)
+
+
+@router.post("/logout", response_model=LogoutResponse)
+def logout(payload: RefreshTokenRequest, db: Session = Depends(get_db)):
+    AuthSessionService.logout_current(db, payload.refresh_token)
+    return {"message": "Logged out successfully."}
+
+
+@router.post("/logout-all", response_model=LogoutResponse)
+def logout_all(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    AuthSessionService.logout_all(db, current_user)
+    return {"message": "All sessions logged out successfully."}
 
 @router.post("/forgot-password")
 @limiter.limit("5/minute")

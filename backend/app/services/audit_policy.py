@@ -118,6 +118,28 @@ def _validate_user_create(
         _reject_invalid_action_payload()
 
 
+def _validate_auth_sessions_revoked(
+    changes: dict[str, JsonValue],
+    metadata: dict[str, JsonValue],
+) -> None:
+    if changes:
+        _reject_invalid_action_payload()
+    reason = metadata.get("reason")
+    if reason not in {
+        "inactive_user",
+        "logout_all",
+        "logout_current",
+        "password_change",
+        "password_reset",
+        "refresh_replay",
+        "user_disabled",
+    }:
+        _reject_invalid_action_payload()
+    affected = metadata.get("affected_sessions")
+    if isinstance(affected, bool) or not isinstance(affected, int) or affected < 0:
+        _reject_invalid_action_payload()
+
+
 _RESTORE_ENTITY_TYPES = frozenset(
     {"exam", "question", "study_material", "topic", "user"}
 )
@@ -758,6 +780,28 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             denied_roles=frozenset(),
             failure_roles=frozenset(),
             owner_requirement="forbidden",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset(),
+            validate_payload=_validate_no_extra_payload,
+        ),
+        "auth.sessions_revoked": AuditActionPolicy(
+            entity_types=frozenset({"user"}),
+            success_roles=frozenset({"admin", "student", "system", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="forbidden",
+            required_success_change_fields=frozenset(),
+            change_fields=frozenset(),
+            metadata_fields=frozenset({"affected_sessions", "reason"}),
+            validate_payload=_validate_auth_sessions_revoked,
+        ),
+        "auth.refresh_replay": AuditActionPolicy(
+            entity_types=frozenset({"refresh_session"}),
+            success_roles=frozenset({"admin", "student", "teacher"}),
+            denied_roles=frozenset(),
+            failure_roles=frozenset(),
+            owner_requirement="required",
             required_success_change_fields=frozenset(),
             change_fields=frozenset(),
             metadata_fields=frozenset(),

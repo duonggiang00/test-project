@@ -47,21 +47,20 @@ const generationJob = (status: JobStatus, version: number) => ({
 });
 
 const signInAsAdmin = async (page: Page) => {
+  await page.route('**/api/proxy/auth/me', async route => {
+    await route.fulfill({
+      status: 200,
+      json: { ...ADMIN, is_active: true },
+    });
+  });
   await page.route('**/api/auth/login', async route => {
     await page.context().addCookies([
       {
-        name: 'token',
+        name: 'access_token',
         value: 'mocked-e2e-token',
         domain: '127.0.0.1',
         path: '/',
         httpOnly: true,
-        sameSite: 'Lax',
-      },
-      {
-        name: 'role',
-        value: 'admin',
-        domain: '127.0.0.1',
-        path: '/',
         sameSite: 'Lax',
       },
     ]);

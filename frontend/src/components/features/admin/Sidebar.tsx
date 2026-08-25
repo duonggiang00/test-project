@@ -4,6 +4,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/lib/store";
 
@@ -20,7 +21,12 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { logout } = useUserStore();
+
+  const handleLogout = async () => {
+    if (await logout()) router.replace("/login");
+  };
 
   return (
     <aside className="bg-white fixed left-0 top-0 h-screen w-[260px] border-r-4 border-black flex-col py-6 z-40 hidden md:flex">
@@ -69,7 +75,7 @@ export function Sidebar() {
           <AppIcon name="help" className="" />
           <span>Support</span>
         </Link>
-        <button onClick={logout} className="flex w-full text-left items-center space-x-3 px-4 py-2 font-mono font-bold text-black bg-white border-2 border-transparent hover:bg-black hover:text-white transition-none">
+        <button onClick={handleLogout} className="flex w-full text-left items-center space-x-3 px-4 py-2 font-mono font-bold text-black bg-white border-2 border-transparent hover:bg-black hover:text-white transition-none">
           <AppIcon name="logout" className="" />
           <span>Logout</span>
         </button>

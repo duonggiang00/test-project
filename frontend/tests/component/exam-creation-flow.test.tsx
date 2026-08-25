@@ -31,6 +31,19 @@ jest.mock("../../src/hooks/useTopics", () => ({
   useTopics: jest.fn(),
 }));
 
+jest.mock("../../src/hooks/useCurrentUser", () => ({
+  useCurrentUser: () => ({
+    data: {
+      id: "teacher-1",
+      email: "teacher@example.com",
+      role: "teacher",
+      full_name: "Teacher One",
+      is_active: true,
+    },
+    error: undefined,
+  }),
+}));
+
 jest.mock("../../src/components/ui/toast", () => ({
   toast: { add: jest.fn() },
 }));

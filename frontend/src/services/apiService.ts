@@ -361,12 +361,17 @@ export interface AiChatTransportMessage {
 export const openAiChatStream = async (
   messages: AiChatTransportMessage[],
   materialId: string,
-): Promise<Response> =>
-  fetch("/api/proxy/ai/chat", {
+): Promise<Response> => {
+  const { csrfHeaders } = await import("@/lib/csrf");
+  return fetch("/api/proxy/ai/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(await csrfHeaders()),
+    },
     body: JSON.stringify({ messages, material_id: materialId }),
   });
+};
 
 export const registerUser = async (payload: { email: string; password: string; full_name: string }) => {
   const res = await api.post("/auth/register", payload);
@@ -374,10 +379,12 @@ export const registerUser = async (payload: { email: string; password: string; f
 };
 
 export const login = async (email: string, password: string, rememberMe: boolean = false) => {
+  const { csrfHeaders } = await import("@/lib/csrf");
   const res = await fetch("/api/auth/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(await csrfHeaders()),
     },
     body: JSON.stringify({ email, password, rememberMe }),
   });
@@ -389,7 +396,11 @@ export const login = async (email: string, password: string, rememberMe: boolean
 };
 
 export const logoutUser = async () => {
-  await fetch("/api/auth/logout", { method: "POST" });
+  const { csrfHeaders } = await import("@/lib/csrf");
+  await fetch("/api/auth/logout", {
+    method: "POST",
+    headers: await csrfHeaders(),
+  });
 };
 
 export const forgotPassword = async (email: string) => {

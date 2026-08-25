@@ -22,6 +22,16 @@ export const ERROR_MESSAGES: Readonly<Record<string, string>> = {
   UNAUTHORIZED: "Your session is missing, invalid, or expired.",
   INCORRECT_OLD_PASSWORD: "The current password is incorrect.",
   INVALID_OR_EXPIRED_TOKEN: "This link is invalid or has expired.",
+  ACCOUNT_DISABLED: "This account is disabled.",
+  INVALID_REFRESH_TOKEN: "Your session is invalid. Sign in again.",
+  REFRESH_TOKEN_EXPIRED: "Your session has expired. Sign in again.",
+  REFRESH_TOKEN_REVOKED: "Your session was revoked. Sign in again.",
+  REFRESH_TOKEN_REPLAYED: "Your session was revoked for security. Sign in again.",
+  REFRESH_TOKEN_ALREADY_ROTATED: "Your session is already being refreshed.",
+  CSRF_TOKEN_INVALID: "The security token is missing or invalid. Try again.",
+  ORIGIN_NOT_ALLOWED: "This request origin is not allowed.",
+  AUTH_RESPONSE_INVALID: "The authentication server returned an invalid response.",
+  LOGOUT_FAILED: "The server could not revoke this session. Sign in again before using this device.",
 
   // Content and submissions
   RESOURCE_NOT_FOUND: "The requested resource could not be found.",

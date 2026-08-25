@@ -83,32 +83,13 @@ test('PlayStudy branding is consistent on public and student surfaces', {
   const studentContext = await browser.newContext();
   await studentContext.addCookies([
     {
-      name: 'token',
+      name: 'access_token',
       value: 'mocked-student-token',
       url: origin,
       httpOnly: true,
       sameSite: 'Lax',
     },
-    {
-      name: 'role',
-      value: 'student',
-      url: origin,
-      sameSite: 'Lax',
-    },
   ]);
-  await studentContext.addInitScript(() => {
-    localStorage.setItem('user-storage', JSON.stringify({
-      state: {
-        user: {
-          id: 'mock-student-id',
-          email: 'student@example.test',
-          role: 'student',
-          full_name: 'Mock Student',
-        },
-      },
-      version: 0,
-    }));
-  });
   const studentPage = await studentContext.newPage();
   await studentPage.route('**/api/proxy/auth/me', route => route.fulfill({
     status: 200,
@@ -281,21 +262,27 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
     }
   });
 
+  await page.route('**/api/proxy/auth/me', async route => {
+    await route.fulfill({
+      status: 200,
+      json: {
+        id: 'mock-admin-id',
+        email: 'admin@example.com',
+        role: 'admin',
+        full_name: 'Mock Admin',
+        is_active: true,
+      },
+    });
+  });
+
   await page.route('**/api/auth/login', async route => {
     await page.context().addCookies([
       {
-        name: 'token',
+        name: 'access_token',
         value: 'mocked-e2e-token',
         domain: '127.0.0.1',
         path: '/',
         httpOnly: true,
-        sameSite: 'Lax',
-      },
-      {
-        name: 'role',
-        value: 'admin',
-        domain: '127.0.0.1',
-        path: '/',
         sameSite: 'Lax',
       },
     ]);

@@ -76,9 +76,9 @@ Legend: `A` allowed, `O` allowed only when owner/scope matches, `P` allowed only
 | Restore teacher content | A | O | — | — | — | — |
 | Publish teacher content | A | O | — | — | — | — |
 | Read published/assigned learning content | A | O | — | P | P | — |
-| Start/create submission | A | — | — | O | — | — |
+| Start/create submission | — | — | — | O | — | — |
 | Read submission | A | O through exam ownership | — | O | — | — |
-| Update in-progress submission | A | — | — | O | — | — |
+| Update in-progress submission | — | — | — | O | — | — |
 | Update submitted submission answers | — | — | — | — | — | — |
 | Grade submission | A | O through exam ownership | — | — | — | — |
 | View grade/result | A | O through exam ownership | — | O when released | — | — |
@@ -111,6 +111,10 @@ Prefer an explicit immutable `owner_id` on aggregate roots. Child resources may 
 - A student may not supply or override `student_id` for an authenticated self-service operation.
 - A submitted submission is immutable except through an explicitly approved correction workflow.
 - Result visibility may depend on exam/result release state.
+- Student self-service endpoints never allow an Admin to impersonate a
+  Student. Admin read and grading operations use their separate management
+  contracts and remain audited; an on-behalf-of submission workflow requires
+  a future approved contract.
 
 ### 6.3 Admin override
 
@@ -171,4 +175,3 @@ Every sensitive endpoint must cover applicable cases:
 - List queries must apply the same ownership boundary as detail queries.
 - Bulk operations must validate authorization for every target without creating N+1 queries.
 - Background jobs must re-evaluate authorization context or operate from an approved immutable job scope; request sessions cannot be reused.
-

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Date, Text
+from sqlalchemy import Boolean, Column, String, DateTime, Date, Text
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 from app.db.soft_delete import SoftDeleteMixin
@@ -13,6 +13,7 @@ class User(SoftDeleteMixin, Base):
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(100))
     role = Column(String(20), default="student") # admin, teacher, student
+    is_active = Column(Boolean, nullable=False, default=True, server_default="true")
     avatar_url = Column(String(255), nullable=True)
     phone_number = Column(String(20), nullable=True)
     date_of_birth = Column(Date, nullable=True)

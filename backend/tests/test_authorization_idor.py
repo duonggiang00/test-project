@@ -445,10 +445,29 @@ def test_teacher_and_admin_cannot_use_student_self_service_routes(
     test_teacher,
     test_admin,
 ):
+    exam_id = uuid.uuid4()
     for actor in (test_teacher, test_admin):
-        response = client.get("/student/exams", headers=actor["headers"])
-        assert response.status_code == 403
-        assert response.json()["error_code"] == "NOT_ENOUGH_PERMISSIONS"
+        responses = (
+            client.get("/student/exams", headers=actor["headers"]),
+            client.get(
+                f"/student/exams/{exam_id}/start",
+                headers=actor["headers"],
+            ),
+            client.post(
+                f"/student/exams/{exam_id}/submit",
+                json={"answers": []},
+                headers=actor["headers"],
+            ),
+            client.get(
+                f"/student/exams/{exam_id}/result",
+                headers=actor["headers"],
+            ),
+        )
+        assert all(response.status_code == 403 for response in responses)
+        assert all(
+            response.json()["error_code"] == "NOT_ENOUGH_PERMISSIONS"
+            for response in responses
+        )
 
 
 def test_ai_chat_context_is_limited_to_the_authorized_material(

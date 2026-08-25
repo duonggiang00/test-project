@@ -60,7 +60,12 @@ function scanBackend(path) {
       loopIndents.length &&
       /(?:\.query\s*\(|\.execute\s*\(|\.scalar\s*\()/u.test(line)
     ) {
-      results.push(violation('backend.query-in-loop', path, lineNumber, line));
+      const waiverPattern = /architecture-guard:\s*allow\s+backend\.query-in-loop\s+[A-Z][A-Z0-9-]{2,40}\s+--\s+\S.+/u;
+      if (waiverPattern.test(line)) {
+        results.push(violation('waiver.backend.query-in-loop', path, lineNumber, line));
+      } else {
+        results.push(violation('backend.query-in-loop', path, lineNumber, line));
+      }
     }
     if (/^\s*@(?:router|app)\.(?:get|post|put|patch|delete|head|options)\(\s*["'][^"']+\/["']/u.test(line)) {
       results.push(violation('contract.backend-trailing-slash', path, lineNumber, line));
@@ -206,7 +211,17 @@ function scan(paths = null) {
   return [
     ...backendFiles.flatMap(scanBackend),
     ...frontendFiles.flatMap(scanFrontend),
-  ].sort((left, right) => `${left.rule}:${left.file}:${left.line}`.localeCompare(`${right.rule}:${right.file}:${right.line}`));
+  ]
+    .filter((item) => !item.rule.startsWith('waiver.'))
+    .sort((left, right) => `${left.rule}:${left.file}:${left.line}`.localeCompare(`${right.rule}:${right.file}:${right.line}`));
+}
+
+function scanWaivers(paths = null) {
+  const backendFiles = paths?.filter((path) => path.endsWith('.py')) ?? filesUnder(resolve(workspaceRoot, 'backend/app'), ['.py']);
+  return backendFiles
+    .flatMap(scanBackend)
+    .filter((item) => item.rule.startsWith('waiver.'))
+    .sort((left, right) => `${left.rule}:${left.file}:${left.line}`.localeCompare(`${right.rule}:${right.file}:${right.line}`));
 }
 
 function fingerprint(item) {
@@ -256,12 +271,21 @@ try {
       }
       process.exit(1);
     }
-    console.log(`ARCHITECTURE_OK current=${current.length} baseline=${baseline.violations.length}`);
+    const waivers = scanWaivers();
+    for (const item of waivers) {
+      console.log(`ARCHITECTURE_WAIVER ${item.rule.slice('waiver.'.length)} ${item.file}:${item.line} ${item.snippet}`);
+    }
+    console.log(`ARCHITECTURE_OK current=${current.length} baseline=${baseline.violations.length} waivers=${waivers.length}`);
   } else if (mode === 'fixtures') {
     const fixtureRoot = resolve(workspaceRoot, 'scripts/fixtures/architecture');
-    const good = scan(filesUnder(resolve(fixtureRoot, 'good'), ['.py', '.ts', '.tsx', '.css']));
+    const goodPaths = filesUnder(resolve(fixtureRoot, 'good'), ['.py', '.ts', '.tsx', '.css']);
+    const good = scan(goodPaths);
+    const goodWaivers = scanWaivers(goodPaths);
     const bad = scan(filesUnder(resolve(fixtureRoot, 'bad'), ['.py', '.ts', '.tsx', '.css']));
     if (good.length !== 0) throw new Error(`Compliant fixtures produced ${good.length} violations`);
+    if (goodWaivers.length !== 1) {
+      throw new Error(`Expected one explicit compliant waiver, got ${goodWaivers.length}`);
+    }
     const required = new Set([
       'backend.session-query',
       'backend.datetime-utcnow',
