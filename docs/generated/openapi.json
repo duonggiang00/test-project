@@ -308,7 +308,34 @@
         "title": "Body_upload_material_materials_upload_post",
         "type": "object"
       },
+      "ChatMessage": {
+        "additionalProperties": false,
+        "description": "One client-controlled chat turn accepted by the material-chat API.",
+        "properties": {
+          "content": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatMessage",
+        "type": "object"
+      },
       "ChatRequest": {
+        "additionalProperties": false,
         "properties": {
           "material_id": {
             "format": "uuid",
@@ -317,9 +344,10 @@
           },
           "messages": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/ChatMessage"
             },
+            "maxItems": 40,
+            "minItems": 1,
             "title": "Messages",
             "type": "array"
           }
@@ -1514,6 +1542,7 @@
         "type": "object"
       },
       "ProcessDocumentRequest": {
+        "additionalProperties": false,
         "properties": {
           "material_id": {
             "format": "uuid",

@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from typing import Any
 from uuid import UUID
 from app.models.material import StudyMaterial
 from app.models.document_chunk import DocumentChunk
@@ -126,7 +127,7 @@ class AiStudioService:
             # spec 9.3 does not scope to generation only. `chat` is already
             # a declared use case in the audit policy.
             model_config = resolve_model_config(ModelUseCase.CHAT)
-            chat_metadata = {
+            chat_metadata: dict[str, Any] = {
                 "prompt_version": prompt_version_label(chat_system_v1),
                 "provider": model_config.provider,
                 "model": model_config.model,

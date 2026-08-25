@@ -1,5 +1,7 @@
 # Handoff: AI-RAG-HIDE-001 — Temporarily disable RAG
 
+Superseded on 2026-08-25 by `AI-RAG-ENABLE-001`. This handoff retains the evidence for the earlier temporary suspension.
+
 Status: REVIEW  
 Risk level: L3 — governed sensitive retrieval behavior
 

@@ -34,7 +34,7 @@ interface Message {
 }
 
 export default function AIWorkspacePage() {
-  const ragEnabled = process.env.NEXT_PUBLIC_RAG_ENABLED === "true";
+  const ragEnabled = process.env.NEXT_PUBLIC_RAG_ENABLED !== "false";
   const { materials, isLoading, mutate } = useMaterials(5000);
   const { topics } = useTopics({ size: 100 });
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");

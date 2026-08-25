@@ -2,9 +2,9 @@
   "schema_version": 1,
   "generator_version": "1.0.1",
   "provenance": {
-    "source_commit": "48f3d48dd6ee1457c1286a60b9d420e2626c1bb3",
-    "source_commit_timestamp": "2026-08-25T17:30:05+07:00",
-    "source_tree_sha256": "98d55c519353803a507a2b7f4e0721f91e4a080c4ad7c9d509981648e20e0205",
+    "source_commit": "0a00c61533764a440c7d5ef9198a17287dc5056f",
+    "source_commit_timestamp": "2026-08-25T19:07:03+07:00",
+    "source_tree_sha256": "39cbfe1af2b6db50e119975112e752aec3975ce09e8c1f091d29ea41a3a2979b",
     "relevant_file_count": 427,
     "alembic_heads": [
       "a74c9d2e6f10"
@@ -12,13 +12,13 @@
   },
   "summary": {
     "sqlalchemy_models": 19,
-    "pydantic_schemas": 79,
+    "pydantic_schemas": 81,
     "fastapi_routes": 75,
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 322,
-    "frontend_test_calls": 132
+    "backend_test_functions": 328,
+    "frontend_test_calls": 133
   },
   "backend": {
     "models": [
@@ -1807,6 +1807,38 @@
       }
     ],
     "schemas": [
+      {
+        "class": "ChatMessage",
+        "fields": [
+          {
+            "name": "role",
+            "required": true,
+            "type": "Literal"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
+          }
+        ],
+        "module": "app.schemas.ai"
+      },
+      {
+        "class": "ChatRequest",
+        "fields": [
+          {
+            "name": "material_id",
+            "required": true,
+            "type": "UUID"
+          },
+          {
+            "name": "messages",
+            "required": true,
+            "type": "list"
+          }
+        ],
+        "module": "app.schemas.ai"
+      },
       {
         "class": "ProcessDocumentRequest",
         "fields": [
@@ -4287,7 +4319,7 @@
         "dependencies": [
           "app.api.deps.get_current_active_teacher",
           "app.api.deps.get_current_user",
-          "app.api.endpoints.ai_studio.require_rag_enabled",
+          "app.api.endpoints.ai_studio.require_legacy_rag_process_enabled",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
@@ -5671,16 +5703,35 @@
         "path": "tests/contract/test_rag_feature_flag.py",
         "tests": [
           {
-            "line": 8,
+            "line": 13,
             "markers": [],
-            "name": "test_rag_is_disabled_by_default"
+            "name": "test_rag_is_enabled_by_default"
           },
           {
-            "line": 28,
+            "line": 34,
             "markers": [
               "parametrize"
             ],
             "name": "test_disabled_rag_routes_fail_before_authentication"
+          },
+          {
+            "line": 64,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_enabled_rag_routes_require_authentication"
+          },
+          {
+            "line": 79,
+            "markers": [],
+            "name": "test_legacy_process_route_remains_disabled_by_default"
+          },
+          {
+            "line": 113,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_chat_rejects_untrusted_roles_and_unknown_fields_before_service_access"
           }
         ],
         "tier": "integration"
@@ -5877,12 +5928,12 @@
         "path": "tests/test_ai_studio.py",
         "tests": [
           {
-            "line": 16,
+            "line": 17,
             "markers": [],
             "name": "test_process_document"
           },
           {
-            "line": 42,
+            "line": 43,
             "markers": [],
             "name": "test_chat_prompt_injection"
           }
@@ -6039,44 +6090,54 @@
         "path": "tests/test_authorization_idor.py",
         "tests": [
           {
-            "line": 116,
+            "line": 117,
             "markers": [],
             "name": "test_management_lists_are_authenticated_and_owner_scoped"
           },
           {
-            "line": 175,
+            "line": 176,
             "markers": [],
             "name": "test_cross_owner_and_missing_details_are_indistinguishable"
           },
           {
-            "line": 239,
+            "line": 240,
             "markers": [],
             "name": "test_bulk_assignment_is_same_owner_all_or_nothing"
           },
           {
-            "line": 298,
+            "line": 299,
             "markers": [],
             "name": "test_legacy_null_owned_roots_are_admin_only"
           },
           {
-            "line": 391,
+            "line": 392,
             "markers": [],
             "name": "test_student_empty_deck_topic_does_not_reveal_existence"
           },
           {
-            "line": 418,
+            "line": 419,
             "markers": [],
             "name": "test_teacher_system_compatibility_does_not_grant_user_purge"
           },
           {
-            "line": 443,
+            "line": 444,
             "markers": [],
             "name": "test_teacher_and_admin_cannot_use_student_self_service_routes"
           },
           {
-            "line": 473,
+            "line": 474,
             "markers": [],
             "name": "test_ai_chat_context_is_limited_to_the_authorized_material"
+          },
+          {
+            "line": 646,
+            "markers": [],
+            "name": "test_ai_chat_rejects_student_and_inactive_actor_before_provider"
+          },
+          {
+            "line": 690,
+            "markers": [],
+            "name": "test_ai_chat_admin_cross_owner_access_persists_both_audit_events"
           }
         ],
         "tier": "integration"
@@ -6940,6 +7001,14 @@
               "unit"
             ],
             "name": "test_chat_generator_still_blocks_prompt_injection_before_calling_the_provider"
+          },
+          {
+            "line": 259,
+            "markers": [
+              "asyncio",
+              "unit"
+            ],
+            "name": "test_chat_generator_drops_provider_priority_roles_for_direct_callers"
           }
         ],
         "tier": "unit"
@@ -7861,7 +7930,7 @@
       {
         "path": "frontend/tests/component/ai-workspace-errors.test.tsx",
         "tier": "component",
-        "test_count": 5
+        "test_count": 6
       },
       {
         "path": "frontend/tests/component/auth-error-localization.test.tsx",

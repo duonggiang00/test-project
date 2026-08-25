@@ -69,7 +69,7 @@ function mockSelectableMaterial(): void {
   });
 }
 
-describe("AI workspace stream failures", () => {
+describe("AI workspace RAG availability and stream failures", () => {
   const originalRagEnabled = process.env.NEXT_PUBLIC_RAG_ENABLED;
 
   beforeAll(() => {
@@ -125,6 +125,23 @@ describe("AI workspace stream failures", () => {
     expect(screen.getByRole("button", { name: /Sinh C.u H.i/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /T.o Flashcards/i })).toBeVisible();
     expect(screen.getByRole("button", { name: /T.o D.n ./i })).toBeVisible();
+  });
+
+  test("shows material chat by default when the presentation flag is unset", () => {
+    delete process.env.NEXT_PUBLIC_RAG_ENABLED;
+    mockSelectableMaterial();
+    render(<AIWorkspacePage />);
+
+    expect(screen.getByRole("textbox")).toBeVisible();
+    expect(screen.getByText(/Select a material before starting material chat/i)).toBeVisible();
+    fireEvent.click(screen.getByText("Source material"));
+    const input = screen.getByPlaceholderText("Enter a material question...");
+    const sendButton = screen.getByRole("button", { name: /Send material question/i });
+    expect(input).toBeEnabled();
+    expect(sendButton).toBeDisabled();
+    fireEvent.change(input, { target: { value: "Summarize this material" } });
+    expect(sendButton).toBeEnabled();
+    expect(mockedOpenAiChatStream).not.toHaveBeenCalled();
   });
 
   test("reports a sanitized provider error event immediately", async () => {
