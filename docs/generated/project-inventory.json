@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.1",
   "provenance": {
-    "source_commit": "0a00c61533764a440c7d5ef9198a17287dc5056f",
-    "source_commit_timestamp": "2026-08-25T19:07:03+07:00",
-    "source_tree_sha256": "39cbfe1af2b6db50e119975112e752aec3975ce09e8c1f091d29ea41a3a2979b",
-    "relevant_file_count": 427,
+    "source_commit": "55f01d8433610929ca8f34838a126204e599e11a",
+    "source_commit_timestamp": "2026-08-25T23:07:48+07:00",
+    "source_tree_sha256": "6f1c1e11312af0bd791b39dc69dd56001b20b3e316e87bd9371d1fa1777e5ca3",
+    "relevant_file_count": 430,
     "alembic_heads": [
       "a74c9d2e6f10"
     ]
@@ -17,8 +17,8 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 328,
-    "frontend_test_calls": 133
+    "backend_test_functions": 330,
+    "frontend_test_calls": 135
   },
   "backend": {
     "models": [
@@ -7838,6 +7838,24 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_run_coverage.py",
+        "tests": [
+          {
+            "line": 8,
+            "markers": [],
+            "name": "test_main_creates_reports_and_disables_pytest_cache"
+          },
+          {
+            "line": 49,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_main_propagates_phase_failures"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_test_database.py",
         "tests": [
           {
@@ -7896,6 +7914,11 @@
         "path": "frontend/src/lib/backend-url.test.ts",
         "tier": "unit",
         "test_count": 3
+      },
+      {
+        "path": "frontend/src/lib/content-security-policy.test.ts",
+        "tier": "unit",
+        "test_count": 2
       },
       {
         "path": "frontend/src/lib/errors.test.ts",

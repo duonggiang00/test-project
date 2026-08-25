@@ -4,7 +4,7 @@ Status: Active
 Plan owner: Project owner  
 Execution owner: Primary coding agent  
 Created: 2026-08-05  
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
 Approved remaining-work execution plan:
 [`REMAINING_WORK_EXECUTION_PLAN_2026-08-25.md`](REMAINING_WORK_EXECUTION_PLAN_2026-08-25.md)
@@ -65,13 +65,15 @@ Milestones 1 and 2 may partially overlap. Feature development may resume under t
 
 ### 3.1 Current open work
 
-Verified on 2026-08-25, the milestone tables contain 86 `DONE`, no `REVIEW`,
-3 owner-approved `DEFERRED`, 1 `SUPERSEDED`, and no `TODO`, `IN_PROGRESS`,
-or `BLOCKED` tasks. The remaining work is:
+Verified on 2026-08-26, the milestone tables contain 87 `DONE`, 6 `TODO`,
+1 `SUPERSEDED`, and no `REVIEW`, `IN_PROGRESS`, `BLOCKED`, or `DEFERRED`
+tasks. The remaining work is:
 
 | Category | IDs | Current evidence | Completion condition |
 |---|---|---|---|
-| Owner-deferred AI evaluation | AI-006, AI-007, AI-008 | Safety and human-review invariants are enforced, but AI quality is not measured. | Owner/admin supplies and approves 30–50 golden cases, explicitly resumes the work, then establishes evaluation baselines and CI thresholds. |
+| Frontend language and coverage | UI-LANGUAGE-001, TEST-FE-COVERAGE-001 | The owner approved four bounded English-language waves; current global frontend coverage is 61.25%. | Translate executable UI/comments with paired test updates and raise meaningful critical-module coverage without reducing the baseline. |
+| Owner-resumed AI evaluation | AI-006, AI-007, AI-008 | The owner resumed the work and approved a Vietnamese-first 40-case design; agents still may not self-approve reference answers. | Validate owner/admin-approved cases, establish three stable baselines, and add deterministic plus capped live regression tiers. |
+| Semantic retrieval | RAG-SEMANTIC-001 | Active chat remains keyword/last-chunk retrieval; local PostgreSQL does not yet provide pgvector. | Install/verify pgvector, pass evaluation gates, implement hybrid retrieval with lexical rollback, and remove the approved legacy endpoint. |
 
 ## 4. Milestone 0 — Durable specification and plan
 
@@ -129,6 +131,7 @@ Goal: Make the same verification commands work on Windows and GitHub Actions.
 | TOOL-007 | Remove dependency on checked-in/cross-platform-incompatible virtual environments | DONE | TOOL-006 | Shared commands invoke locked uv environments and local Node tools; no bootstrap command references `backend/venv` or global pytest |
 | TOOL-008 | Prepare an isolated PostgreSQL integration profile | DONE | TOOL-001, TOOL-005 | Guarded lifecycle created `test_project_db_test`, passed 24 integration tests, dropped it in `finally`, and final status was `absent` |
 | TOOL-009 | Document a future containerization path without making Docker mandatory | DONE | TOOL-008 | `docs/development/CONTAINERIZATION_PATH.md` defines future service/image/runtime contracts while preserving the Windows-native workflow |
+| TOOL-PYTEST-CACHE-001 | Make coverage independent of pytest cache accessibility | DONE | TOOL-006, TEST-001 | Both coverage phases disable the cache provider, create report output first, propagate failures, and the canonical coverage gate passes 672 tests at 90.57% backend/61.25% frontend |
 
 Exit criteria:
 
@@ -151,6 +154,7 @@ Goal: Prevent unverified code from entering `main`.
 | CI-008 | Upload logs, traces, screenshots, and reports on failure | DONE | CI-005 | Local failures produced error context/screenshot/video; config captures first-retry trace and CI uploads the complete Playwright report tree |
 | CI-009 | Add flaky-test retry/ownership policy | DONE | CI-005 | One retry collects diagnostics; report checker fails retried/flaky/unowned tests and the synthetic violation fixture fails as expected |
 | CI-010 | Protect required checks before merge | DONE | CI-002–009 | `main` protection requires the exact three PR contexts with strict/up-to-date checks, denies force pushes/deletion, and left PR #1 `unstable` while its mocked check failed |
+| SEC-CSP-001 | Narrow the production CSP while preserving static rendering | DONE | CI-002, TEST-007 | Production removes `unsafe-eval` and unused external origins, development alone retains `unsafe-eval`, HTTP captures match the contract, fast/build pass, and mocked E2E passes 28/28 |
 
 Exit criteria:
 
@@ -193,6 +197,8 @@ Goal: Establish fast feedback and meaningful coverage across risk boundaries.
 | TEST-007 | Add hydration, cache-mutation, and BFF-only tests | DONE | TEST-006 | Five frontend unit suites pass 13 tests including Zustand no-token hydration, SWR non-revalidating cache mutation, and BFF cookie/path/host/redirect contracts |
 | TEST-008 | Add brutalist visual regression coverage | DONE | TEST-006, CI-007 | Reviewed black/white desktop/mobile baselines exist for all four browser projects; tooling overlay removed and clean matrix passes 4/4 |
 | TEST-009 | Cover loading, empty, error, disabled, and keyboard states | DONE | TEST-006 | Five component tests cover loading/error/empty/disabled/focus semantics and mocked flow proves keyboard activation across four browser projects |
+| UI-LANGUAGE-001 | Convert remaining executable frontend UI text and comments to English | TODO | SEC-CSP-001 | Four bounded public/auth, admin/AI, exam, and student/shared waves pass targeted tests, build, and affected browser flows |
+| TEST-FE-COVERAGE-001 | Raise meaningful frontend coverage while translating each wave | TODO | TEST-002, UI-LANGUAGE-001 | Critical modules approach 80% meaningful line coverage and global coverage reaches `max(25%, fresh baseline + 10 percentage points)` without lowering committed thresholds |
 
 Exit criteria:
 
@@ -278,12 +284,13 @@ Goal: Ensure AI output is reviewable, tenant-safe, measurable, and regression-te
 | AI-003 | Implement prompt versioning and AI audit metadata | DONE | AI-001, DATA-001 | Every transition and chat call records the §2.4 field set (prompt version, provider/model, tokens, estimated cost, latency, context source ids, reviewer, outcome) atomically with the state change; cost is configuration-derived or an explicit null, never fabricated |
 | AI-004 | Add redaction and access controls for sensitive AI logs | DONE | AI-003, SEC-002 | Rendered prompts/raw output live only in `ai_restricted_payloads`, readable by owner/admin with cross-tenant probes indistinguishable from missing; a planted canary reaches no audit row; §6.3's 30-day expiry runs through the existing purge path without loosening its allowlist |
 | AI-005 | Enforce tenant-safe retrieval | DONE | SEC-002, TEST-004 | AI chat/process/background generation require one authorized material and cross-owner/missing probes never invoke the provider or enter retrieval context |
-| AI-006 | Build the first admin-approved golden dataset | DEFERRED | AI-001 | Deferred by owner decision on 2026-08-19. Requires 30–50 admin-approved reference cases that no agent may invent or self-approve (`REMAINING_HIGH_RISK_APPROVAL_PACKET.md` §7) |
-| AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | DEFERRED | AI-006 | Deferred with AI-006; blocked on its dataset |
-| AI-008 | Add prompt/model regression thresholds to CI | DEFERRED | AI-007 | Deferred with AI-006/007; the change contract forbids inventing thresholds before an approved baseline report exists |
+| AI-006 | Build the first admin-approved golden dataset | TODO | AI-001 | Owner resumed the work on 2026-08-25 with a Vietnamese-first 40-case design; only owner/admin-approved reference content may enter the approved dataset and no agent may self-approve it |
+| AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | TODO | AI-006 | Versioned evaluator emits aggregate/per-case metrics without committing raw provider payloads; structure, citation, and injection remain hard gates |
+| AI-008 | Add prompt/model regression thresholds to CI | TODO | AI-007 | After three stable full baselines, deterministic PR checks and a capped 20-case live subset enforce approved thresholds while all 40 run weekly/manual |
 | AI-009 | Verify AI grading remains advisory until teacher/admin approval | DONE | AI-002, AI-007 | `AIGradeSuggestion` starts `awaiting_review` and its creation cannot change awarded points, submission totals, or result release; the existing deterministic `GradingService` is untouched and not reclassified. No AI grading exists yet, so the invariant is established ahead of it rather than retrofitted |
 | AI-RAG-HIDE-001 | Temporarily disable RAG/material chat while preserving content generation | SUPERSEDED | AI-001–005 | Implemented and verified, then superseded by the owner's 2026-08-25 decision to return RAG/material chat to the active MVP surface; retained as historical evidence |
 | AI-RAG-ENABLE-001 | Re-enable owner-scoped RAG/material chat by default | DONE | AI-001–005 | Material chat defaults are active while the backend-authoritative kill switch, default-disabled legacy mock processor, strict message-role contract, owner-scoped retrieval, audit metadata, prompt-injection handling, sanitized errors, and BFF transport remain; fast passes 495 tests plus build, full guarded PostgreSQL passes 171/171, capped live provider smoke passes, and independent L3 review reports no remaining P1/P2 |
+| RAG-SEMANTIC-001 | Replace lexical-only retrieval with evaluated pgvector hybrid retrieval | TODO | AI-006–008 | Typed embeddings, pgvector storage/indexing, vector-plus-full-text reciprocal-rank fusion, source events, lexical rollback, and approved `/ai/process-document` removal pass safety/quality thresholds before semantic mode becomes default |
 
 Exit criteria:
 
@@ -389,6 +396,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-25 | Workflow tracker reconciliation | Completed | Reconciled SEC-003–007 to `DONE` against commit `5cdb886`, its completed handoff, PostgreSQL/migration/E2E evidence, and independent review. Confirmed that the only remaining milestone work is five GitHub-hosted checks in `REVIEW`, one AI transition in `REVIEW`, and three owner-approved AI evaluation tasks in `DEFERRED`; EXAM-FLOW-QUICK-001 remains a supplemental L2 review item. |
 | 2026-08-25 | CI-GITHUB-001 / CI-002/003/005/006/010 | Completed | Published and repaired the GitHub workflow; push run `32831201837` passed Fast, PostgreSQL integration/Alembic, and real E2E; PR run `32837826190` passed Fast, coverage, and 28/28 mocked browser tests. Applied `main` protection with the exact three strict required contexts and force-push/deletion denial; the earlier failed mocked check left PR #1 `unstable`, providing merge-block evidence. See `CI-GITHUB-001_CHANGE_CONTRACT.md` and `../handoffs/CI-GITHUB-001.md`. |
 | 2026-08-25 | AI-RAG-ENABLE-001 | Completed | Owner reversed the temporary RAG suspension. Material chat is active by default; the synthetic compatibility processor remains default-disabled. Strict chat-role validation closes provider-priority injection, guarded PostgreSQL owner/student/inactive/admin and audit regression passes 3/3 with database cleanup, the capped live provider smoke completes, and the independent L3 reviewer reports no remaining P1/P2. No migration or data rewrite. See `AI-RAG-ENABLE-001_CHANGE_CONTRACT.md` and `../handoffs/AI-RAG-ENABLE-001.md`. |
+| 2026-08-26 | TOOL-PYTEST-CACHE-001 / SEC-CSP-001 | Completed | Coverage is cache-independent and passes 352 unit/contract + 171 PostgreSQL + 149 frontend tests at 90.57%/61.25%; production and development HTTP CSP captures match the narrowed allowlists; fast passes 501 tests plus build; mocked E2E passes 28/28; independent L2 review found no P1/P2 and both P3 documentation findings were closed. See `WORKFLOW-COVERAGE-CSP-001_CHANGE_CONTRACT.md` and `../handoffs/WORKFLOW-COVERAGE-CSP-001.md`. |
 
 ## 17. Known program risks
 
@@ -403,6 +411,6 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
 | Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
 | Administrative on-behalf-of student submission is not implemented | The approved current contract keeps self-service routes student-only and uses separate audited Admin management operations; any future impersonation/on-behalf-of workflow requires a new approved target and audit contract |
-| AI output is governed but its quality is not yet measured | Hard safety invariants (no cross-owner retrieval, no automatic publication, no final AI grading) are enforced in code and tested. Correctness, groundedness, injection resistance, latency, and cost remain unmeasured until AI-006–008 are undeferred; do not represent Milestone 9 as making AI output good, only as making it reviewable |
+| AI output is governed but its quality is not yet measured | Hard safety invariants (no cross-owner retrieval, no automatic publication, no final AI grading) are enforced in code and tested. Correctness, groundedness, injection resistance, latency, and cost remain unmeasured until AI-006–008 are completed; do not represent Milestone 9 as making AI output good, only as making it reviewable |
 | `AIGradeSuggestion` has no production caller | The advisory invariant currently holds trivially because nothing generates a suggestion yet. When AI grading is implemented, the apply-on-approval path described in the model docstring still has to be built and tested |
 | Post-MVP submission/grade retention remains undecided | The approved MVP policy forbids permanent purge; require a later educational-record ADR and explicit owner approval before changing it |

@@ -1,5 +1,10 @@
 import subprocess
 import sys
+from pathlib import Path
+
+
+PYTEST_CACHE_ARGS = ["-p", "no:cacheprovider"]
+REPORTS_DIRECTORY = Path("reports")
 
 
 def run(arguments: list[str]) -> int:
@@ -8,6 +13,8 @@ def run(arguments: list[str]) -> int:
 
 
 def main() -> int:
+    REPORTS_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
     if run(["-m", "coverage", "erase"]) != 0:
         return 1
 
@@ -16,6 +23,7 @@ def main() -> int:
             "-m",
             "pytest",
             "-q",
+            *PYTEST_CACHE_ARGS,
             "-m",
             "unit or contract",
             "--cov=app",
@@ -32,6 +40,7 @@ def main() -> int:
             "scripts.run_integration",
             "--",
             "-q",
+            *PYTEST_CACHE_ARGS,
             "-m",
             "integration",
             "--cov=app",
