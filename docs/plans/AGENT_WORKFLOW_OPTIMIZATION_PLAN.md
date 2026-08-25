@@ -4,7 +4,7 @@ Status: Active
 Plan owner: Project owner  
 Execution owner: Primary coding agent  
 Created: 2026-08-05  
-Last updated: 2026-08-19
+Last updated: 2026-08-25
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
 
 ## 1. Objective
@@ -60,6 +60,19 @@ Milestone 0: Durable specification and plan
 ```
 
 Milestones 1 and 2 may partially overlap. Feature development may resume under the new workflow after Milestone 3, while later hardening milestones continue.
+
+### 3.1 Current open work
+
+Verified on 2026-08-25, the milestone tables contain 79 `DONE`, 6 `REVIEW`,
+3 owner-approved `DEFERRED`, and no `TODO`, `IN_PROGRESS`, or `BLOCKED`
+tasks. The remaining work is:
+
+| Category | IDs | Current evidence | Completion condition |
+|---|---|---|---|
+| GitHub-hosted verification | CI-002, CI-003, CI-005, CI-006, CI-010 | The workflow, local gates, and policy checker are implemented. `origin` is reachable but has no heads, and GitHub CLI is unavailable locally. | Push the initial branch, observe the first pull-request and `main` runs, apply required checks, and capture merge-block evidence. |
+| Independent review | AI-RAG-HIDE-001 | Implementation and local verification are recorded; its handoff remains `REVIEW`. | Complete the required independent L3 security/behavior review and resolve any P1/P2 findings. |
+| Supplemental independent review | EXAM-FLOW-QUICK-001 | Implementation and local verification are recorded in the progress log; its handoff remains `REVIEW`. | Complete the scoped L2 diff review and resolve any findings. |
+| Owner-deferred AI evaluation | AI-006, AI-007, AI-008 | Safety and human-review invariants are enforced, but AI quality is not measured. | Owner/admin supplies and approves 30–50 golden cases, explicitly resumes the work, then establishes evaluation baselines and CI thresholds. |
 
 ## 4. Milestone 0 — Durable specification and plan
 
@@ -220,11 +233,11 @@ All tasks in this milestone require approved change contracts and independent re
 |---|---|---|---|---|
 | SEC-001 | Implement named permission-policy layer | DONE | GOV-002, TEST-004 | Typed policies centralize compatibility grants, owner decisions, admin override, and fail-closed audit commits |
 | SEC-002 | Define and apply ownership fields and filters to sensitive resources | DONE | SEC-001 | Explicit/derived ownership, scoped queries, legacy-null quarantine, same-owner links, and tenant-safe retrieval pass PostgreSQL tests |
-| SEC-003 | Implement access/refresh token lifecycle and rotation | TODO | GOV-001, TEST-003 | Rotation, expiry, and replay cases pass |
-| SEC-004 | Implement revocation and logout semantics | TODO | SEC-003 | Single/all-session behavior is tested and audited |
-| SEC-005 | Implement CSRF protections for cookie-authenticated mutations | TODO | SEC-003 | Cross-site mutation tests fail safely |
-| SEC-006 | Add IDOR and cross-tenant regression suite | REVIEW | SEC-002–005 | Ownership/IDOR suite passes; final status awaits SEC-003–005 and resolution of Admin versus student-self-service matrix semantics |
-| SEC-007 | Verify canonical role redirects and frontend UX guards | TODO | SEC-001, TEST-006 | `/dashboard`, `/student/home`, and `/login` behavior passes |
+| SEC-003 | Implement access/refresh token lifecycle and rotation | DONE | GOV-001, TEST-003 | Fifteen-minute access tokens plus hashed opaque refresh sessions, 7/30-day expiry, atomic rotation, and replay-family revocation pass PostgreSQL tests |
+| SEC-004 | Implement revocation and logout semantics | DONE | SEC-003 | Logout, logout-all, password-change, inactive-user, and replay revocation behavior is tested and security-sensitive events are audited |
+| SEC-005 | Implement CSRF protections for cookie-authenticated mutations | DONE | SEC-003 | Same-origin enforcement, constant-time double-submit CSRF checks, BFF credential stripping, and cross-site rejection cases pass |
+| SEC-006 | Add IDOR and cross-tenant regression suite | DONE | SEC-002–005 | Ownership/IDOR matrices pass; the owner approved student-only self-service with separate audited Admin management contracts, and the permission matrix/tests match that decision |
+| SEC-007 | Verify canonical role redirects and frontend UX guards | DONE | SEC-001, TEST-006 | Server-side `/auth/me` role hydration and canonical `/dashboard`, `/student/home`, and `/login` redirects pass unit, mocked-browser, and real-backend E2E coverage |
 
 Exit criteria:
 
@@ -373,6 +386,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-20 | WORKSPACE-ARCHIVE-001 | Completed | Moved local report generation/output, its reconstructible commit snapshot, temporary/demo renders, unused brand experiments, obsolete pnpm/DeepEval state, and 12 unreferenced ad-hoc backend Python utilities into the ignored local archive. Active `backend/` now has zero loose `.py` files; 476 formal tests collect, scoped Ruff passes, and no executable reference targets an archived script. See `WORKSPACE-ARCHIVE-001_CHANGE_CONTRACT.md` and `../handoffs/WORKSPACE-ARCHIVE-001.md`. |
 | 2026-08-24 | ANTI-NODB-001 / GUARD-008 | Completed | Replaced the remote icon font with Lucide, bundled IBM Plex Mono locally, extended CSS/design guard coverage, and reduced executable design-debt fingerprints from 328 to zero. Fast verification and 28/28 mocked tests across Chromium, Firefox, WebKit, and mobile Chrome pass without PostgreSQL. See `ANTI-NODB-001_CHANGE_CONTRACT.md` and `../handoffs/ANTI-NODB-001.md`. |
 | 2026-08-25 | ANTI-PG-SEC-001 / SEC-003-007 | Completed | Removed all ten active query anti-patterns; implemented the approved access/refresh, revocation, CSRF, BFF, role-hydration, and student-only self-service contracts. Fast verification passed 487 tests plus production build; PostgreSQL integration passed 169/169; migration upgrade/downgrade/upgrade passed through head `a74c9d2e6f10`; real E2E passed 3/3; mocked E2E passed 28/28 across four browser projects; final independent review found no P1/P2; the managed `_test` database is absent. See `ANTI-PG-SEC-001_CHANGE_CONTRACT.md` and `../handoffs/ANTI-PG-SEC-001.md`. |
+| 2026-08-25 | Workflow tracker reconciliation | Completed | Reconciled SEC-003–007 to `DONE` against commit `5cdb886`, its completed handoff, PostgreSQL/migration/E2E evidence, and independent review. Confirmed that the only remaining milestone work is five GitHub-hosted checks in `REVIEW`, one AI transition in `REVIEW`, and three owner-approved AI evaluation tasks in `DEFERRED`; EXAM-FLOW-QUICK-001 remains a supplemental L2 review item. |
 
 ## 17. Known program risks
 
@@ -382,11 +396,11 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Historical Antigravity rules could contaminate agent discovery | Mitigated: the full legacy tree is recoverable under ignored `.legacy-archive/antigravity-agents-20260805`; active `.agents` contains only three validated skills |
 | Broad ignore rules could silently exclude test suites | Mitigated by CI-001; retain `git check-ignore` validation in future CI work |
 | Backend integration tests could mutate a developer database | Mitigated: direct integration fixtures require `ENV=test`; the runner manages only a new local `_test` database and refuses unsafe or pre-existing targets |
-| Backend tests share a global SlowAPI limiter and exceed auth limits during a full run | Mitigated with per-test limiter reset; current full baseline is 29 passed in 23.78s |
-| CI workflow has not executed on GitHub | `origin` is configured but currently has no heads; CI-002/003 remain in REVIEW until the initial push/PR runs, and remote protection work still needs authenticated GitHub CLI access |
+| Backend tests share a global SlowAPI limiter and exceed auth limits during a full run | Mitigated with per-test limiter reset; the latest canonical fast and PostgreSQL integration gates pass |
+| CI workflow has not executed on GitHub | `origin` is configured but currently has no heads; CI-002/003/005/006/010 remain in `REVIEW` until initial push/PR/`main` runs and branch-protection evidence exist; remote protection work also needs authenticated GitHub access |
 | Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
 | Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
-| Admin student-submission permissions are ambiguous | Keep self-service routes student-only until an approved on-behalf-of target/audit contract or permission-matrix amendment resolves SEC-006 |
+| Administrative on-behalf-of student submission is not implemented | The approved current contract keeps self-service routes student-only and uses separate audited Admin management operations; any future impersonation/on-behalf-of workflow requires a new approved target and audit contract |
 | AI output is governed but its quality is not yet measured | Hard safety invariants (no cross-owner retrieval, no automatic publication, no final AI grading) are enforced in code and tested. Correctness, groundedness, injection resistance, latency, and cost remain unmeasured until AI-006–008 are undeferred; do not represent Milestone 9 as making AI output good, only as making it reviewable |
 | `AIGradeSuggestion` has no production caller | The advisory invariant currently holds trivially because nothing generates a suggestion yet. When AI grading is implemented, the apply-on-approval path described in the model docstring still has to be built and tested |
 | Post-MVP submission/grade retention remains undecided | The approved MVP policy forbids permanent purge; require a later educational-record ADR and explicit owner approval before changing it |

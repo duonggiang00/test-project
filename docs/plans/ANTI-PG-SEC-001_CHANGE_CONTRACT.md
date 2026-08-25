@@ -81,5 +81,5 @@ Approval evidence: Project owner approved implementation of the proposed plan on
 - Unresolved assumptions: none for the approved local verification scope.
 - Independent review result:
   - Final PostgreSQL-enabled read-only re-review found no remaining P1/P2 after the initial findings and executable-gate regressions were remediated.
-- SPEC_DRIFT:
-  - The approved permission matrix grants Admin student-submission self-service actions, while live routes intentionally require a Student actor. The owner chose the safer student-only behavior on 2026-08-25; the matrix and tests will be amended accordingly.
+- Resolved SPEC_DRIFT:
+  - The permission matrix previously granted Admin student-submission self-service actions while live routes required a Student actor. The owner selected the safer student-only behavior on 2026-08-25; the matrix and regression tests now match that decision.
