@@ -57,7 +57,7 @@ jobs:
         run: npm ci
 
       - name: Create ignored fast-test environment file
-        run: cp .env.example .env
+        run: node scripts/create-ci-env.mjs fast
 
       - name: Run fast gate
         run: node scripts/verify.mjs fast
@@ -80,8 +80,6 @@ jobs:
     needs: fast
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ai_exam
 
     services:
       postgres:
@@ -125,6 +123,9 @@ jobs:
         working-directory: backend
         run: uv sync --frozen
 
+      - name: Create ignored PostgreSQL test environment file
+        run: node scripts/create-ci-env.mjs postgres
+
       - name: Run coverage and PostgreSQL integration gate
         env:
           COVERAGE_BASE_SHA: ${{ github.event.before }}
@@ -150,8 +151,6 @@ jobs:
     needs: fast
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ai_exam
 
     services:
       postgres:
@@ -196,6 +195,9 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
+
+      - name: Create ignored PostgreSQL test environment file
+        run: node scripts/create-ci-env.mjs postgres
 
       - name: Run coverage regression gate
         env:
@@ -257,8 +259,6 @@ jobs:
     needs: fast
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/ai_exam
 
     services:
       postgres:
@@ -305,6 +305,9 @@ jobs:
       - name: Install Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
+
+      - name: Create ignored PostgreSQL test environment file
+        run: node scripts/create-ci-env.mjs postgres
 
       - name: Run real backend smoke flow
         run: node scripts/verify.mjs e2e-real
