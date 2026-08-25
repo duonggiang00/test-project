@@ -16,6 +16,7 @@ const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const backendRoot = resolve(workspaceRoot, "backend");
 const frontendRoot = resolve(workspaceRoot, "frontend");
 const outputPath = resolve(workspaceRoot, "docs/generated/project-inventory.json");
+const introspectionDatabaseUrl = "postgresql://inventory:inventory@127.0.0.1:5432/inventory";
 
 const ignoredDirectoryNames = new Set([
   ".auth",
@@ -81,6 +82,7 @@ function backendInventory() {
     ["run", "--frozen", "python", "-m", "scripts.emit_inventory"],
     backendRoot,
     {
+      DATABASE_URL: process.env.DATABASE_URL ?? introspectionDatabaseUrl,
       UV_CACHE_DIR: resolve(backendRoot, ".uv-cache"),
       UV_PYTHON_INSTALL_DIR: resolve(backendRoot, ".uv-python"),
     },
