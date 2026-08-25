@@ -12,6 +12,7 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def enable_rag_for_legacy_regressions(monkeypatch):
     monkeypatch.setattr(settings, "RAG_ENABLED", True)
+    monkeypatch.setattr(settings, "RAG_LEGACY_PROCESS_ENABLED", True)
 
 def test_process_document(client, db, test_teacher):
     # First create a mock material

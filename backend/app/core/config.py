@@ -42,10 +42,12 @@ class Settings(BaseSettings):
     AI_MODEL_QUESTION_GENERATION: str = ""
     AI_MODEL_FLASHCARD_GENERATION: str = ""
     AI_MODEL_TOPIC_BRIEF_GENERATION: str = ""
-    # Material chat/retrieval is retained for later work but is not part of
-    # the active MVP surface. Both RAG endpoints fail closed unless an
-    # operator explicitly enables this server-side flag.
-    RAG_ENABLED: bool = False
+    # Material chat/retrieval is part of the active MVP surface. Operators can
+    # still set this server-side flag to false as an emergency kill switch.
+    RAG_ENABLED: bool = True
+    # Compatibility-only mock processing endpoint. Real uploads already use
+    # the governed extraction/chunking pipeline, so this remains opt-in.
+    RAG_LEGACY_PROCESS_ENABLED: bool = False
 
     # Per-model token pricing for the §2.4 `estimated_cost` audit field
     # (AI-003), as a JSON object:

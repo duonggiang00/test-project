@@ -1,6 +1,6 @@
 # Handoff: EXAM-FLOW-QUICK-001 — Expose exam creation and question assignment
 
-Status: REVIEW  
+Status: DONE
 Risk level: L2
 
 ## Outcome
@@ -57,8 +57,8 @@ The first sandboxed browser attempt could not spawn browser executables (`EPERM`
 ## Risks and follow-up
 
 - Known risks: Admin and Teacher still intentionally share the same presentation; backend ownership/permission policy remains the only authority.
-- Unverified items: Independent L2 diff review has not yet been recorded, so status remains `REVIEW` rather than `DONE`.
-- Follow-up tasks: Independent reviewer should inspect only the scoped EXAM-FLOW diff and either sign off or return concrete findings.
+- Unverified items: None within the approved L2 scope.
+- Follow-up tasks: None. The independent reviewer reconstructed and approved the scoped historical diff `2fe438f^..2fe438f` with no P1/P2/P3 findings on 2026-08-25.
 
 ## Rollback
 

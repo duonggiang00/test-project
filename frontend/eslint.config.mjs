@@ -21,16 +21,16 @@ const eslintConfig = defineConfig([
         "paths": [
           {
             "name": "@/lib/api",
-            "message": "❌ ANTI-PATTERN: TUYỆT ĐỐI CẤM gọi API trực tiếp. Hãy dùng custom hook (SWR) trong src/hooks/"
+            "message": "ANTI-PATTERN: Do not call the backend API directly. Use an SWR hook from src/hooks/."
           },
           {
             "name": "axios",
-            "message": "❌ ANTI-PATTERN: Cấm dùng axios trong giao diện. Mọi request phải thông qua src/hooks/ hoặc src/lib/api.ts"
+            "message": "ANTI-PATTERN: Do not use axios in UI components. Route requests through src/hooks/ or the approved service boundary."
           }
         ],
         "patterns": [{
           "group": ["**/lib/api"],
-          "message": "❌ ANTI-PATTERN: TUYỆT ĐỐI CẤM gọi API trực tiếp. Hãy dùng custom hook (SWR) trong src/hooks/"
+          "message": "ANTI-PATTERN: Do not call the backend API directly. Use an SWR hook from src/hooks/."
         }]
       }]
     }
@@ -44,6 +44,10 @@ const eslintConfig = defineConfig([
     ".next-e2e-real/**",
     "out/**",
     "build/**",
+    "reports/**",
+    "coverage/**",
+    "playwright-report/**",
+    "test-results/**",
     "next-env.d.ts",
   ]),
 ]);

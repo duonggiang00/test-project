@@ -1,20 +1,18 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.schemas.ai import ProcessDocumentRequest, ProcessDocumentResponse
+from app.schemas.ai import ChatRequest, ProcessDocumentRequest, ProcessDocumentResponse
 from app.schemas.ai_generation import (
     AIGenerationJobResponse,
     PublishJobRequest,
     ReviewDecisionRequest,
     UpdateDraftRequest,
 )
-from app.core.security_guardrails import MAX_MESSAGES
 from app.core.config import settings
 from app.core.exceptions import AppException
 from app.api.deps import get_current_active_teacher
 from app.models.user import User
-from pydantic import BaseModel, field_validator
-from typing import List, Dict, Any, Optional
+from typing import Optional
 from uuid import UUID
 from fastapi.responses import StreamingResponse
 from fastapi_pagination import Page
@@ -22,17 +20,6 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 
 from app.services.ai_studio_service import AiStudioService
 from app.services.material_service import MaterialService
-
-class ChatRequest(BaseModel):
-    material_id: UUID
-    messages: List[Dict[str, Any]]
-
-    @field_validator("messages")
-    @classmethod
-    def validate_message_count(cls, v: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        if len(v) > MAX_MESSAGES * 2:
-            raise ValueError(f"Too many messages. Maximum allowed: {MAX_MESSAGES * 2}")
-        return v
 
 router = APIRouter()
 
@@ -45,10 +32,19 @@ def require_rag_enabled() -> None:
             error_code="FEATURE_NOT_AVAILABLE",
         )
 
+
+def require_legacy_rag_process_enabled() -> None:
+    """Keep the compatibility-only mock processor outside the active surface."""
+    if not settings.RAG_ENABLED or not settings.RAG_LEGACY_PROCESS_ENABLED:
+        raise AppException(
+            status_code=404,
+            error_code="FEATURE_NOT_AVAILABLE",
+        )
+
 @router.post(
     "/process-document",
     response_model=ProcessDocumentResponse,
-    dependencies=[Depends(require_rag_enabled)],
+    dependencies=[Depends(require_legacy_rag_process_enabled)],
 )
 def process_document(
     request: ProcessDocumentRequest,
@@ -77,7 +73,7 @@ async def chat(
         AiStudioService.chat_generator(
             db,
             material,
-            request.messages,
+            [message.model_dump() for message in request.messages],
             current_user,
         ),
         media_type="text/event-stream"

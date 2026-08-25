@@ -2,7 +2,7 @@
 
 Status: Approved  
 Approved date: 2026-08-05  
-Last decision update: 2026-08-21
+Last decision update: 2026-08-25
 Product stage: MVP with real users  
 Primary development environment: Windows
 
@@ -23,8 +23,7 @@ Current code wins when it differs from a historical PRD. This rule does not conv
 
 ## 2. Product scope
 
-All existing product modules are official scope and remain under active development,
-subject to the temporary RAG/chat suspension recorded in Section 9.5:
+All existing product modules are official scope and remain under active development:
 
 - Authentication and user management.
 - Topic and material management.
@@ -32,8 +31,7 @@ subject to the temporary RAG/chat suspension recorded in Section 9.5:
 - Student exam flow.
 - Flashcards and spaced repetition.
 - AI Studio content generation for questions, flashcards, and topic briefs.
-- Retrieval-augmented generation and material chat are retained for future work
-  but are temporarily disabled in the active MVP surface.
+- Retrieval-augmented generation and material chat.
 - AI-assisted grading.
 - Analytics and reporting.
 - Password reset.
@@ -287,18 +285,22 @@ AI regression evaluation must measure:
 
 No golden dataset currently exists. An admin is responsible for approving the reference answers. The initial target is a small, high-quality dataset before expanding coverage.
 
-### 9.5 Temporary RAG and material-chat suspension
+### 9.5 Active RAG and material chat
 
-- RAG and material chat are not part of the active MVP surface until the owner
-  explicitly re-enables them.
-- Backend access is disabled by default through `RAG_ENABLED=false`; frontend
-  chat presentation is disabled by default through
-  `NEXT_PUBLIC_RAG_ENABLED=false`.
+- RAG and material chat are part of the active MVP surface.
+- Backend access is enabled by default through `RAG_ENABLED=true`; frontend
+  chat presentation is enabled by default through
+  `NEXT_PUBLIC_RAG_ENABLED=true`.
+- Both flags remain available as emergency kill switches. The backend flag is
+  authoritative and must fail closed before authentication, retrieval, or
+  provider work when disabled.
+- The compatibility-only mock `/ai/process-document` route remains disabled by
+  default through `RAG_LEGACY_PROCESS_ENABLED=false`; real material uploads use
+  the governed extraction and chunk-persistence path.
 - Upload, content extraction, document chunk persistence, question generation,
   flashcard generation, topic-brief generation, and human review remain active.
-- The existing retrieval implementation and historical engineering evidence are
-  retained so the capability can be resumed without deleting data or rewriting
-  history.
+- Retrieval remains owner-scoped, audited, redacted according to the restricted
+  payload policy, and protected by the existing prompt-injection guardrails.
 
 ## 10. Testing and CI
 

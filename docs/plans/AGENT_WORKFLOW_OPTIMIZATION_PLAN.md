@@ -6,6 +6,8 @@ Execution owner: Primary coding agent
 Created: 2026-08-05  
 Last updated: 2026-08-25
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
+Approved remaining-work execution plan:
+[`REMAINING_WORK_EXECUTION_PLAN_2026-08-25.md`](REMAINING_WORK_EXECUTION_PLAN_2026-08-25.md)
 
 ## 1. Objective
 
@@ -63,14 +65,12 @@ Milestones 1 and 2 may partially overlap. Feature development may resume under t
 
 ### 3.1 Current open work
 
-Verified on 2026-08-25, the milestone tables contain 84 `DONE`, 1 `REVIEW`,
-3 owner-approved `DEFERRED`, and no `TODO`, `IN_PROGRESS`, or `BLOCKED`
-tasks. The remaining work is:
+Verified on 2026-08-25, the milestone tables contain 86 `DONE`, no `REVIEW`,
+3 owner-approved `DEFERRED`, 1 `SUPERSEDED`, and no `TODO`, `IN_PROGRESS`,
+or `BLOCKED` tasks. The remaining work is:
 
 | Category | IDs | Current evidence | Completion condition |
 |---|---|---|---|
-| Independent review | AI-RAG-HIDE-001 | Implementation and local verification are recorded; its handoff remains `REVIEW`. | Complete the required independent L3 security/behavior review and resolve any P1/P2 findings. |
-| Supplemental independent review | EXAM-FLOW-QUICK-001 | Implementation and local verification are recorded in the progress log; its handoff remains `REVIEW`. | Complete the scoped L2 diff review and resolve any findings. |
 | Owner-deferred AI evaluation | AI-006, AI-007, AI-008 | Safety and human-review invariants are enforced, but AI quality is not measured. | Owner/admin supplies and approves 30–50 golden cases, explicitly resumes the work, then establishes evaluation baselines and CI thresholds. |
 
 ## 4. Milestone 0 — Durable specification and plan
@@ -282,7 +282,8 @@ Goal: Ensure AI output is reviewable, tenant-safe, measurable, and regression-te
 | AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | DEFERRED | AI-006 | Deferred with AI-006; blocked on its dataset |
 | AI-008 | Add prompt/model regression thresholds to CI | DEFERRED | AI-007 | Deferred with AI-006/007; the change contract forbids inventing thresholds before an approved baseline report exists |
 | AI-009 | Verify AI grading remains advisory until teacher/admin approval | DONE | AI-002, AI-007 | `AIGradeSuggestion` starts `awaiting_review` and its creation cannot change awarded points, submission totals, or result release; the existing deterministic `GradingService` is untouched and not reclassified. No AI grading exists yet, so the invariant is established ahead of it rather than retrofitted |
-| AI-RAG-HIDE-001 | Temporarily disable RAG/material chat while preserving content generation | REVIEW | AI-001–005 | Owner-approved feature flags default off; RAG routes fail closed and AI Workspace hides chat while upload, chunking, Questions, Flashcards, Topic Briefs, and review remain active. Focused unit, PostgreSQL integration, lint/type, production build, and four-browser AI review E2E pass; independent L3 review remains |
+| AI-RAG-HIDE-001 | Temporarily disable RAG/material chat while preserving content generation | SUPERSEDED | AI-001–005 | Implemented and verified, then superseded by the owner's 2026-08-25 decision to return RAG/material chat to the active MVP surface; retained as historical evidence |
+| AI-RAG-ENABLE-001 | Re-enable owner-scoped RAG/material chat by default | DONE | AI-001–005 | Material chat defaults are active while the backend-authoritative kill switch, default-disabled legacy mock processor, strict message-role contract, owner-scoped retrieval, audit metadata, prompt-injection handling, sanitized errors, and BFF transport remain; fast passes 495 tests plus build, full guarded PostgreSQL passes 171/171, capped live provider smoke passes, and independent L3 review reports no remaining P1/P2 |
 
 Exit criteria:
 
@@ -381,12 +382,13 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-19 | AI-006 / AI-007 / AI-008 | Deferred | Owner elected to defer the golden dataset, evaluation runner, and CI regression thresholds. AI-006 requires 30–50 admin-approved reference cases that no agent may invent or self-approve; AI-007 and AI-008 are blocked on it, and the change contract forbids inventing thresholds before an approved baseline exists. Hard safety invariants are enforced and tested regardless; AI *quality* is governed but not yet measured. |
 | 2026-08-19 | Milestone 9 independent review | Completed | A separate reviewer agent read all eight commits and re-ran every suite. Two findings, both fixed before sign-off: a P1 auto-publish escape (the topic-kit background worker still wrote briefs and flashcard decks straight to live tables, producing no audit row on the owner path) and a P2 (the chat path recorded no §2.4 metadata and usually no audit event). Verified clean: publish reads only the reviewed draft, no `generated -> published` path exists, both redaction barriers hold under attack, restricted-payload cross-tenant reads are indistinguishable 404s, the purge allowlist did not loosen, and `GradingService` was untouched. Final: fast gate green, PostgreSQL integration 139/139, mocked E2E 24/24 across four browsers, migration round trip clean through `e7b21c9d4a83`. See `../handoffs/AI-001-004-009.md`. |
 | 2026-08-20 | AI-RAG-HIDE-001 | Review | Owner approved a temporary default-off RAG/material-chat transition. The implementation preserves upload, extraction, chunks, generation, review, and historical RAG code/data while hiding chat and blocking both RAG routes. Focused backend/frontend tests, PostgreSQL integration, production build, and four-browser AI review E2E passed; Google Docs readback confirms the report contains none of the prohibited RAG/chat terms. Independent L3 review remains. See `AI-RAG-HIDE-001_CHANGE_CONTRACT.md` and `../handoffs/AI-RAG-HIDE-001.md`. |
-| 2026-08-20 | EXAM-FLOW-QUICK-001 | Review | Exposed Exam Builder in desktop/mobile navigation; Topic-backed `create=1` intent creates drafts and redirects to the Builder; direct creation and Topic-filtered bulk question assignment are connected; legacy response enums normalize to canonical uppercase form payloads. Frontend 121/121, guarded PostgreSQL exam/ownership 13/13, architecture guard, production build, and mocked E2E 28/28 across Chromium/Firefox/WebKit/mobile pass. Independent L2 diff review remains. See `EXAM-FLOW-QUICK-001_CHANGE_CONTRACT.md` and `../handoffs/EXAM-FLOW-QUICK-001.md`. |
+| 2026-08-20 | EXAM-FLOW-QUICK-001 | Completed | Exposed Exam Builder in desktop/mobile navigation; Topic-backed `create=1` intent creates drafts and redirects to the Builder; direct creation and Topic-filtered bulk question assignment are connected; legacy response enums normalize to canonical uppercase form payloads. Frontend 121/121, guarded PostgreSQL exam/ownership 13/13, architecture guard, production build, and mocked E2E 28/28 across Chromium/Firefox/WebKit/mobile pass. Independent L2 review reconstructed and approved `2fe438f^..2fe438f` with no P1/P2/P3 findings. See `EXAM-FLOW-QUICK-001_CHANGE_CONTRACT.md` and `../handoffs/EXAM-FLOW-QUICK-001.md`. |
 | 2026-08-20 | WORKSPACE-ARCHIVE-001 | Completed | Moved local report generation/output, its reconstructible commit snapshot, temporary/demo renders, unused brand experiments, obsolete pnpm/DeepEval state, and 12 unreferenced ad-hoc backend Python utilities into the ignored local archive. Active `backend/` now has zero loose `.py` files; 476 formal tests collect, scoped Ruff passes, and no executable reference targets an archived script. See `WORKSPACE-ARCHIVE-001_CHANGE_CONTRACT.md` and `../handoffs/WORKSPACE-ARCHIVE-001.md`. |
 | 2026-08-24 | ANTI-NODB-001 / GUARD-008 | Completed | Replaced the remote icon font with Lucide, bundled IBM Plex Mono locally, extended CSS/design guard coverage, and reduced executable design-debt fingerprints from 328 to zero. Fast verification and 28/28 mocked tests across Chromium, Firefox, WebKit, and mobile Chrome pass without PostgreSQL. See `ANTI-NODB-001_CHANGE_CONTRACT.md` and `../handoffs/ANTI-NODB-001.md`. |
 | 2026-08-25 | ANTI-PG-SEC-001 / SEC-003-007 | Completed | Removed all ten active query anti-patterns; implemented the approved access/refresh, revocation, CSRF, BFF, role-hydration, and student-only self-service contracts. Fast verification passed 487 tests plus production build; PostgreSQL integration passed 169/169; migration upgrade/downgrade/upgrade passed through head `a74c9d2e6f10`; real E2E passed 3/3; mocked E2E passed 28/28 across four browser projects; final independent review found no P1/P2; the managed `_test` database is absent. See `ANTI-PG-SEC-001_CHANGE_CONTRACT.md` and `../handoffs/ANTI-PG-SEC-001.md`. |
 | 2026-08-25 | Workflow tracker reconciliation | Completed | Reconciled SEC-003–007 to `DONE` against commit `5cdb886`, its completed handoff, PostgreSQL/migration/E2E evidence, and independent review. Confirmed that the only remaining milestone work is five GitHub-hosted checks in `REVIEW`, one AI transition in `REVIEW`, and three owner-approved AI evaluation tasks in `DEFERRED`; EXAM-FLOW-QUICK-001 remains a supplemental L2 review item. |
 | 2026-08-25 | CI-GITHUB-001 / CI-002/003/005/006/010 | Completed | Published and repaired the GitHub workflow; push run `32831201837` passed Fast, PostgreSQL integration/Alembic, and real E2E; PR run `32837826190` passed Fast, coverage, and 28/28 mocked browser tests. Applied `main` protection with the exact three strict required contexts and force-push/deletion denial; the earlier failed mocked check left PR #1 `unstable`, providing merge-block evidence. See `CI-GITHUB-001_CHANGE_CONTRACT.md` and `../handoffs/CI-GITHUB-001.md`. |
+| 2026-08-25 | AI-RAG-ENABLE-001 | Completed | Owner reversed the temporary RAG suspension. Material chat is active by default; the synthetic compatibility processor remains default-disabled. Strict chat-role validation closes provider-priority injection, guarded PostgreSQL owner/student/inactive/admin and audit regression passes 3/3 with database cleanup, the capped live provider smoke completes, and the independent L3 reviewer reports no remaining P1/P2. No migration or data rewrite. See `AI-RAG-ENABLE-001_CHANGE_CONTRACT.md` and `../handoffs/AI-RAG-ENABLE-001.md`. |
 
 ## 17. Known program risks
 

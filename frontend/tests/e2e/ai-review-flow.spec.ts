@@ -246,6 +246,8 @@ test('material upload and AI generation are publishable only after review (MOCKE
 
   // --- GENERATE ---
   await page.getByText(MATERIAL.title).click();
+  await expect(page.getByPlaceholder('Enter a material question...')).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Send material question' })).toBeDisabled();
   await page.getByRole('button', { name: /Sinh C.u H.i/i }).click();
 
   // --- AWAITING REVIEW: approve/reject offered, publish withheld ---
