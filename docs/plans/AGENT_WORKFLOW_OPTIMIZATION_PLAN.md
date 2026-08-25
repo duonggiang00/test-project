@@ -63,13 +63,12 @@ Milestones 1 and 2 may partially overlap. Feature development may resume under t
 
 ### 3.1 Current open work
 
-Verified on 2026-08-25, the milestone tables contain 79 `DONE`, 6 `REVIEW`,
+Verified on 2026-08-25, the milestone tables contain 84 `DONE`, 1 `REVIEW`,
 3 owner-approved `DEFERRED`, and no `TODO`, `IN_PROGRESS`, or `BLOCKED`
 tasks. The remaining work is:
 
 | Category | IDs | Current evidence | Completion condition |
 |---|---|---|---|
-| GitHub-hosted verification | CI-002, CI-003, CI-005, CI-006, CI-010 | The workflow, local gates, and policy checker are implemented. `origin` is reachable but has no heads, and GitHub CLI is unavailable locally. | Push the initial branch, observe the first pull-request and `main` runs, apply required checks, and capture merge-block evidence. |
 | Independent review | AI-RAG-HIDE-001 | Implementation and local verification are recorded; its handoff remains `REVIEW`. | Complete the required independent L3 security/behavior review and resolve any P1/P2 findings. |
 | Supplemental independent review | EXAM-FLOW-QUICK-001 | Implementation and local verification are recorded in the progress log; its handoff remains `REVIEW`. | Complete the scoped L2 diff review and resolve any findings. |
 | Owner-deferred AI evaluation | AI-006, AI-007, AI-008 | Safety and human-review invariants are enforced, but AI quality is not measured. | Owner/admin supplies and approves 30–50 golden cases, explicitly resumes the work, then establishes evaluation baselines and CI thresholds. |
@@ -143,15 +142,15 @@ Goal: Prevent unverified code from entering `main`.
 | ID | Task | Status | Depends on | Acceptance evidence |
 |---|---|---|---|---|
 | CI-001 | Fix `.gitignore` so backend and frontend test suites are tracked | DONE | PLAN-003 | `git check-ignore` confirms test files are not ignored |
-| CI-002 | Add pull-request fast gate | REVIEW | TOOL-006, CI-001 | Workflow implementation and 178.9s local gate pass are verified; awaiting the first GitHub pull-request run |
-| CI-003 | Add push-to-main integration gate | REVIEW | TOOL-006, TOOL-008, CI-001 | Workflow implementation, pgvector service profile, 24/24 local integration pass, and cleanup are verified; awaiting the first push-to-`main` run |
+| CI-002 | Add pull-request fast gate | DONE | TOOL-006, CI-001 | GitHub PR run `32837826190` completed `Fast verification` successfully |
+| CI-003 | Add push-to-main integration gate | DONE | TOOL-006, TOOL-008, CI-001 | GitHub push run `32831201837` completed `PostgreSQL integration`, including coverage and the Alembic round trip, successfully |
 | CI-004 | Add Alembic upgrade/downgrade/upgrade verification | DONE | CI-003 | Guarded PostgreSQL passes `upgrade head -> downgrade base -> upgrade head`; exact table/enum/revision assertions, single-head signature validation, nine runner unit tests, and `_test` cleanup pass after separately approved FK-name repairs |
-| CI-005 | Add mocked Playwright critical-flow suite to PRs | REVIEW | CI-002 | Backend-independent admin flow passes four local projects in 52s with failure artifacts; awaiting first GitHub pull-request run |
-| CI-006 | Add real-backend/PostgreSQL smoke E2E suite on `main` | REVIEW | CI-003, CI-005 | Guarded runner passed login, topic/exam/question creation, student submit/result, cleanup, and 3/3 owner/flake policy locally in 32s; awaiting first GitHub `main` run |
+| CI-005 | Add mocked Playwright critical-flow suite to PRs | DONE | CI-002 | GitHub PR run `32837826190` completed the 28-test Chromium/Firefox/WebKit/mobile matrix and owner/flake policy successfully |
+| CI-006 | Add real-backend/PostgreSQL smoke E2E suite on `main` | DONE | CI-003, CI-005 | GitHub push run `32831201837` completed `Real backend smoke E2E` successfully with the isolated PostgreSQL service |
 | CI-007 | Add Chromium, Firefox, WebKit, and mobile projects | DONE | CI-005, CI-006 | Chromium, Firefox, WebKit, and Pixel 7 Chrome matrix passes locally in 52s, within the 10-minute budget |
 | CI-008 | Upload logs, traces, screenshots, and reports on failure | DONE | CI-005 | Local failures produced error context/screenshot/video; config captures first-retry trace and CI uploads the complete Playwright report tree |
 | CI-009 | Add flaky-test retry/ownership policy | DONE | CI-005 | One retry collects diagnostics; report checker fails retried/flaky/unowned tests and the synthetic violation fixture fails as expected |
-| CI-010 | Protect required checks before merge | REVIEW | CI-002–009 | Machine-readable policy and drift gate identify three PR requirements; remote application and merge-block evidence await the first GitHub PR |
+| CI-010 | Protect required checks before merge | DONE | CI-002–009 | `main` protection requires the exact three PR contexts with strict/up-to-date checks, denies force pushes/deletion, and left PR #1 `unstable` while its mocked check failed |
 
 Exit criteria:
 
@@ -387,6 +386,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-24 | ANTI-NODB-001 / GUARD-008 | Completed | Replaced the remote icon font with Lucide, bundled IBM Plex Mono locally, extended CSS/design guard coverage, and reduced executable design-debt fingerprints from 328 to zero. Fast verification and 28/28 mocked tests across Chromium, Firefox, WebKit, and mobile Chrome pass without PostgreSQL. See `ANTI-NODB-001_CHANGE_CONTRACT.md` and `../handoffs/ANTI-NODB-001.md`. |
 | 2026-08-25 | ANTI-PG-SEC-001 / SEC-003-007 | Completed | Removed all ten active query anti-patterns; implemented the approved access/refresh, revocation, CSRF, BFF, role-hydration, and student-only self-service contracts. Fast verification passed 487 tests plus production build; PostgreSQL integration passed 169/169; migration upgrade/downgrade/upgrade passed through head `a74c9d2e6f10`; real E2E passed 3/3; mocked E2E passed 28/28 across four browser projects; final independent review found no P1/P2; the managed `_test` database is absent. See `ANTI-PG-SEC-001_CHANGE_CONTRACT.md` and `../handoffs/ANTI-PG-SEC-001.md`. |
 | 2026-08-25 | Workflow tracker reconciliation | Completed | Reconciled SEC-003–007 to `DONE` against commit `5cdb886`, its completed handoff, PostgreSQL/migration/E2E evidence, and independent review. Confirmed that the only remaining milestone work is five GitHub-hosted checks in `REVIEW`, one AI transition in `REVIEW`, and three owner-approved AI evaluation tasks in `DEFERRED`; EXAM-FLOW-QUICK-001 remains a supplemental L2 review item. |
+| 2026-08-25 | CI-GITHUB-001 / CI-002/003/005/006/010 | Completed | Published and repaired the GitHub workflow; push run `32831201837` passed Fast, PostgreSQL integration/Alembic, and real E2E; PR run `32837826190` passed Fast, coverage, and 28/28 mocked browser tests. Applied `main` protection with the exact three strict required contexts and force-push/deletion denial; the earlier failed mocked check left PR #1 `unstable`, providing merge-block evidence. See `CI-GITHUB-001_CHANGE_CONTRACT.md` and `../handoffs/CI-GITHUB-001.md`. |
 
 ## 17. Known program risks
 
@@ -397,7 +397,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Broad ignore rules could silently exclude test suites | Mitigated by CI-001; retain `git check-ignore` validation in future CI work |
 | Backend integration tests could mutate a developer database | Mitigated: direct integration fixtures require `ENV=test`; the runner manages only a new local `_test` database and refuses unsafe or pre-existing targets |
 | Backend tests share a global SlowAPI limiter and exceed auth limits during a full run | Mitigated with per-test limiter reset; the latest canonical fast and PostgreSQL integration gates pass |
-| CI workflow has not executed on GitHub | `origin` is configured but currently has no heads; CI-002/003/005/006/010 remain in `REVIEW` until initial push/PR/`main` runs and branch-protection evidence exist; remote protection work also needs authenticated GitHub access |
+| CI workflow has not executed on GitHub | Mitigated: hosted push and PR runs are green, `main` has the declared strict required contexts, and PR #1 demonstrated the blocked state while a required check failed |
 | Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
 | Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
 | Administrative on-behalf-of student submission is not implemented | The approved current contract keeps self-service routes student-only and uses separate audited Admin management operations; any future impersonation/on-behalf-of workflow requires a new approved target and audit contract |
