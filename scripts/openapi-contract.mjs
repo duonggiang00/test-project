@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const backendRoot = resolve(workspaceRoot, 'backend');
 const outputPath = resolve(workspaceRoot, 'docs/generated/openapi.json');
+const introspectionDatabaseUrl = 'postgresql://inventory:inventory@127.0.0.1:5432/inventory';
 
 function liveContract() {
   const result = spawnSync(
@@ -15,6 +16,7 @@ function liveContract() {
       cwd: backendRoot,
       env: {
         ...process.env,
+        DATABASE_URL: process.env.DATABASE_URL ?? introspectionDatabaseUrl,
         UV_CACHE_DIR: resolve(backendRoot, '.uv-cache'),
         UV_PYTHON_INSTALL_DIR: resolve(backendRoot, '.uv-python'),
       },
