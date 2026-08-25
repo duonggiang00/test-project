@@ -30,19 +30,19 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: ${{ env.UV_VERSION }}
           python-version: "3.12"
@@ -96,12 +96,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -110,7 +110,7 @@ jobs:
         run: npm ci
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: ${{ env.UV_VERSION }}
           python-version: "3.12"
@@ -164,19 +164,19 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: ${{ env.UV_VERSION }}
           python-version: "3.12"
@@ -216,10 +216,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -269,17 +269,17 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v8
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           version: ${{ env.UV_VERSION }}
           python-version: "3.12"

@@ -43,6 +43,12 @@ Out of scope:
 
 ## Assumptions and blockers
 
-- Verified: `origin` points to `https://github.com/duonggiang00/test-project.git`; the public repository exists and currently has no remote heads.
-- Verified: Git is configured to use Git Credential Manager, but no GitHub CLI or token environment variable is available.
-- Unresolved: whether Git Credential Manager or an existing browser session can authenticate push, pull-request creation, and branch-protection administration.
+- Verified: `origin` points to `https://github.com/duonggiang00/test-project.git`; the public repository exists and `main` now tracks `origin/main`.
+- Verified: Git Credential Manager authenticates workflow-bearing pushes after browser reauthorization; no GitHub CLI or token environment variable is available.
+- Unresolved: whether the connected GitHub API client has repository-administration permission for branch protection.
+
+## Execution evidence
+
+- Git Credential Manager authentication was refreshed after GitHub rejected the first push because the previous OAuth credential lacked `workflow` scope; retrying then published `main` successfully without exposing a token.
+- Push run `32825477755` failed before checkout in `Fast verification`; the official job log reports `Unable to resolve action astral-sh/setup-uv@v8`.
+- The GitHub releases API on 2026-08-25 reports current releases for `actions/checkout@v7`, `actions/setup-node@v7`, `astral-sh/setup-uv@v10.0.1`, and `actions/upload-artifact@v7`. Git ref checks confirm every selected ref exists; setup-uv has no moving `v10` tag, so its exact release tag is pinned before rerunning hosted verification.
