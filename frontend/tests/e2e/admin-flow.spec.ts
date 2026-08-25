@@ -187,7 +187,9 @@ test('login follows a predictable keyboard order with visible focus', {
     page.getByRole('link', { name: 'Register' }),
   ];
 
-  const keyboardOrder = testInfo.project.name === 'webkit'
+  // Windows WebKit follows the host convention that omits links from Tab
+  // navigation. Linux WebKit includes links, matching the other CI browsers.
+  const keyboardOrder = testInfo.project.name === 'webkit' && process.platform === 'win32'
     ? [focusOrder[1], focusOrder[2], focusOrder[3], focusOrder[4], focusOrder[6]]
     : focusOrder;
 
