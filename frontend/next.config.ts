@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 import { getBackendUrl } from "./src/lib/backend-url";
+import { createContentSecurityPolicy } from "./src/lib/content-security-policy";
 
 const backendUrl = new URL(getBackendUrl());
+const contentSecurityPolicy = createContentSecurityPolicy(
+  process.env.NODE_ENV === 'development',
+);
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -44,7 +48,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: http://127.0.0.1:8000 https://*; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' http://127.0.0.1:8000 https://openrouter.ai;"
+            value: contentSecurityPolicy,
           }
         ]
       }
