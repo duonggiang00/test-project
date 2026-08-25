@@ -18,6 +18,7 @@ const frontendRoot = resolve(workspaceRoot, "frontend");
 const outputPath = resolve(workspaceRoot, "docs/generated/project-inventory.json");
 
 const ignoredDirectoryNames = new Set([
+  ".auth",
   ".git",
   ".next",
   ".pytest_cache",
