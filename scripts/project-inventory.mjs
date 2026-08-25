@@ -11,7 +11,7 @@ import { dirname, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const GENERATOR_VERSION = "1.0.0";
+const GENERATOR_VERSION = "1.0.1";
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const backendRoot = resolve(workspaceRoot, "backend");
 const frontendRoot = resolve(workspaceRoot, "frontend");
@@ -216,15 +216,65 @@ function sourceFiles() {
   return [...new Set(paths.filter((path) => existsSync(path) && statSync(path).isFile()))].sort();
 }
 
-function sourceTreeHash(paths) {
+function canonicalSourceBytes(contents) {
+  if (!contents.includes(13) || contents.includes(0)) {
+    return contents;
+  }
+
+  const normalized = Buffer.allocUnsafe(contents.length);
+  let outputIndex = 0;
+  for (let index = 0; index < contents.length; index += 1) {
+    if (contents[index] === 13 && contents[index + 1] === 10) {
+      continue;
+    }
+    normalized[outputIndex] = contents[index];
+    outputIndex += 1;
+  }
+  return normalized.subarray(0, outputIndex);
+}
+
+function sourceEntryHash(entries) {
   const hash = createHash("sha256");
-  for (const path of paths) {
-    hash.update(toPosix(relative(workspaceRoot, path)));
+  for (const entry of entries) {
+    hash.update(entry.relativePath);
     hash.update("\0");
-    hash.update(readFileSync(path));
+    hash.update(canonicalSourceBytes(entry.contents));
     hash.update("\0");
   }
   return hash.digest("hex");
+}
+
+function sourceTreeHash(paths) {
+  return sourceEntryHash(
+    paths.map((path) => ({
+      relativePath: toPosix(relative(workspaceRoot, path)),
+      contents: readFileSync(path),
+    })),
+  );
+}
+
+function assertSourceHashFixtures() {
+  const textPath = "fixture/example.py";
+  const lfHash = sourceEntryHash([
+    { relativePath: textPath, contents: Buffer.from("first\nsecond\n", "utf8") },
+  ]);
+  const crlfHash = sourceEntryHash([
+    { relativePath: textPath, contents: Buffer.from("first\r\nsecond\r\n", "utf8") },
+  ]);
+  if (lfHash !== crlfHash) {
+    throw new Error("Source hash must be stable across LF and CRLF text checkouts");
+  }
+
+  const binaryPath = "fixture/image.bin";
+  const binaryCrLfHash = sourceEntryHash([
+    { relativePath: binaryPath, contents: Buffer.from([0, 13, 10, 255]) },
+  ]);
+  const binaryLfHash = sourceEntryHash([
+    { relativePath: binaryPath, contents: Buffer.from([0, 10, 255]) },
+  ]);
+  if (binaryCrLfHash === binaryLfHash) {
+    throw new Error("Source hash must preserve binary bytes");
+  }
 }
 
 function gitValue(args) {
@@ -232,6 +282,7 @@ function gitValue(args) {
 }
 
 function buildInventory() {
+  assertSourceHashFixtures();
   const backend = backendInventory();
   const frontend = frontendInventory();
   const frontendTestEntries = frontendTests();
