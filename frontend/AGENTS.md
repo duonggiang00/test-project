@@ -44,11 +44,4 @@ This repository uses Next.js 16 App Router. Before changing framework behavior, 
 
 ## Verification
 
-- Pure service/hook logic: focused unit tests.
-- Components: behavior and accessibility-oriented tests.
-- Server/client boundary or hydration changes: build plus hydration-focused tests.
-- Routing/auth/user-flow changes: navigation E2E from a real entry point.
-- Layout/style changes: visual regression at desktop and mobile viewports.
-- Critical flows must eventually cover Chromium, Firefox, WebKit, and mobile projects.
-
-Read `frontend/tests/AGENTS.md` before changing frontend tests.
+Use the centralized risk and behavior matrix in `docs/agent-workflows/TASK_RISK_CLASSIFICATION.md`. Read `frontend/tests/AGENTS.md` before changing frontend tests.

@@ -72,6 +72,7 @@ jobs:
           path: |
             backend/reports/
             frontend/reports/
+            reports/agent-workflow/
             frontend/.next/diagnostics/
 
   integration:
@@ -144,6 +145,7 @@ jobs:
           path: |
             backend/reports/
             frontend/reports/
+            reports/agent-workflow/
 
   coverage-pr:
     name: Coverage regression
@@ -214,6 +216,7 @@ jobs:
           path: |
             backend/reports/
             frontend/reports/
+            reports/agent-workflow/
 
   mocked-e2e:
     name: Mocked browser matrix
@@ -251,7 +254,9 @@ jobs:
           name: mocked-browser-diagnostics-${{ github.run_id }}
           if-no-files-found: ignore
           retention-days: 7
-          path: frontend/reports/playwright/
+          path: |
+            frontend/reports/playwright/
+            reports/agent-workflow/
 
   real-e2e:
     name: Real backend smoke E2E
@@ -322,3 +327,4 @@ jobs:
           path: |
             backend/reports/
             frontend/reports/playwright/
+            reports/agent-workflow/

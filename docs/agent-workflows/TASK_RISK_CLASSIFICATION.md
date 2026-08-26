@@ -56,3 +56,20 @@ Examples: breaking API, auth architecture replacement, destructive migration, pr
 - A task may be split only when each child has an independently testable contract.
 - Splitting work does not reduce the risk classification of a security/data boundary.
 
+## Affected-behavior verification matrix
+
+Apply every row that matches the change in addition to the minimum risk-level verification above.
+
+| Changed behavior | Required verification |
+|---|---|
+| Pure backend or frontend logic | Focused unit tests |
+| Backend use case or endpoint | Contract tests, including negative authorization where applicable |
+| Query, constraint, or transaction behavior | PostgreSQL integration and a query-budget/concurrency test when relevant |
+| Migration | Upgrade, downgrade, upgrade; model-drift check |
+| Frontend component | Behavior and accessibility component tests |
+| Server/client boundary or hydration | Focused test and production build |
+| Routing, authentication UX, or user flow | Navigation E2E from the real entry point |
+| Layout or styling | Desktop and mobile visual regression |
+| Security, ownership, or tenant boundary | Adversarial/IDOR cases and independent specialist review |
+
+During implementation, run the closest affected test after each coherent edit. Run the complete affected domain or cross-layer gate once after the code stabilizes. A prior passing result may be reused only when the verification manifest confirms an identical command and source/toolchain fingerprint; PostgreSQL integration, migration, coverage, and E2E results are never reused.

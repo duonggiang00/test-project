@@ -67,6 +67,7 @@ playwright/.auth/
 **/playwright/.auth/
 /backend/reports/
 /frontend/reports/
+/reports/agent-workflow/
 
 # Build
 *.pyc

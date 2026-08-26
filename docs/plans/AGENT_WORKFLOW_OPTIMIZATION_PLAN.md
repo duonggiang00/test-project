@@ -59,14 +59,15 @@ Milestone 0: Durable specification and plan
     -> Milestone 7: Auth, ownership, and tenant isolation
     -> Milestone 8: Audit, soft delete, and upload governance
     -> Milestone 9: AI reliability and evaluation
+    -> Milestone 10: Token-efficient coding workflow
 ```
 
 Milestones 1 and 2 may partially overlap. Feature development may resume under the new workflow after Milestone 3, while later hardening milestones continue.
 
 ### 3.1 Current open work
 
-Verified on 2026-08-26, the milestone tables contain 89 `DONE`, no `REVIEW`,
-4 `TODO`, 1 `SUPERSEDED`, and no `IN_PROGRESS`, `BLOCKED`, or `DEFERRED`
+Verified on 2026-08-27, the milestone tables contain 94 `DONE`, 4 `TODO`,
+1 `SUPERSEDED`, and no `REVIEW`, `IN_PROGRESS`, `BLOCKED`, or `DEFERRED`
 tasks. The remaining work is:
 
 | Category | IDs | Current evidence | Completion condition |
@@ -297,7 +298,25 @@ Exit criteria:
 - Sensitive retrieval is tenant-isolated.
 - All AI-generated publishable content requires human approval.
 
-## 14. Agent assignment model
+## 14. Milestone 10 — Token-efficient coding workflow
+
+Goal: Reduce routine coding context and stdout without weakening approvals, review, or verification coverage.
+
+| ID | Task | Status | Depends on | Acceptance evidence |
+|---|---|---|---|---|
+| TOK-001 | Establish workflow-token governance and six fixed scenarios | DONE | GOV-008, TEST-001 | L2 Change Contract and six L0-L3 benchmark scenarios record context, commands, stdout proxies, elapsed time, and required gates |
+| TOK-002 | Apply progressive disclosure and compact task briefs | DONE | TOK-001 | Root/scoped rules load relevant policy, centralize the verification matrix, and apply the six-field brief plus risk-based artifact policy |
+| TOK-003 | Add a bounded live task-context packet | DONE | INV-001-008, TOK-002 | Live source lookup works with stale inventory, labels freshness, maps rules/spec/ADRs/code/tests/dependencies, and remains deterministic within 12 KB/180 lines |
+| TOK-004 | Add compact verification, persisted logs, and safe resume | DONE | TOOL-006, TOK-001 | Compact/verbose output, redacted ignored logs/manifests, failure tails, exact fingerprints, and non-cacheable gate exclusions pass focused and canonical verification |
+| TOK-005 | Record risk-based model routing and benchmark proxy results | DONE | TOK-001-004 | Routing preserves required reviewers; six-scenario median L0-L2 context reduction is 79.71%; actual token telemetry is explicitly unverified |
+
+Exit criteria:
+
+- Every L0-L2 context packet is at most 12 KB and 180 lines.
+- Median context plus successful-output proxies improve by at least 40% without losing a gate or test.
+- Independent L2 review confirms failures remain visible and application/API/database behavior is unchanged.
+
+## 15. Agent assignment model
 
 | Change class | Implementation | Review | Prior approval |
 |---|---|---|---|
@@ -311,7 +330,7 @@ Exit criteria:
 
 The reviewer must not silently take ownership of a large implementation rewrite. Material rework returns to the implementation owner or becomes a separately tracked follow-up.
 
-## 15. Definition of Done
+## 16. Definition of Done
 
 A task may move to `DONE` only when its handoff records:
 
@@ -328,7 +347,7 @@ A task may move to `DONE` only when its handoff records:
 
 If the environment cannot execute a required check, the task remains `BLOCKED` or `REVIEW`; it is not `DONE`.
 
-## 16. Current progress log
+## 17. Current progress log
 
 | Date | Task | Event | Evidence/notes |
 |---|---|---|---|
@@ -397,8 +416,9 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-25 | AI-RAG-ENABLE-001 | Completed | Owner reversed the temporary RAG suspension. Material chat is active by default; the synthetic compatibility processor remains default-disabled. Strict chat-role validation closes provider-priority injection, guarded PostgreSQL owner/student/inactive/admin and audit regression passes 3/3 with database cleanup, the capped live provider smoke completes, and the independent L3 reviewer reports no remaining P1/P2. No migration or data rewrite. See `AI-RAG-ENABLE-001_CHANGE_CONTRACT.md` and `../handoffs/AI-RAG-ENABLE-001.md`. |
 | 2026-08-26 | TOOL-PYTEST-CACHE-001 / SEC-CSP-001 | Completed | Coverage is cache-independent and passes 352 unit/contract + 171 PostgreSQL + 149 frontend tests at 90.57%/61.25%; production and development HTTP CSP captures match the narrowed allowlists; fast passes 501 tests plus build; mocked E2E passes 28/28; independent L2 review found no P1/P2 and both P3 documentation findings were closed. See `WORKFLOW-COVERAGE-CSP-001_CHANGE_CONTRACT.md` and `../handoffs/WORKFLOW-COVERAGE-CSP-001.md`. |
 | 2026-08-26 | UI-LANGUAGE-001 / TEST-FE-COVERAGE-001 | Completed | Translated all 37 identified executable frontend files across public/auth, admin/AI, exam, and student/shared surfaces; zero unintended Vietnamese source matches remain. Independent-review findings were remediated: faithful product claims, named pagination controls, global coverage 76.97%, changed-line coverage 82.14%, Windows/Linux visual evidence, and an unobscured AI guardrail. Canonical fast passed and final independent review approved with no remaining P1/P2/P3 findings. See `../handoffs/FRONTEND-ENGLISH-COVERAGE-001.md`. |
+| 2026-08-27 | WORKFLOW-TOKEN-001 / TOK-001-005 | Completed | Progressive-disclosure rules, live bounded context, compact/redacted verification evidence, conservative resume, model routing, and six fixed scenarios are implemented. Focused script tests pass 22/22; fast passes 534 tests plus build with the complete 182-test frontend Jest project executed once; exact resume reuses 13/13 safe steps; median L0-L2 context reduction is 79.71% and compact success stdout falls 49.60%. Final independent L2 review found no P1/P2/P3. See `WORKFLOW-TOKEN-001_CHANGE_CONTRACT.md` and `../handoffs/WORKFLOW-TOKEN-001.md`. |
 
-## 17. Known program risks
+## 18. Known program risks
 
 | Risk | Mitigation |
 |---|---|
