@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
-  "measured_at": "2026-08-05",
+  "measured_at": "2026-08-26",
   "backend": {
     "lines_percent": 72.52,
     "covered_lines": 1639,
     "total_lines": 2260
   },
   "frontend": {
-    "lines_percent": 0.75,
-    "covered_lines": 81,
-    "total_lines": 10685
+    "lines_percent": 76.97,
+    "covered_lines": 10588,
+    "total_lines": 13756
   },
   "changed_code": {
     "lines_percent": 80

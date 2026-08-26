@@ -29,16 +29,16 @@ export function useConfirm() {
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleCancel(); }}>
       <DialogContent className="border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] bg-white rounded-none sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-black text-xl uppercase tracking-tight font-mono">Xác nhận</DialogTitle>
+          <DialogTitle className="font-black text-xl uppercase tracking-tight font-mono">Confirm action</DialogTitle>
           <DialogDescription className="hidden">Confirmation dialog</DialogDescription>
         </DialogHeader>
         <div className="py-4 font-mono font-bold text-black">{message}</div>
         <DialogFooter className="flex gap-2 justify-end sm:justify-end">
           <Button data-testid="confirm-dialog-cancel" variant="outline" onClick={handleCancel} className="border-2 border-black rounded-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] font-mono uppercase font-bold hover:bg-white text-black">
-            Hủy
+            Cancel
           </Button>
           <Button data-testid="confirm-dialog-confirm" onClick={handleConfirm} className="border-2 border-black rounded-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] font-mono uppercase font-bold bg-black text-white hover:bg-white transition-all">
-            Đồng ý
+            Confirm
           </Button>
         </DialogFooter>
       </DialogContent>

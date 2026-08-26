@@ -130,7 +130,7 @@ function QuestionsContent() {
 
   const handleSave = async () => {
     if (!content.trim()) {
-      toast.add({ title: "Thông báo", description: "Question content is required.", type: "info" });
+      toast.add({ title: "Question required", description: "Question content is required.", type: "info" });
       return;
     }
     setIsSaving(true);
@@ -140,7 +140,7 @@ function QuestionsContent() {
       
       if (questionType === "MATCHING") {
         if (matchingPairs.length < 2) {
-          toast.add({ title: "Thông báo", description: "Matching questions require at least 2 pairs.", type: "info" });
+          toast.add({ title: "More pairs required", description: "Matching questions require at least 2 pairs.", type: "info" });
           setIsSaving(false);
           return;
         }
@@ -169,7 +169,7 @@ function QuestionsContent() {
       handleCloseModal();
     } catch (error) {
       logBackendError("Question save failed", error);
-      toast.add({ title: "Thông báo", description: "Failed to save question", type: "error" });
+      toast.add({ title: "Save failed", description: "Failed to save question", type: "error" });
     } finally {
       setIsSaving(false);
     }
@@ -183,7 +183,7 @@ function QuestionsContent() {
       await mutate();
     } catch (error) {
       logBackendError("Question delete failed", error);
-      toast.add({ title: "Thông báo", description: "Failed to delete question", type: "error" });
+      toast.add({ title: "Delete failed", description: "Failed to delete question", type: "error" });
     } finally {
       setIsDeleting(null);
     }
@@ -352,9 +352,9 @@ function QuestionsContent() {
                       type="button"
                       onClick={handleInsertBlank}
                       className="text-xs font-bold uppercase border-2 border-black bg-black text-white px-3 py-1.5 hover:bg-white hover:text-black transition-colors flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-                      title="Bôi đen chữ và bấm để tự động tạo [BLANK] + Đáp án"
+                      title="Select text and click to create a [BLANK] with its answer"
                     >
-                      <Plus size={14} /> Chèn [BLANK]
+                      <Plus size={14} /> Insert [BLANK]
                     </button>
                   )}
                 </div>

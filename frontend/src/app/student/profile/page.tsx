@@ -62,7 +62,7 @@ export default function StudentProfilePage() {
         <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4 border-b-4 border-black pb-4">
             <span className="font-mono text-lg font-bold uppercase">
-              {isSummaryPartial ? "Bài thi hoàn thành gần đây" : "Bài thi hoàn thành"}
+              {isSummaryPartial ? "Recently Completed Exams" : "Completed Exams"}
             </span>
             <div className="w-10 h-10 border-2 border-black flex items-center justify-center">
               <AppIcon name="task_alt" className="text-black" />
@@ -72,8 +72,8 @@ export default function StudentProfilePage() {
             <div className="text-5xl font-black text-black">{completedCount}</div>
             <p className="font-mono text-sm text-black uppercase mt-2">
               {isSummaryPartial
-                ? `Trong ${exams.length} bài thi gần nhất`
-                : `Trên ${pagination.total} bài thi đang công bố`}
+                ? `Across the latest ${exams.length} exams`
+                : `Across ${pagination.total} published exams`}
             </p>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function StudentProfilePage() {
         {/* Stat 2: Average Score */}
         <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4 border-b-4 border-black pb-4">
-            <span className="font-mono text-lg font-bold uppercase">Điểm trung bình</span>
+            <span className="font-mono text-lg font-bold uppercase">Average Score</span>
             <div className="w-10 h-10 border-2 border-black flex items-center justify-center">
               <AppIcon name="analytics" className="text-black" />
             </div>
@@ -89,7 +89,7 @@ export default function StudentProfilePage() {
           <div>
             <div className="text-5xl font-black text-black">{averageScore}%</div>
             <p className="font-mono text-sm text-black uppercase mt-2">
-              Chuẩn hóa theo tổng điểm của {scoredExamCount} bài
+              Normalized across {scoredExamCount} scored exams
             </p>
           </div>
         </div>
@@ -97,18 +97,18 @@ export default function StudentProfilePage() {
         {/* Stat 3: Role & System ID */}
         <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4 border-b-4 border-black pb-4">
-            <span className="font-mono text-lg font-bold uppercase">Thông tin hệ thống</span>
+            <span className="font-mono text-lg font-bold uppercase">System Information</span>
             <div className="w-10 h-10 border-2 border-black flex items-center justify-center">
               <AppIcon name="badge" className="text-black" />
             </div>
           </div>
           <div className="space-y-2">
             <div>
-              <span className="font-mono text-xs text-black uppercase block">Mã tài khoản (ID)</span>
+              <span className="font-mono text-xs text-black uppercase block">Account ID</span>
               <span className="font-mono text-sm font-bold text-black break-all">{profile?.id}</span>
             </div>
             <div>
-              <span className="font-mono text-xs text-black uppercase block">Vai trò</span>
+              <span className="font-mono text-xs text-black uppercase block">Role</span>
               <span className="font-mono text-sm font-bold text-black uppercase">{profile?.role}</span>
             </div>
           </div>
@@ -120,25 +120,25 @@ export default function StudentProfilePage() {
         <div className="flex items-center justify-between mb-6 border-b-4 border-black pb-4">
           <h2 className="font-mono text-2xl font-black uppercase flex items-center gap-3">
             <AppIcon name="history_edu" className="text-black size-8" />
-            {isSummaryPartial ? "Lịch sử thi gần đây" : "Lịch sử thi đã hoàn thành"}
+            {isSummaryPartial ? "Recent Exam History" : "Completed Exam History"}
           </h2>
           <span className="px-3 py-1 bg-black text-white font-mono font-bold text-sm uppercase border-2 border-black">
-            {completedCount} bài thi
+            {completedCount} exams
           </span>
         </div>
 
         {completedExams.length === 0 ? (
           <div className="bg-white border-2 border-dashed border-black p-8 text-center">
             <AppIcon name="find_in_page" className="size-12 text-black mb-2" />
-            <p className="font-mono font-bold text-lg text-black uppercase">Chưa có bài thi nào hoàn thành</p>
+            <p className="font-mono font-bold text-lg text-black uppercase">No completed exams</p>
             <p className="font-mono text-sm text-black uppercase mt-1">
-              Hãy hoàn thành các bài thi ở trang chủ để xem lịch sử kết quả.
+              Complete an exam from the home page to build your result history.
             </p>
             <Link
               href="/student/home"
               className="inline-block mt-4 px-6 py-3 bg-black text-white font-mono font-bold uppercase border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-white hover:text-black transition-all"
             >
-              Đến trang chủ
+              Go to home
             </Link>
           </div>
         ) : (
@@ -151,11 +151,11 @@ export default function StudentProfilePage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="px-2 py-0.5 bg-black text-white font-mono font-bold text-xs uppercase border border-black">
-                      Đã nộp
+                      Submitted
                     </span>
                     <span className="font-mono text-xs text-black uppercase flex items-center gap-1">
                       <AppIcon name="schedule" className="size-4" />
-                      {exam.duration_minutes} phút
+                      {exam.duration_minutes} minutes
                     </span>
                   </div>
                   <h3 className="font-mono text-xl font-bold text-black uppercase">{exam.title}</h3>
@@ -167,7 +167,7 @@ export default function StudentProfilePage() {
                 <div className="flex items-center gap-6">
                   {exam.total_score !== null && (
                     <div className="text-right">
-                      <span className="font-mono text-xs text-black uppercase block">Điểm số</span>
+                      <span className="font-mono text-xs text-black uppercase block">Score</span>
                       <span className="font-mono text-3xl font-black text-black">{exam.total_score}</span>
                     </div>
                   )}
@@ -175,7 +175,7 @@ export default function StudentProfilePage() {
                     href={`/student/exam/${exam.id}/result`}
                     className="px-4 py-2 bg-white text-black font-mono font-bold uppercase border-2 border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-all text-sm flex items-center gap-1"
                   >
-                    Xem kết quả
+                    View result
                     <AppIcon name="arrow_forward" className="size-4" />
                   </Link>
                 </div>

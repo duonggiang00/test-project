@@ -65,13 +65,12 @@ Milestones 1 and 2 may partially overlap. Feature development may resume under t
 
 ### 3.1 Current open work
 
-Verified on 2026-08-26, the milestone tables contain 87 `DONE`, 6 `TODO`,
-1 `SUPERSEDED`, and no `REVIEW`, `IN_PROGRESS`, `BLOCKED`, or `DEFERRED`
+Verified on 2026-08-26, the milestone tables contain 89 `DONE`, no `REVIEW`,
+4 `TODO`, 1 `SUPERSEDED`, and no `IN_PROGRESS`, `BLOCKED`, or `DEFERRED`
 tasks. The remaining work is:
 
 | Category | IDs | Current evidence | Completion condition |
 |---|---|---|---|
-| Frontend language and coverage | UI-LANGUAGE-001, TEST-FE-COVERAGE-001 | The owner approved four bounded English-language waves; current global frontend coverage is 61.25%. | Translate executable UI/comments with paired test updates and raise meaningful critical-module coverage without reducing the baseline. |
 | Owner-resumed AI evaluation | AI-006, AI-007, AI-008 | The owner resumed the work and approved a Vietnamese-first 40-case design; agents still may not self-approve reference answers. | Validate owner/admin-approved cases, establish three stable baselines, and add deterministic plus capped live regression tiers. |
 | Semantic retrieval | RAG-SEMANTIC-001 | Active chat remains keyword/last-chunk retrieval; local PostgreSQL does not yet provide pgvector. | Install/verify pgvector, pass evaluation gates, implement hybrid retrieval with lexical rollback, and remove the approved legacy endpoint. |
 
@@ -197,8 +196,8 @@ Goal: Establish fast feedback and meaningful coverage across risk boundaries.
 | TEST-007 | Add hydration, cache-mutation, and BFF-only tests | DONE | TEST-006 | Five frontend unit suites pass 13 tests including Zustand no-token hydration, SWR non-revalidating cache mutation, and BFF cookie/path/host/redirect contracts |
 | TEST-008 | Add brutalist visual regression coverage | DONE | TEST-006, CI-007 | Reviewed black/white desktop/mobile baselines exist for all four browser projects; tooling overlay removed and clean matrix passes 4/4 |
 | TEST-009 | Cover loading, empty, error, disabled, and keyboard states | DONE | TEST-006 | Five component tests cover loading/error/empty/disabled/focus semantics and mocked flow proves keyboard activation across four browser projects |
-| UI-LANGUAGE-001 | Convert remaining executable frontend UI text and comments to English | TODO | SEC-CSP-001 | Four bounded public/auth, admin/AI, exam, and student/shared waves pass targeted tests, build, and affected browser flows |
-| TEST-FE-COVERAGE-001 | Raise meaningful frontend coverage while translating each wave | TODO | TEST-002, UI-LANGUAGE-001 | Critical modules approach 80% meaningful line coverage and global coverage reaches `max(25%, fresh baseline + 10 percentage points)` without lowering committed thresholds |
+| UI-LANGUAGE-001 | Convert remaining executable frontend UI text and comments to English | DONE | SEC-CSP-001 | All 37 identified source files are translated; the source scan has zero unintended Vietnamese UI/comment matches; Windows/Linux visual evidence passes; independent review approved |
+| TEST-FE-COVERAGE-001 | Raise meaningful frontend coverage while translating each wave | DONE | TEST-002, UI-LANGUAGE-001 | Six behavior-oriented suites raise all-source coverage to 76.97% and changed-line coverage to 82.14%; canonical fast gate and independent review pass |
 
 Exit criteria:
 
@@ -397,6 +396,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-25 | CI-GITHUB-001 / CI-002/003/005/006/010 | Completed | Published and repaired the GitHub workflow; push run `32831201837` passed Fast, PostgreSQL integration/Alembic, and real E2E; PR run `32837826190` passed Fast, coverage, and 28/28 mocked browser tests. Applied `main` protection with the exact three strict required contexts and force-push/deletion denial; the earlier failed mocked check left PR #1 `unstable`, providing merge-block evidence. See `CI-GITHUB-001_CHANGE_CONTRACT.md` and `../handoffs/CI-GITHUB-001.md`. |
 | 2026-08-25 | AI-RAG-ENABLE-001 | Completed | Owner reversed the temporary RAG suspension. Material chat is active by default; the synthetic compatibility processor remains default-disabled. Strict chat-role validation closes provider-priority injection, guarded PostgreSQL owner/student/inactive/admin and audit regression passes 3/3 with database cleanup, the capped live provider smoke completes, and the independent L3 reviewer reports no remaining P1/P2. No migration or data rewrite. See `AI-RAG-ENABLE-001_CHANGE_CONTRACT.md` and `../handoffs/AI-RAG-ENABLE-001.md`. |
 | 2026-08-26 | TOOL-PYTEST-CACHE-001 / SEC-CSP-001 | Completed | Coverage is cache-independent and passes 352 unit/contract + 171 PostgreSQL + 149 frontend tests at 90.57%/61.25%; production and development HTTP CSP captures match the narrowed allowlists; fast passes 501 tests plus build; mocked E2E passes 28/28; independent L2 review found no P1/P2 and both P3 documentation findings were closed. See `WORKFLOW-COVERAGE-CSP-001_CHANGE_CONTRACT.md` and `../handoffs/WORKFLOW-COVERAGE-CSP-001.md`. |
+| 2026-08-26 | UI-LANGUAGE-001 / TEST-FE-COVERAGE-001 | Completed | Translated all 37 identified executable frontend files across public/auth, admin/AI, exam, and student/shared surfaces; zero unintended Vietnamese source matches remain. Independent-review findings were remediated: faithful product claims, named pagination controls, global coverage 76.97%, changed-line coverage 82.14%, Windows/Linux visual evidence, and an unobscured AI guardrail. Canonical fast passed and final independent review approved with no remaining P1/P2/P3 findings. See `../handoffs/FRONTEND-ENGLISH-COVERAGE-001.md`. |
 
 ## 17. Known program risks
 
@@ -409,7 +409,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Backend tests share a global SlowAPI limiter and exceed auth limits during a full run | Mitigated with per-test limiter reset; the latest canonical fast and PostgreSQL integration gates pass |
 | CI workflow has not executed on GitHub | Mitigated: hosted push and PR runs are green, `main` has the declared strict required contexts, and PR #1 demonstrated the blocked state while a required check failed |
 | Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
-| Frontend coverage baseline is only 0.75% | Baseline instruments all `frontend/src` instead of hiding unimported files; forbid regression and raise it through TEST-006–009 with ~80% coverage on changed executable lines |
+| Frontend coverage was historically too low | Mitigated: the honest all-source baseline is now 76.97% (`10,588/13,756` lines), CI forbids regression, and changed executable lines pass the unchanged 80% target at 82.14% |
 | Administrative on-behalf-of student submission is not implemented | The approved current contract keeps self-service routes student-only and uses separate audited Admin management operations; any future impersonation/on-behalf-of workflow requires a new approved target and audit contract |
 | AI output is governed but its quality is not yet measured | Hard safety invariants (no cross-owner retrieval, no automatic publication, no final AI grading) are enforced in code and tested. Correctness, groundedness, injection resistance, latency, and cost remain unmeasured until AI-006–008 are completed; do not represent Milestone 9 as making AI output good, only as making it reviewable |
 | `AIGradeSuggestion` has no production caller | The advisory invariant currently holds trivially because nothing generates a suggestion yet. When AI grading is implemented, the apply-on-approval path described in the model docstring still has to be built and tested |

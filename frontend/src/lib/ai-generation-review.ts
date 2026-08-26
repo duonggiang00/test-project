@@ -69,34 +69,34 @@ export function isTerminalStatus(status: AIGenerationJobStatus): boolean {
 export const REVIEW_STATUS_LABELS: Readonly<
   Record<AIGenerationJobStatus, string>
 > = {
-  requested: "[...] ĐÃ TIẾP NHẬN YÊU CẦU",
-  processing: "[...] ĐANG SINH NỘI DUNG",
-  generated: "[...] ĐÃ SINH, ĐANG CHUYỂN DUYỆT",
-  awaiting_review: "[WAIT] ĐANG CHỜ DUYỆT",
-  approved: "[OK] ĐÃ DUYỆT",
-  rejected: "[X] ĐÃ TỪ CHỐI",
-  published: "[OK] ĐÃ XUẤT BẢN",
-  failed: "[!] SINH NỘI DUNG THẤT BẠI",
+  requested: "[...] REQUEST RECEIVED",
+  processing: "[...] GENERATING CONTENT",
+  generated: "[...] GENERATED, QUEUING REVIEW",
+  awaiting_review: "[WAIT] AWAITING REVIEW",
+  approved: "[OK] APPROVED",
+  rejected: "[X] REJECTED",
+  published: "[OK] PUBLISHED",
+  failed: "[!] GENERATION FAILED",
 };
 
 /** Explains why no action is offered, so a dead-end state is never silent. */
 export const REVIEW_STATUS_HINTS: Readonly<
   Record<AIGenerationJobStatus, string>
 > = {
-  requested: "Yêu cầu đang chờ hệ thống xử lý.",
-  processing: "AI đang sinh nội dung cho phiên duyệt này.",
-  generated: "Nội dung vừa được sinh và sẽ sớm chuyển sang trạng thái chờ duyệt.",
-  awaiting_review: "Hãy duyệt hoặc từ chối bản nháp này trước khi xuất bản.",
-  approved: "Bản nháp đã được duyệt và có thể xuất bản vào hệ thống.",
-  rejected: "Bản nháp đã bị từ chối và không thể xuất bản.",
-  published: "Nội dung đã được ghi vào hệ thống.",
-  failed: "Không thể sinh nội dung. Hãy thử sinh lại từ tài liệu.",
+  requested: "The request is waiting for processing.",
+  processing: "AI is generating content for this review session.",
+  generated: "The content was generated and will move to review shortly.",
+  awaiting_review: "Approve or reject this draft before publishing.",
+  approved: "The draft is approved and can be published.",
+  rejected: "The draft was rejected and cannot be published.",
+  published: "The content was published to the system.",
+  failed: "Content generation failed. Try generating again from the material.",
 };
 
 export const REVIEW_ACTION_LABELS: Readonly<
   Record<AIGenerationReviewAction, string>
 > = {
-  approve: "Duyệt",
-  reject: "Từ chối",
-  publish: "Xuất bản",
+  approve: "Approve",
+  reject: "Reject",
+  publish: "Publish",
 };

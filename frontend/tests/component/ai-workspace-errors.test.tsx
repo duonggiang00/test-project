@@ -122,9 +122,9 @@ describe("AI workspace RAG availability and stream failures", () => {
     expect(screen.queryByRole("button", { name: /Send material question/i })).not.toBeInTheDocument();
     expect(mockedOpenAiChatStream).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText("Source material"));
-    expect(screen.getByRole("button", { name: /Sinh C.u H.i/i })).toBeVisible();
-    expect(screen.getByRole("button", { name: /T.o Flashcards/i })).toBeVisible();
-    expect(screen.getByRole("button", { name: /T.o D.n ./i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /Generate Questions/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /Generate Flashcards/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /Generate Outline/i })).toBeVisible();
   });
 
   test("shows material chat by default when the presentation flag is unset", () => {
@@ -252,7 +252,7 @@ describe("AI workspace RAG availability and stream failures", () => {
     render(<AIWorkspacePage />);
 
     fireEvent.click(screen.getByText("Source material"));
-    fireEvent.click(screen.getByRole("button", { name: /Sinh C.u H.i/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Generate Questions/i }));
 
     await waitFor(() =>
       expect(mockedToastAdd).toHaveBeenCalledWith({
@@ -267,17 +267,17 @@ describe("AI workspace RAG availability and stream failures", () => {
 
   test.each([
     {
-      buttonName: /Sinh C.u H.i/i,
+      buttonName: /Generate Questions/i,
       service: () => mockedGenerateQuestions,
       result: { questions: [] },
     },
     {
-      buttonName: /T.o Flashcards/i,
+      buttonName: /Generate Flashcards/i,
       service: () => mockedGenerateFlashcards,
       result: { flashcards: [] },
     },
     {
-      buttonName: /T.o D.n ./i,
+      buttonName: /Generate Outline/i,
       service: () => mockedGenerateTopicBrief,
       result: { content: "Brief" },
     },

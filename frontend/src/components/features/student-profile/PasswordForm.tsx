@@ -27,12 +27,12 @@ export default function PasswordForm() {
     setSuccessMsg("");
 
     if (formData.new_password !== formData.confirm_password) {
-      setErrorMsg("Mật khẩu xác nhận không khớp");
+      setErrorMsg("The password confirmation does not match.");
       setIsSaving(false);
       return;
     }
     if (formData.new_password.length < 8) {
-      setErrorMsg("Mật khẩu mới phải có ít nhất 8 ký tự");
+      setErrorMsg("The new password must contain at least 8 characters.");
       setIsSaving(false);
       return;
     }
@@ -42,7 +42,7 @@ export default function PasswordForm() {
         old_password: formData.old_password,
         new_password: formData.new_password,
       });
-      setSuccessMsg("Cập nhật mật khẩu thành công!");
+      setSuccessMsg("Password updated successfully.");
       setFormData({ old_password: "", new_password: "", confirm_password: "" });
     } catch (err: unknown) {
       setErrorMsg(getBackendErrorMessage(err, "The password could not be updated."));
@@ -56,7 +56,7 @@ export default function PasswordForm() {
       <div className="flex items-center justify-between mb-6 border-b-4 border-black pb-4">
         <h2 className="text-2xl font-black uppercase flex items-center gap-3">
           <AppIcon name="lock" className="text-black size-8" />
-          Bảo Mật & Mật Khẩu
+          Security & Password
         </h2>
       </div>
 
@@ -73,7 +73,7 @@ export default function PasswordForm() {
         )}
 
         <div className="flex flex-col">
-          <label className="font-mono text-sm font-bold uppercase mb-2">Mật khẩu hiện tại</label>
+          <label className="font-mono text-sm font-bold uppercase mb-2">Current password</label>
           <input
             type="password"
             name="old_password"
@@ -85,7 +85,7 @@ export default function PasswordForm() {
         </div>
 
         <div className="flex flex-col">
-          <label className="font-mono text-sm font-bold uppercase mb-2">Mật khẩu mới</label>
+          <label className="font-mono text-sm font-bold uppercase mb-2">New password</label>
           <input
             type="password"
             name="new_password"
@@ -97,7 +97,7 @@ export default function PasswordForm() {
         </div>
 
         <div className="flex flex-col">
-          <label className="font-mono text-sm font-bold uppercase mb-2">Xác nhận mật khẩu mới</label>
+          <label className="font-mono text-sm font-bold uppercase mb-2">Confirm new password</label>
           <input
             type="password"
             name="confirm_password"
@@ -113,7 +113,7 @@ export default function PasswordForm() {
           disabled={isSaving}
           className="w-full px-6 py-3 mt-4 bg-black text-white font-mono font-bold uppercase border-2 border-black hover:bg-white hover:text-black transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50"
         >
-          {isSaving ? "Đang cập nhật..." : "Đổi mật khẩu"}
+          {isSaving ? "Updating..." : "Change password"}
         </button>
       </form>
     </div>

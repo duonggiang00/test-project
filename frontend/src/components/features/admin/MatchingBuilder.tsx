@@ -78,7 +78,7 @@ export default function MatchingBuilder({ pairs, onChange }: MatchingBuilderProp
                 <textarea
                   value={pair.right}
                   onChange={(e) => handleChangeRight(index, e.target.value)}
-                  placeholder="e.g. Quả Táo"
+                  placeholder="e.g. Apple"
                   className="w-full resize-y min-h-[80px] border-4 border-black bg-white p-2 font-mono text-black focus:outline-none focus:ring-4 focus:ring-black/20"
                 />
               </div>

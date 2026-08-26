@@ -111,11 +111,11 @@ function ExamsPageContent() {
     setIsDeleting(true);
     try {
       await deleteExam(id);
-      toast.add({ title: "Thành công", description: "Đã xóa bài thi", type: "success" });
+      toast.add({ title: "Exam deleted", description: "The exam was deleted.", type: "success" });
       mutate();
     } catch (error) {
       logBackendError("Exam delete failed", error);
-      toast.add({ title: "Lỗi", description: "Lỗi khi xóa bài thi", type: "error" });
+      toast.add({ title: "Delete failed", description: "The exam could not be deleted.", type: "error" });
     } finally {
       setIsDeleting(false);
       setDeletingExamId(null);
@@ -144,7 +144,7 @@ function ExamsPageContent() {
       }
     } catch (error) {
       logBackendError("Exam save failed", error);
-      toast.add({ title: "Lỗi", description: "Lỗi khi lưu bài thi", type: "error" });
+      toast.add({ title: "Save failed", description: "The exam could not be saved.", type: "error" });
     } finally {
       setIsSubmitting(false);
     }
@@ -389,11 +389,11 @@ function ExamsPageContent() {
         <DialogContent className="border-4 border-black bg-white rounded-none sm:max-w-[400px] text-black shadow-[16px_16px_0_0_rgba(0,0,0,1)] p-0">
           <DialogHeader className="p-6 border-b-4 border-black bg-white">
             <DialogTitle className="text-2xl font-bold uppercase tracking-widest font-mono text-black">
-              Xóa bài thi
+              Delete exam
             </DialogTitle>
           </DialogHeader>
           <div className="p-6 bg-white">
-            <p className="mb-8 font-bold font-mono text-lg">Bạn có chắc chắn muốn xóa bài thi này không?</p>
+            <p className="mb-8 font-bold font-mono text-lg">Are you sure you want to delete this exam?</p>
             <div className="flex justify-end gap-4 border-t-4 border-black pt-6">
               <Button
                 variant="outline"
@@ -401,7 +401,7 @@ function ExamsPageContent() {
                 className="px-6 py-2 border-4 border-black rounded-none font-bold uppercase tracking-widest font-mono bg-white hover:bg-white text-black"
                 disabled={isDeleting}
               >
-                Hủy
+                Cancel
               </Button>
               <Button
                 data-testid="confirm-delete-exam-button"
@@ -410,7 +410,7 @@ function ExamsPageContent() {
                 disabled={isDeleting}
               >
                 {isDeleting && <Loader2 className="w-5 h-5 mr-3 animate-spin" />}
-                Xóa
+                Delete
               </Button>
             </div>
           </div>

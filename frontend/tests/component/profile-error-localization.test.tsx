@@ -84,7 +84,7 @@ describe("profile error localization", () => {
     mockedUpdateProfile.mockRejectedValue(rejection("STATE_CONFLICT"));
     const { container } = render(<ProfileForm />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Chỉnh sửa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.submit(container.querySelector("form") as HTMLFormElement);
 
     await waitFor(() =>
@@ -116,7 +116,7 @@ describe("profile error localization", () => {
     });
 
     render(<ProfileForm />);
-    fireEvent.click(screen.getByRole("button", { name: "Chỉnh sửa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
 
     expect(screen.getByDisplayValue("Nguyen Student")).toBeVisible();
     expect(screen.getByDisplayValue("0912345678")).toBeVisible();

@@ -72,7 +72,7 @@ export default function AIWorkspacePage() {
     if (!file) return;
 
     if (!selectedTopicId) {
-       toast.add({ title: "Thông báo", description: "Vui lòng chọn chủ đề trước khi tải lên", type: "warning" });
+       toast.add({ title: "Topic required", description: "Select a topic before uploading.", type: "warning" });
        e.target.value = '';
        return;
     }
@@ -80,14 +80,14 @@ export default function AIWorkspacePage() {
     setIsUploading(true);
     try {
       toast.add({
-        title: "Đang tải lên...",
-        description: "AI đang phân tích tài liệu (khoảng 30s).",
+        title: "Uploading...",
+        description: "AI is analyzing the material. This may take about 30 seconds.",
         type: "info"
       });
       await uploadMaterial(file, selectedTopicId);
       toast.add({
-        title: "Thành công",
-        description: "Tài liệu đã vào hàng đợi AI.",
+        title: "Upload queued",
+        description: "The material was added to the AI queue.",
         type: "success"
       });
       e.target.value = '';
@@ -112,8 +112,8 @@ export default function AIWorkspacePage() {
     try {
       await deleteMaterial(materialToDelete, false, true);
       toast.add({
-        title: "Thành công",
-        description: "Đã xóa tài liệu khỏi hệ thống.",
+        title: "Material deleted",
+        description: "The material was removed from the system.",
         type: "success"
       });
       if (activeMaterial === materialToDelete) {
@@ -139,7 +139,7 @@ export default function AIWorkspacePage() {
     if (!activeMaterial) return;
     setIsStreaming(true);
     setActiveToolCall({ name: "draft_exam", args: "" });
-    setMessages(prev => [...prev, { role: "assistant", content: "[...] Đang sinh câu hỏi từ tài liệu..." }]);
+    setMessages(prev => [...prev, { role: "assistant", content: "[...] Generating questions from the material..." }]);
     
     try {
       const data = await generateMaterialQuestions(
@@ -147,7 +147,7 @@ export default function AIWorkspacePage() {
         questionCount,
       );
       setActiveToolCall({ name: "draft_exam", args: data });
-      setMessages(prev => [...prev, { role: "assistant", content: "[OK] Đã sinh xong câu hỏi. Xem kết quả ở khu vực hiển thị bên dưới." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "[OK] Questions generated. Review the results below." }]);
     } catch (error) {
       toast.add({
         title: "Question generation failed",
@@ -167,7 +167,7 @@ export default function AIWorkspacePage() {
     if (!activeMaterial) return;
     setIsStreaming(true);
     setActiveToolCall({ name: "draft_flashcards", args: "" });
-    setMessages(prev => [...prev, { role: "assistant", content: "[...] Đang tạo flashcards từ tài liệu..." }]);
+    setMessages(prev => [...prev, { role: "assistant", content: "[...] Generating flashcards from the material..." }]);
     
     try {
       const data = await generateMaterialFlashcards(
@@ -175,7 +175,7 @@ export default function AIWorkspacePage() {
         questionCount,
       );
       setActiveToolCall({ name: "draft_flashcards", args: data });
-      setMessages(prev => [...prev, { role: "assistant", content: "[OK] Đã sinh xong flashcards. Xem kết quả ở khu vực hiển thị bên dưới." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "[OK] Flashcards generated. Review the results below." }]);
     } catch (error) {
       toast.add({
         title: "Flashcard generation failed",
@@ -195,12 +195,12 @@ export default function AIWorkspacePage() {
     if (!activeMaterial) return;
     setIsStreaming(true);
     setActiveToolCall({ name: "draft_topic_brief", args: "" });
-    setMessages(prev => [...prev, { role: "assistant", content: "[...] Đang tóm tắt dàn ý tài liệu..." }]);
+    setMessages(prev => [...prev, { role: "assistant", content: "[...] Generating a material outline..." }]);
     
     try {
       const data = await generateMaterialTopicBrief(activeMaterial);
       setActiveToolCall({ name: "draft_topic_brief", args: data });
-      setMessages(prev => [...prev, { role: "assistant", content: "[OK] Đã tạo xong dàn ý. Xem kết quả ở khu vực hiển thị bên dưới." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "[OK] Outline generated. Review the results below." }]);
     } catch (error) {
       toast.add({
         title: "Topic brief generation failed",
@@ -326,8 +326,8 @@ export default function AIWorkspacePage() {
   return (
     <div className="h-full flex flex-col md:flex-row bg-white border-b-4 border-black text-black">
       
-      {/* CỘT TRÁI: KNOWLEDGE BASE */}
-      <div className="w-full md:w-1/3 flex flex-col border-r-4 border-black border-b-4 md:border-b-0 min-h-[500px]">
+      {/* LEFT COLUMN: KNOWLEDGE BASE */}
+      <div className="w-full min-w-0 md:w-1/3 flex flex-col border-r-4 border-black border-b-4 md:border-b-0 min-h-[500px]">
         <div className="p-4 border-b-4 border-black bg-black text-white flex justify-between items-center">
           <h2 className="text-xl font-bold font-mono uppercase">Knowledge Base</h2>
           <AppIcon name="folder" className="font-bold" />
@@ -336,13 +336,13 @@ export default function AIWorkspacePage() {
         {/* Upload Area */}
         <div className="p-4 border-b-4 border-black bg-white relative space-y-4">
           <div className="flex flex-col gap-2">
-            <label className="font-mono text-sm font-bold uppercase text-black">Chủ đề <span className="text-black">*</span></label>
+            <label className="font-mono text-sm font-bold uppercase text-black">Topic <span className="text-black">*</span></label>
             <select
               value={selectedTopicId}
               onChange={(e) => setSelectedTopicId(e.target.value)}
               className="w-full border-4 border-black p-2 font-mono uppercase text-sm font-bold bg-white focus:outline-none"
             >
-              <option value="">-- CHỌN CHỦ ĐỀ --</option>
+              <option value="">-- SELECT TOPIC --</option>
               {topics?.map((topic: Topic) => (
                 <option key={topic.id} value={topic.id}>{topic.name}</option>
               ))}
@@ -351,7 +351,7 @@ export default function AIWorkspacePage() {
           
           <div className="border-4 border-dashed border-black p-6 flex flex-col items-center justify-center bg-white hover:bg-white transition-none group text-center shadow-[4px_4px_0_0_rgba(0,0,0,1)] relative">
             <AppIcon name={isUploading ? 'sync' : 'cloud_upload'} className="size-8 font-bold mb-2" />
-            <h3 className="text-base font-bold text-black uppercase font-mono">Tải tài liệu lên</h3>
+            <h3 className="text-base font-bold text-black uppercase font-mono">Upload material</h3>
             <p className="text-black font-mono text-xs mt-1">PDF, DOCX, TXT. Max 50MB.</p>
             <input 
               type="file" 
@@ -368,7 +368,7 @@ export default function AIWorkspacePage() {
           {isLoading && materials.length === 0 ? (
             <div className="text-center p-4"><AppIcon name="sync" className="animate-spin font-bold size-6" /></div>
           ) : materials.length === 0 ? (
-            <div className="text-center font-bold font-mono text-sm border-4 border-black p-4 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">Chưa có tài liệu nào.</div>
+            <div className="text-center font-bold font-mono text-sm border-4 border-black p-4 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">No materials yet.</div>
           ) : (
             materials.map((mat) => (
               <div 
@@ -383,14 +383,14 @@ export default function AIWorkspacePage() {
                 <div className="flex justify-between items-center pl-8 text-xs font-mono font-bold mt-2">
                   <span className="uppercase">{mat.file_type}</span>
                   <div className="flex items-center gap-2">
-                    <span>{mat.ai_status === 'completed' ? '[OK] HOÀN THÀNH' : (mat.ai_status === 'processing' ? '[...] ĐANG XỬ LÝ' : '[WAIT] CHỜ XỬ LÝ')}</span>
+                    <span>{mat.ai_status === 'completed' ? '[OK] COMPLETE' : (mat.ai_status === 'processing' ? '[...] PROCESSING' : '[WAIT] QUEUED')}</span>
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         setMaterialToDelete(mat.id);
                       }}
                       className="bg-white text-black border-2 border-black hover:bg-black hover:text-white flex items-center justify-center p-1 transition-none"
-                      title="Xóa tài liệu"
+                      title="Delete material"
                     >
                       <AppIcon name="delete" className="size-4 font-bold" />
                     </button>
@@ -403,7 +403,7 @@ export default function AIWorkspacePage() {
       </div>
 
       {/* CENTER: content generation activity; material chat is feature-gated. */}
-      <div className="w-full md:w-1/3 flex flex-col border-r-4 border-black border-b-4 md:border-b-0 min-h-[500px]">
+      <div className="w-full min-w-0 md:w-1/3 flex flex-col border-r-4 border-black border-b-4 md:border-b-0 min-h-[500px]">
         <div className="p-4 border-b-4 border-black bg-black text-white flex justify-between items-center">
           <h2 className="text-xl font-bold font-mono uppercase">
             {ragEnabled ? "AI Studio" : "Content Studio"}
@@ -411,15 +411,15 @@ export default function AIWorkspacePage() {
           <AppIcon name="smart_toy" className="font-bold" />
         </div>
 
-        {/* Thao tác nhanh (Only active if material selected) */}
+        {/* Quick actions are active only when a material is selected. */}
         <div className="p-4 border-b-4 border-black bg-white">
-          <h3 className="font-bold font-mono uppercase mb-2">Thao tác nhanh</h3>
+          <h3 className="font-bold font-mono uppercase mb-2">Quick actions</h3>
           {!activeMaterial ? (
-            <div className="text-sm font-mono opacity-50 font-bold border-2 border-black border-dashed p-2">Vui lòng chọn 1 tài liệu ở cột trái.</div>
+            <div className="text-sm font-mono opacity-50 font-bold border-2 border-black border-dashed p-2">Select a material in the left column.</div>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <label className="font-mono text-sm font-bold uppercase">Số lượng:</label>
+                <label className="font-mono text-sm font-bold uppercase">Quantity:</label>
                 <input 
                   type="number" 
                   min={1} 
@@ -435,21 +435,21 @@ export default function AIWorkspacePage() {
                   disabled={isStreaming}
                   className="flex-1 bg-white text-black border-4 border-black font-bold font-mono text-xs p-2 uppercase hover:bg-black hover:text-white transition-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] disabled:opacity-50"
                 >
-                  Sinh Câu Hỏi
+                  Generate Questions
                 </button>
                 <button 
                   onClick={generateFlashcards}
                   disabled={isStreaming}
                   className="flex-1 bg-white text-black border-4 border-black font-bold font-mono text-xs p-2 uppercase hover:bg-black hover:text-white transition-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] disabled:opacity-50"
                 >
-                  Tạo Flashcards
+                  Generate Flashcards
                 </button>
                 <button 
                   onClick={generateTopicBrief}
                   disabled={isStreaming}
                   className="flex-1 bg-white text-black border-4 border-black font-bold font-mono text-xs p-2 uppercase hover:bg-black hover:text-white transition-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] disabled:opacity-50"
                 >
-                  Tạo Dàn Ý
+                  Generate Outline
                 </button>
               </div>
             </div>
@@ -477,9 +477,9 @@ export default function AIWorkspacePage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Cảnh báo Guardrails */}
-        <div className="px-4 py-2 bg-white border-t-4 border-black text-xs font-mono font-bold text-center">
-          [WARNING] AI có thể sinh kết quả sai.
+        {/* AI guardrail warning */}
+        <div className="w-full max-w-full px-4 py-2 bg-white border-t-4 border-black text-xs leading-tight font-mono font-bold text-center whitespace-normal break-words">
+          [WARNING] AI output may be incorrect.
         </div>
 
         {ragEnabled && (
@@ -515,8 +515,8 @@ export default function AIWorkspacePage() {
         )}
       </div>
 
-      {/* CỘT PHẢI: GENERATIVE UI (RIGHT PANE Part 2) */}
-      <div className="w-full md:w-1/3 flex flex-col bg-white border-l-0 md:border-l-4 border-black">
+      {/* RIGHT COLUMN: GENERATIVE UI */}
+      <div className="w-full min-w-0 md:w-1/3 flex flex-col bg-white border-l-0 md:border-l-4 border-black">
         <GenerativePreview
           toolName={activeToolCall?.name || null}
           toolArgs={activeToolCall?.args || null}
@@ -527,11 +527,11 @@ export default function AIWorkspacePage() {
       <Dialog open={!!materialToDelete} onOpenChange={(open) => !open && setMaterialToDelete(null)}>
         <DialogContent className="border-4 border-black rounded-none shadow-[8px_8px_0_0_rgba(0,0,0,1)] bg-white text-black max-w-md p-6">
           <DialogHeader>
-            <DialogTitle className="font-mono font-bold uppercase text-lg border-b-4 border-black pb-2">Xác nhận xóa</DialogTitle>
+            <DialogTitle className="font-mono font-bold uppercase text-lg border-b-4 border-black pb-2">Confirm deletion</DialogTitle>
             <DialogDescription className="font-mono text-black pt-4">
-              Bạn có chắc chắn muốn xóa tài liệu này?
+              Are you sure you want to delete this material?
               <br/><br/>
-              <strong>Lưu ý:</strong> File vật lý sẽ bị xóa để giải phóng dung lượng. Các câu hỏi và flashcard đã được AI sinh ra từ tài liệu này vẫn sẽ được giữ lại trong hệ thống.
+              <strong>Note:</strong> The stored file will be removed. Questions and flashcards already generated from this material will remain in the system.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-6 flex gap-4 bg-transparent p-0 border-0">
@@ -539,14 +539,14 @@ export default function AIWorkspacePage() {
               onClick={() => setMaterialToDelete(null)}
               className="flex-1 border-4 border-black bg-white text-black font-mono font-bold uppercase p-2 hover:bg-white transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)]"
             >
-              Hủy
+              Cancel
             </button>
             <button
               onClick={handleDeleteMaterial}
               disabled={isDeleting}
               className="flex-1 border-4 border-black bg-black text-white font-mono font-bold uppercase p-2 hover:bg-white hover:text-black transition-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isDeleting ? <Loader2 className="animate-spin w-4 h-4" /> : "Xóa"}
+              {isDeleting ? <Loader2 className="animate-spin w-4 h-4" /> : "Delete"}
             </button>
           </DialogFooter>
         </DialogContent>

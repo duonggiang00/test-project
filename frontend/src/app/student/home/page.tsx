@@ -14,7 +14,7 @@ export default function StudentHomePage() {
   const { user: storeUser } = useUserStore();
   const { profile } = useProfile();
   const currentUser = profile || storeUser;
-  const studentName = currentUser?.full_name?.split(" ")[0] || currentUser?.full_name || "bạn";
+  const studentName = currentUser?.full_name?.split(" ")[0] || currentUser?.full_name || "Student";
 
   const { topics, isLoading, isError } = useTopics();
 
@@ -26,9 +26,9 @@ export default function StudentHomePage() {
       
       <div className="flex justify-between items-end border-b-4 border-black pb-4 mt-8">
         <div>
-          <h1 className="font-mono text-3xl md:text-5xl font-black uppercase tracking-tight">Thư viện chủ đề</h1>
+          <h1 className="font-mono text-3xl md:text-5xl font-black uppercase tracking-tight">Topic Library</h1>
           <p className="font-mono mt-2 font-bold uppercase text-black">
-            Khám phá các bộ môn, ôn tập Flashcard và làm bài thi
+            Explore subjects, review flashcards, and take exams
           </p>
         </div>
       </div>
@@ -41,13 +41,13 @@ export default function StudentHomePage() {
 
       {isError && (
         <div role="alert" className="p-4 border-4 border-dashed border-black bg-white text-black font-mono font-bold uppercase text-center shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-          Đã có lỗi xảy ra khi tải dữ liệu!
+          Topic data could not be loaded.
         </div>
       )}
 
       {!isLoading && !isError && topics && topics.length === 0 && (
         <div className="p-10 border-4 border-dashed border-black bg-white text-black font-mono font-bold uppercase text-center shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-          Chưa có chủ đề nào được tạo.
+          No topics are available yet.
         </div>
       )}
 
@@ -66,10 +66,10 @@ export default function StudentHomePage() {
                 {topic.name}
               </h2>
               <p className="font-mono text-sm font-medium text-black line-clamp-3 mb-4 flex-1">
-                {topic.description || "Chưa có mô tả"}
+                {topic.description || "No description"}
               </p>
               <div className="flex items-center text-sm font-mono font-bold uppercase text-black mt-auto">
-                Vào học ngay <AppIcon name="arrow_forward" className="ml-1" />
+                Start learning <AppIcon name="arrow_forward" className="ml-1" />
               </div>
             </Link>
           ))}

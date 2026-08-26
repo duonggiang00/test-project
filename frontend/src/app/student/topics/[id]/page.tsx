@@ -32,7 +32,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
   if (isTopicLoading || isDecksLoading) {
     return (
       <div className="p-8 font-mono">
-        <p className="text-xl font-bold uppercase">ĐANG TẢI DỮ LIỆU...</p>
+        <p className="text-xl font-bold uppercase">LOADING TOPIC...</p>
       </div>
     );
   }
@@ -40,19 +40,19 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
   if (!topic) {
     return (
       <div className="p-8 font-mono">
-        <p className="text-xl font-bold uppercase">KHÔNG TÌM THẤY CHỦ ĐỀ</p>
+        <p className="text-xl font-bold uppercase">TOPIC NOT FOUND</p>
       </div>
     );
   }
 
   return (
     <div className="p-4 md:p-8 font-mono max-w-5xl mx-auto flex flex-col gap-8 w-full">
-      <nav aria-label="Điều hướng chủ đề">
+      <nav aria-label="Topic navigation">
         <Link
           href="/student/home"
           className="inline-flex min-h-11 items-center border-4 border-black bg-white px-4 py-2 font-black uppercase shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-black"
         >
-          &larr; Trang chủ Student
+          &larr; Student Home
         </Link>
       </nav>
       <div className="border-4 border-black p-6 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
@@ -63,7 +63,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
         {/* Progress Bar Dynamic */}
         <div className="mb-6 bg-white border-4 border-black p-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="font-bold uppercase">Tiến độ học tập</span>
+            <span className="font-bold uppercase">Learning progress</span>
             <span className="font-bold">{progress}%</span>
           </div>
           <div className="w-full border-4 border-black h-8 relative bg-white">
@@ -76,13 +76,13 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
             <ReactMarkdown>{topic.brief_content}</ReactMarkdown>
           </div>
         ) : (
-          <p className="font-bold uppercase">Chưa có nội dung tóm tắt.</p>
+          <p className="font-bold uppercase">No topic summary is available.</p>
         )}
       </div>
 
       <div className="border-4 border-black p-6 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
         <h2 className="text-2xl font-black uppercase mb-6 border-b-4 border-black pb-4">
-          BỘ THẺ GHI NHỚ (FLASHCARDS)
+          FLASHCARD DECKS
         </h2>
         {decks && decks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -101,13 +101,13 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
                   onClick={() => router.push(`/student/topics/${id}/decks/${deck.id}/study`)}
                   className="w-full border-4 border-black bg-black text-white hover:bg-white hover:text-black font-black uppercase shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all rounded-none mt-4"
                 >
-                  BẮT ĐẦU ÔN TẬP
+                  START REVIEW
                 </Button>
               </div>
             ))}
           </div>
         ) : (
-          <p className="font-bold uppercase">CHƯA CÓ BỘ THẺ NÀO CHO CHỦ ĐỀ NÀY.</p>
+          <p className="font-bold uppercase">NO FLASHCARD DECKS FOR THIS TOPIC.</p>
         )}
       </div>
       
@@ -115,12 +115,12 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
       <div className="border-4 border-black p-6 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b-4 border-black pb-4 gap-4">
           <h2 className="text-2xl font-black uppercase">
-            BÀI KIỂM TRA & ĐÁNH GIÁ
+            EXAMS & ASSESSMENTS
           </h2>
           <div className="relative">
             <input
               type="text"
-              placeholder="TÌM BÀI THI..."
+              placeholder="SEARCH EXAMS..."
               value={searchExam}
               onChange={(e) => {
                 setSearchExam(e.target.value);
@@ -147,7 +147,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
                   <div>
                     <h3 className="font-black text-xl uppercase mb-1">{exam.title}</h3>
                     <div className="flex gap-4 text-sm font-bold uppercase">
-                      <span className="bg-black text-white px-2 py-1">{exam.duration_minutes} PHÚT</span>
+                      <span className="bg-black text-white px-2 py-1">{exam.duration_minutes} MINUTES</span>
                     </div>
                   </div>
                   <Button
@@ -158,7 +158,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
                     )}
                     className="border-4 border-black bg-white text-black hover:bg-black hover:text-white font-black uppercase transition-all rounded-none w-full md:w-auto"
                   >
-                    {isSubmitted ? "XEM KẾT QUẢ" : isInProgress ? "TIẾP TỤC LÀM BÀI" : "BẮT ĐẦU LÀM BÀI"}
+                    {isSubmitted ? "VIEW RESULT" : isInProgress ? "CONTINUE EXAM" : "START EXAM"}
                   </Button>
                 </div>
               );
@@ -172,7 +172,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
                   disabled={examPage === 1}
                   className="border-4 border-black bg-white text-black hover:bg-black hover:text-white font-black uppercase rounded-none disabled:opacity-50"
                 >
-                  TRƯỚC
+                  PREVIOUS
                 </Button>
                 <span className="font-bold border-4 border-black px-4 py-2 bg-white flex items-center">
                   {examPage} / {pagination.pages}
@@ -188,7 +188,7 @@ export default function StudentTopicDetailPage({ params }: { params: Promise<{ i
             )}
           </div>
         ) : (
-          <p className="font-bold uppercase text-center py-8">KHÔNG TÌM THẤY BÀI THI NÀO.</p>
+          <p className="font-bold uppercase text-center py-8">NO EXAMS FOUND.</p>
         )}
       </div>
     </div>

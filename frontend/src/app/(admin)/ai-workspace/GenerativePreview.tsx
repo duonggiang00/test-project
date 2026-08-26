@@ -168,10 +168,10 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
   const handleDraftError = useCallback((caught: unknown) => {
     logBackendError("AI generation draft update failed", caught);
     toast.add({
-      title: "Lưu thất bại",
+      title: "Save failed",
       description: getBackendErrorMessage(
         caught,
-        "Không thể lưu thay đổi bản nháp.",
+        "Draft changes could not be saved.",
       ),
       type: "error",
     });
@@ -327,8 +327,8 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
     try {
       await updateDraft({ questions: editedQuestions.map(toQuestionPayload) });
       toast.add({
-        title: "Đã lưu",
-        description: "Đã lưu thay đổi bản nháp câu hỏi.",
+        title: "Saved",
+        description: "Question draft changes were saved.",
         type: "success",
       });
     } catch {
@@ -362,8 +362,8 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
     try {
       await updateDraft({ flashcards: editedFlashcards.map(toFlashcardPayload) });
       toast.add({
-        title: "Đã lưu",
-        description: "Đã lưu thay đổi bản nháp flashcard.",
+        title: "Saved",
+        description: "Flashcard draft changes were saved.",
         type: "success",
       });
     } catch {
@@ -379,8 +379,8 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
         title: editedBriefTitle || null,
       });
       toast.add({
-        title: "Đã lưu",
-        description: "Đã lưu thay đổi bản nháp tóm tắt.",
+        title: "Saved",
+        description: "Summary draft changes were saved.",
         type: "success",
       });
     } catch {
@@ -394,7 +394,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
         <div className="text-center font-mono opacity-50 text-black">
           <AppIcon name="auto_awesome" className="size-16 mb-4 block" />
           <p className="font-bold text-lg uppercase">Generative UI Area</p>
-          <p className="text-sm mt-2">Dữ liệu AI sinh ra sẽ được hiển thị và chỉnh sửa tại đây.</p>
+          <p className="text-sm mt-2">AI-generated content will appear here for editing and review.</p>
         </div>
       </div>
     );
@@ -428,7 +428,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
         )}
         {isEditable && (
           <p className="font-mono text-xs font-bold uppercase bg-white border-2 border-black p-2">
-            [EDIT] Bạn có thể chỉnh sửa, xóa hoặc thêm nội dung bên dưới trước khi duyệt.
+            [EDIT] Edit, remove, or add content below before approval.
           </p>
         )}
       </div>
@@ -453,10 +453,10 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
               {isEditable && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   <button type="button" className={SMALL_BUTTON_CLASS} onClick={addQuestion}>
-                    + Thêm câu hỏi
+                    + Add question
                   </button>
                   <button type="button" className={SMALL_BUTTON_CLASS} onClick={clearQuestions}>
-                    Xóa tất cả
+                    Clear all
                   </button>
                   <button
                     type="button"
@@ -466,14 +466,14 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                     aria-busy={isSavingDraft}
                   >
                     {isSavingDraft && <Loader2 className="animate-spin w-4 h-4" aria-hidden="true" />}
-                    Lưu thay đổi
+                    Save changes
                   </button>
                 </div>
               )}
 
               <div className="space-y-4">
                 {questionsToRender.length === 0 && (
-                  <p className="font-mono text-sm opacity-60">Chưa có câu hỏi nào.</p>
+                  <p className="font-mono text-sm opacity-60">No questions yet.</p>
                 )}
                 {questionsToRender.map((q, i) => {
                   const isChoiceType = q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE";
@@ -485,7 +485,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                             className={`${INPUT_CLASS} flex-1`}
                             value={q.content}
                             onChange={(e) => updateQuestion(i, { content: e.target.value })}
-                            placeholder={`Nội dung câu hỏi ${i + 1}`}
+                            placeholder={`Question ${i + 1} content`}
                             rows={2}
                           />
                         ) : (
@@ -525,7 +525,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                               className={SMALL_BUTTON_CLASS}
                               onClick={() => removeQuestion(i)}
                             >
-                              Xóa câu hỏi
+                              Delete question
                             </button>
                           )}
                         </div>
@@ -548,14 +548,14 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                                     className={`${INPUT_CLASS} flex-1`}
                                     value={opt.content}
                                     onChange={(e) => updateOption(i, j, { content: e.target.value })}
-                                    placeholder={`Đáp án ${j + 1}`}
+                                    placeholder={`Answer ${j + 1}`}
                                   />
                                   <button
                                     type="button"
                                     className={SMALL_BUTTON_CLASS}
                                     onClick={() => removeOption(i, j)}
                                   >
-                                    Xóa
+                                    Delete
                                   </button>
                                 </>
                               ) : (
@@ -573,7 +573,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                                 className={SMALL_BUTTON_CLASS}
                                 onClick={() => addOption(i)}
                               >
-                                + Thêm đáp án
+                                + Add answer
                               </button>
                             </li>
                           )}
@@ -582,7 +582,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
 
                       {q.type === "MATCHING" && !!q.metadata_json && !!q.metadata_json.pairs && (
                         <div className="mt-2 border-t-2 border-black pt-2">
-                          <p className="text-xs font-mono font-bold uppercase mb-2 underline">Các cặp ghép nối:</p>
+                          <p className="text-xs font-mono font-bold uppercase mb-2 underline">Matching pairs:</p>
                           <ul className="space-y-1">
                             {(q.metadata_json.pairs as Record<string, string>[]).map((pair, j) => (
                               <li key={j} className="font-mono text-sm font-bold flex gap-2">
@@ -597,11 +597,11 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                       )}
                       {q.type === "FILL_IN_BLANK" && !!q.metadata_json && !!q.metadata_json.blanks && (
                         <div className="mt-2 border-t-2 border-black pt-2">
-                          <p className="text-xs font-mono font-bold uppercase mb-2 underline">Các chỗ trống cần điền:</p>
+                          <p className="text-xs font-mono font-bold uppercase mb-2 underline">Fill-in blanks:</p>
                           <ul className="space-y-1">
                             {(q.metadata_json.blanks as { blank_index?: number; acceptable_answers: string | string[] }[]).map((blank, j) => (
                               <li key={j} className="font-mono text-sm font-bold">
-                                Chỗ trống [{blank.blank_index ?? j}]: {Array.isArray(blank.acceptable_answers) ? blank.acceptable_answers.join(" | ") : String(blank.acceptable_answers || "")}
+                                Blank [{blank.blank_index ?? j}]: {Array.isArray(blank.acceptable_answers) ? blank.acceptable_answers.join(" | ") : String(blank.acceptable_answers || "")}
                               </li>
                             ))}
                           </ul>
@@ -619,10 +619,10 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
               {isEditable && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   <button type="button" className={SMALL_BUTTON_CLASS} onClick={addFlashcard}>
-                    + Thêm thẻ
+                    + Add card
                   </button>
                   <button type="button" className={SMALL_BUTTON_CLASS} onClick={clearFlashcards}>
-                    Xóa tất cả
+                    Clear all
                   </button>
                   <button
                     type="button"
@@ -632,13 +632,13 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                     aria-busy={isSavingDraft}
                   >
                     {isSavingDraft && <Loader2 className="animate-spin w-4 h-4" aria-hidden="true" />}
-                    Lưu thay đổi
+                    Save changes
                   </button>
                 </div>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {flashcardsToRender.length === 0 && (
-                  <p className="font-mono text-sm opacity-60">Chưa có thẻ nào.</p>
+                  <p className="font-mono text-sm opacity-60">No cards yet.</p>
                 )}
                 {flashcardsToRender.map((card, i) => (
                   <div key={i} className={`${CARD_CLASS} flex flex-col justify-center items-stretch text-center gap-2`}>
@@ -648,13 +648,13 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                           className={`${INPUT_CLASS} font-bold text-center`}
                           value={card.term}
                           onChange={(e) => updateFlashcard(i, { term: e.target.value })}
-                          placeholder="Thuật ngữ"
+                          placeholder="Term"
                         />
                         <textarea
                           className={`${INPUT_CLASS} text-center`}
                           value={card.definition}
                           onChange={(e) => updateFlashcard(i, { definition: e.target.value })}
-                          placeholder="Định nghĩa"
+                          placeholder="Definition"
                           rows={2}
                         />
                         <button
@@ -662,7 +662,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                           className={SMALL_BUTTON_CLASS}
                           onClick={() => removeFlashcard(i)}
                         >
-                          Xóa thẻ
+                          Delete card
                         </button>
                       </>
                     ) : (
@@ -685,7 +685,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                     className={`${INPUT_CLASS} font-bold mb-2`}
                     value={editedBriefTitle}
                     onChange={(e) => setEditedBriefTitle(e.target.value)}
-                    placeholder="Tiêu đề tóm tắt"
+                    placeholder="Summary title"
                   />
                   <textarea
                     className={`${INPUT_CLASS} whitespace-pre-wrap`}
@@ -699,7 +699,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                       className={SMALL_BUTTON_CLASS}
                       onClick={() => setEditedBriefContent("")}
                     >
-                      Xóa nội dung
+                      Clear content
                     </button>
                     <button
                       type="button"
@@ -709,7 +709,7 @@ export default function GenerativePreview({ toolName, toolArgs, isStreaming }: G
                       aria-busy={isSavingDraft}
                     >
                       {isSavingDraft && <Loader2 className="animate-spin w-4 h-4" aria-hidden="true" />}
-                      Lưu thay đổi
+                      Save changes
                     </button>
                   </div>
                 </div>

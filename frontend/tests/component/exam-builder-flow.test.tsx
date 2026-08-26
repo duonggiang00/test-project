@@ -159,7 +159,7 @@ describe("exam question authoring and assignment", () => {
   test("defaults the bank to the exam Topic and hides questions already assigned", async () => {
     await renderExamBuilder();
 
-    expect(screen.getByLabelText(/Lọc theo Chủ đề/i)).toHaveValue("topic-1");
+    expect(screen.getByLabelText(/Filter by topic/i)).toHaveValue("topic-1");
     expect(screen.queryByTestId("question-bank-item-question-existing"))
       .not.toBeInTheDocument();
     expect(screen.getByTestId("question-bank-item-question-bank")).toBeVisible();
@@ -172,7 +172,7 @@ describe("exam question authoring and assignment", () => {
     fireEvent.click(screen.getByRole("checkbox", {
       name: /Select question: Available bank question/i,
     }));
-    fireEvent.click(screen.getByRole("button", { name: /Thêm vào Bài thi \(1\)/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Add to Exam \(1\)/i }));
 
     await waitFor(() => expect(mockedBulkAdd).toHaveBeenCalledWith(
       "exam-1",

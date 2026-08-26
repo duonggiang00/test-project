@@ -24,32 +24,32 @@ export default function AdminDashboard() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-4 border-black pb-4">
         <div>
-          <h1 className="text-3xl font-bold text-black uppercase tracking-tight">Tổng quan Dashboard</h1>
-          <p className="text-base font-mono text-black mt-1">Theo dõi hoạt động và tiến độ hệ thống AI.</p>
+          <h1 className="text-3xl font-bold text-black uppercase tracking-tight">Dashboard Overview</h1>
+          <p className="text-base font-mono text-black mt-1">Monitor activity and AI processing progress.</p>
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard 
-          title="Tổng Học Sinh" 
-          value={overview?.total_students || 0} 
-          icon={Users} 
+          title="Total Students"
+          value={overview?.total_students || 0}
+          icon={Users}
         />
         <StatCard 
-          title="Tổng Số Đề Thi" 
-          value={overview?.total_exams || 0} 
-          icon={FileText} 
+          title="Total Exams"
+          value={overview?.total_exams || 0}
+          icon={FileText}
         />
         <StatCard 
-          title="Tổng Câu Hỏi" 
-          value={overview?.total_questions || 0} 
-          icon={HelpCircle} 
+          title="Total Questions"
+          value={overview?.total_questions || 0}
+          icon={HelpCircle}
         />
         <StatCard 
-          title="Lượt Nộp Bài" 
-          value={overview?.total_submissions || 0} 
-          icon={CheckSquare} 
+          title="Submissions"
+          value={overview?.total_submissions || 0}
+          icon={CheckSquare}
         />
       </div>
 

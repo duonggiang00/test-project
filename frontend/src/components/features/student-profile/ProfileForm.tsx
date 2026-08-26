@@ -65,7 +65,7 @@ export default function ProfileForm() {
       <div className="flex items-center justify-between mb-6 border-b-4 border-black pb-4">
         <h2 className="text-2xl font-black uppercase flex items-center gap-3">
           <AppIcon name="manage_accounts" className="text-black size-8" />
-          Hồ Sơ Cá Nhân
+          Personal Profile
         </h2>
         {!isEditing && (
           <button
@@ -80,7 +80,7 @@ export default function ProfileForm() {
             }}
             className="px-4 py-2 bg-black text-white font-mono font-bold uppercase border-2 border-black hover:bg-white hover:text-black transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)]"
           >
-            Chỉnh sửa
+            Edit
           </button>
         )}
       </div>
@@ -99,7 +99,7 @@ export default function ProfileForm() {
             onClick={() => fileInputRef.current?.click()}
             className="px-4 py-2 bg-white text-black font-mono font-bold text-sm uppercase border-2 border-black hover:bg-black hover:text-white transition-all shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
           >
-            Đổi Avatar
+            Change Avatar
           </button>
           <input
             type="file"
@@ -121,26 +121,26 @@ export default function ProfileForm() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="font-mono text-xs text-black uppercase block mb-1">Họ và tên</span>
-                  <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.full_name || "Chưa cập nhật"}</span>
+                  <span className="font-mono text-xs text-black uppercase block mb-1">Full name</span>
+                  <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.full_name || "Not provided"}</span>
                 </div>
                 <div>
                   <span className="font-mono text-xs text-black uppercase block mb-1">Email</span>
                   <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.email}</span>
                 </div>
                 <div>
-                  <span className="font-mono text-xs text-black uppercase block mb-1">Số điện thoại</span>
-                  <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.phone_number || "Chưa cập nhật"}</span>
+                  <span className="font-mono text-xs text-black uppercase block mb-1">Phone number</span>
+                  <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.phone_number || "Not provided"}</span>
                 </div>
                 <div>
-                  <span className="font-mono text-xs text-black uppercase block mb-1">Ngày sinh</span>
-                  <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.date_of_birth || "Chưa cập nhật"}</span>
+                  <span className="font-mono text-xs text-black uppercase block mb-1">Date of birth</span>
+                  <span className="font-mono text-lg font-bold text-black border-b-2 border-black block pb-1">{profile.date_of_birth || "Not provided"}</span>
                 </div>
               </div>
               <div>
-                <span className="font-mono text-xs text-black uppercase block mb-1">Giới thiệu (Bio)</span>
+                <span className="font-mono text-xs text-black uppercase block mb-1">Bio</span>
                 <p className="font-mono text-base font-bold text-black border-2 border-black p-3 bg-white min-h-[80px]">
-                  {profile.bio || "Chưa cập nhật"}
+                  {profile.bio || "Not provided"}
                 </p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export default function ProfileForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col">
-                  <label className="font-mono text-sm font-bold uppercase mb-2">Họ và tên</label>
+                  <label className="font-mono text-sm font-bold uppercase mb-2">Full name</label>
                   <input
                     type="text"
                     name="full_name"
@@ -158,7 +158,7 @@ export default function ProfileForm() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="font-mono text-sm font-bold uppercase mb-2">Email (Không đổi)</label>
+                  <label className="font-mono text-sm font-bold uppercase mb-2">Email (read only)</label>
                   <input
                     type="text"
                     value={profile.email}
@@ -167,7 +167,7 @@ export default function ProfileForm() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="font-mono text-sm font-bold uppercase mb-2">Số điện thoại</label>
+                  <label className="font-mono text-sm font-bold uppercase mb-2">Phone number</label>
                   <input
                     type="text"
                     name="phone_number"
@@ -177,7 +177,7 @@ export default function ProfileForm() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="font-mono text-sm font-bold uppercase mb-2">Ngày sinh</label>
+                  <label className="font-mono text-sm font-bold uppercase mb-2">Date of birth</label>
                   <input
                     type="date"
                     name="date_of_birth"
@@ -188,7 +188,7 @@ export default function ProfileForm() {
                 </div>
               </div>
               <div className="flex flex-col">
-                <label className="font-mono text-sm font-bold uppercase mb-2">Giới thiệu (Bio)</label>
+                <label className="font-mono text-sm font-bold uppercase mb-2">Bio</label>
                 <textarea
                   name="bio"
                   value={formData.bio}
@@ -211,14 +211,14 @@ export default function ProfileForm() {
                   }}
                   className="px-6 py-3 bg-white text-black font-mono font-bold uppercase border-2 border-black hover:bg-white transition-all"
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
                   className="px-6 py-3 bg-black text-white font-mono font-bold uppercase border-2 border-black hover:bg-white hover:text-black transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50"
                 >
-                  {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+                  {isSaving ? "Saving..." : "Save changes"}
                 </button>
               </div>
             </form>

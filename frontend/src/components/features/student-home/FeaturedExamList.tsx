@@ -16,7 +16,7 @@ export default function FeaturedExamList() {
     return (
       <section data-testid="featured-exams-loading" className="flex flex-col items-center justify-center p-12 border-4 border-black bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] min-h-[300px]">
         <Loader2 className="w-12 h-12 animate-spin text-black mb-4" />
-        <span className="font-mono text-lg font-bold text-black uppercase">Đang tải danh sách bài thi...</span>
+        <span className="font-mono text-lg font-bold text-black uppercase">Loading exams...</span>
       </section>
     );
   }
@@ -25,8 +25,8 @@ export default function FeaturedExamList() {
     return (
       <section data-testid="featured-exams-error" className="flex flex-col items-center justify-center p-12 border-4 border-black bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] min-h-[300px]">
         <AppIcon name="error" className="size-16 text-black mb-4" />
-        <p className="font-mono font-bold text-black text-xl uppercase">Không thể tải danh sách bài thi</p>
-        <p className="font-mono text-sm text-black uppercase mt-2">Vui lòng thử lại sau.</p>
+        <p className="font-mono font-bold text-black text-xl uppercase">Exams could not be loaded</p>
+        <p className="font-mono text-sm text-black uppercase mt-2">Try again later.</p>
       </section>
     );
   }
@@ -36,15 +36,15 @@ export default function FeaturedExamList() {
       <div className="flex justify-between items-center border-b-4 border-black pb-4">
         <h3 className="text-2xl md:text-3xl font-black text-black uppercase tracking-tight flex items-center gap-3">
           <AppIcon name="extension" className="text-black size-8 md:size-10" />
-          Kỳ Thi Của Tôi
+          My Exams
         </h3>
       </div>
 
       {exams.length === 0 ? (
         <div data-testid="featured-exams-empty" className="bg-white border-4 border-dashed border-black p-12 text-center flex flex-col items-center justify-center min-h-[250px]">
           <AppIcon name="task_alt" className="size-16 text-black mb-4" />
-          <p className="text-xl font-bold text-black uppercase">Bạn chưa có bài thi nào.</p>
-          <p className="text-sm text-black uppercase mt-2">Hãy quay lại sau nhé!</p>
+          <p className="text-xl font-bold text-black uppercase">No exams are available.</p>
+          <p className="text-sm text-black uppercase mt-2">Check again later.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-6">
@@ -53,9 +53,9 @@ export default function FeaturedExamList() {
               <FeaturedExamCard
                 key={exam.id}
                 id={exam.id}
-                subject={exam.topic_name || "Tổng hợp"}
+                subject={exam.topic_name || "General"}
                 title={exam.title}
-                description={exam.description || "Bài thi đánh giá năng lực học sinh"}
+                description={exam.description || "Student assessment exam"}
                 durationMinutes={exam.duration_minutes}
                 questionCount={exam.question_count || 0}
                 submissionStatus={exam.submission_status}
@@ -73,7 +73,7 @@ export default function FeaturedExamList() {
                 disabled={currentPage === 1}
                 className="px-4 py-2 border-4 border-black bg-white text-black hover:bg-black hover:text-white disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-black transition-colors uppercase"
               >
-                Trang trước
+                Previous page
               </button>
               <span className="text-lg px-4 border-b-4 border-black">
                 {currentPage} / {pagination.pages}
@@ -83,7 +83,7 @@ export default function FeaturedExamList() {
                 disabled={currentPage === pagination.pages}
                 className="px-4 py-2 border-4 border-black bg-white text-black hover:bg-black hover:text-white disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-black transition-colors uppercase"
               >
-                Trang tiếp
+                Next page
               </button>
             </div>
           )}

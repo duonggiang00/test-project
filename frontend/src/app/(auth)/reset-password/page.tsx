@@ -30,17 +30,17 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
     e.preventDefault();
 
     if (!token) {
-      toast.add({ title: "Lỗi", description: "Mã khôi phục không hợp lệ", type: "error" });
+      toast.add({ title: "Invalid request", description: "The recovery token is invalid.", type: "error" });
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.add({ title: "Lỗi", description: "Mật khẩu xác nhận không khớp", type: "error" });
+      toast.add({ title: "Passwords do not match", description: "Confirm the same password in both fields.", type: "error" });
       return;
     }
 
     if (password.length < 8) {
-      toast.add({ title: "Lỗi", description: "Mật khẩu phải có ít nhất 8 ký tự", type: "error" });
+      toast.add({ title: "Password too short", description: "Use at least 8 characters.", type: "error" });
       return;
     }
 
@@ -49,8 +49,8 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
     try {
       await resetPassword({ token, new_password: password });
       toast.add({
-        title: "Thành công",
-        description: "Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập.",
+        title: "Password reset",
+        description: "Your password has been reset. Sign in with the new password.",
         type: "success"
       });
       router.push("/login");
@@ -72,10 +72,10 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white text-black px-4 font-mono">
         <Card className="w-full max-w-md border-4 border-black rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] bg-white text-black p-6 text-center space-y-4">
-          <h2 className="text-xl font-bold uppercase">Lỗi truy cập</h2>
-          <p>Đường dẫn khôi phục không hợp lệ hoặc thiếu Token.</p>
+          <h2 className="text-xl font-bold uppercase">Invalid reset link</h2>
+          <p>The recovery link is invalid or does not include a token.</p>
           <Button className="w-full border-4 border-black rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] font-mono tracking-widest uppercase font-bold bg-black text-white hover:bg-white hover:text-black transition-colors" onClick={() => router.push("/login")}>
-            Về trang Đăng nhập
+            Go to sign in
           </Button>
         </Card>
       </div>
@@ -86,16 +86,16 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
     <div className="flex h-screen w-full items-center justify-center bg-white text-black px-4 font-mono">
       <Card className="w-full max-w-md border-4 border-black rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] bg-white text-black">
         <CardHeader className="space-y-2 text-center border-b-4 border-black pb-6">
-          <CardTitle className="text-2xl font-mono tracking-widest uppercase font-bold text-black">Đặt Lại Mật Khẩu</CardTitle>
+          <CardTitle className="text-2xl font-mono tracking-widest uppercase font-bold text-black">Reset Password</CardTitle>
           <CardDescription className="font-mono text-black uppercase">
-            Vui lòng nhập mật khẩu mới
+            Enter your new password
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6 pt-6">
             <div className="space-y-2">
               <label className="text-sm font-bold leading-none font-mono tracking-widest uppercase text-black" htmlFor="password">
-                Mật khẩu mới
+                New password
               </label>
               <div className="relative">
                 <Input
@@ -117,7 +117,7 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-bold leading-none font-mono tracking-widest uppercase text-black" htmlFor="confirmPassword">
-                Xác nhận Mật khẩu mới
+                Confirm new password
               </label>
               <div className="relative">
                 <Input
@@ -144,11 +144,11 @@ export default function ResetPasswordPage({ searchParams }: PageProps) {
               type="submit" 
               disabled={isLoading} 
             >
-              {isLoading ? "Đang xử lý..." : "Cập Nhật Mật Khẩu"}
+              {isLoading ? "Processing..." : "Update Password"}
             </Button>
             <div className="text-center w-full mt-2">
               <Link href="/login" className="text-sm font-bold font-mono uppercase text-black hover:underline underline-offset-4">
-                Hủy và về đăng nhập
+                Cancel and return to sign in
               </Link>
             </div>
           </CardFooter>

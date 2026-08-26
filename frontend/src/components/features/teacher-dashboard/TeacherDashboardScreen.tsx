@@ -11,8 +11,8 @@ export default function TeacherDashboardScreen() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-4 border-black pb-4">
         <div>
-          <h1 className="text-3xl font-bold text-black uppercase tracking-tight">Tổng quan Dashboard</h1>
-          <p className="text-base font-mono text-black mt-1">Theo dõi hoạt động và tiến độ hệ thống AI.</p>
+          <h1 className="text-3xl font-bold text-black uppercase tracking-tight">Dashboard Overview</h1>
+          <p className="text-base font-mono text-black mt-1">Monitor activity and AI processing progress.</p>
         </div>
         <div className="flex items-center gap-3">
           <button className="p-2 border-4 border-black bg-white text-black hover:bg-black hover:text-white transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
@@ -20,7 +20,7 @@ export default function TeacherDashboardScreen() {
           </button>
           <button className="px-4 py-2 bg-black text-white font-bold flex items-center gap-2 border-4 border-black hover:bg-white hover:text-black transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)] uppercase tracking-tight">
             <AppIcon name="filter_list" className="size-[18px]" />
-            Lọc Dữ Liệu
+            Filter Data
           </button>
         </div>
       </div>
@@ -30,24 +30,24 @@ export default function TeacherDashboardScreen() {
         <DashboardStatCard
           icon="description"
           trend={{ type: 'up', value: '+12%', icon: 'trending_up' }}
-          title="Tổng Số Đề Thi"
+          title="Total Exams"
           value="1,248"
         />
         <DashboardStatCard
           icon="smart_toy"
           trend={{ type: 'up', value: '+24%', icon: 'trending_up' }}
-          title="Câu Hỏi AI Tạo"
+          title="AI-Generated Questions"
           value="15.4k"
         />
         <DashboardStatCard
           icon="group"
-          title="Học Sinh Đăng Ký"
+          title="Registered Students"
           value="3,892"
         />
         <DashboardStatCard
           icon="check_circle"
           trend={{ type: 'down', value: '-2%', icon: 'trending_down' }}
-          title="Lượt Nộp Bài"
+          title="Submissions"
           value="42.1k"
         />
       </div>

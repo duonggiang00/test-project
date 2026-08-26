@@ -49,7 +49,7 @@ jest.mock("../../src/lib/store", () => ({
 jest.mock(
   "../../src/components/features/student-home/FeaturedExamList",
   () => function MockFeaturedExamList() {
-    return <section aria-label="Kỳ thi của tôi">Exam list</section>;
+    return <section aria-label="My exams">Exam list</section>;
   },
 );
 
@@ -92,8 +92,8 @@ describe("Student flow navigation", () => {
   test("shows the exam list and Topic library on Student Home", () => {
     render(<StudentHomePage />);
 
-    expect(screen.getByRole("region", { name: "Kỳ thi của tôi" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Thư viện chủ đề" })).toBeVisible();
+    expect(screen.getByRole("region", { name: "My exams" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Topic Library" })).toBeVisible();
   });
 
   test("routes exam actions by submission state", async () => {
@@ -142,13 +142,13 @@ describe("Student flow navigation", () => {
       await params;
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "BẮT ĐẦU LÀM BÀI" }));
+    fireEvent.click(screen.getByRole("button", { name: "START EXAM" }));
     expect(push).toHaveBeenLastCalledWith("/student/exam/exam-new");
 
-    fireEvent.click(screen.getByRole("button", { name: "TIẾP TỤC LÀM BÀI" }));
+    fireEvent.click(screen.getByRole("button", { name: "CONTINUE EXAM" }));
     expect(push).toHaveBeenLastCalledWith("/student/exam/exam-progress");
 
-    fireEvent.click(screen.getByRole("button", { name: "XEM KẾT QUẢ" }));
+    fireEvent.click(screen.getByRole("button", { name: "VIEW RESULT" }));
     expect(push).toHaveBeenLastCalledWith("/student/exam/exam-done/result");
   });
 });

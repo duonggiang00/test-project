@@ -84,39 +84,39 @@ describe("AI generation job review panel", () => {
     renderPreview();
 
     await waitFor(() =>
-      expect(statusText()).toHaveTextContent(/ĐANG CHỜ DUYỆT/),
+      expect(statusText()).toHaveTextContent(/AWAITING REVIEW/),
     );
     expect(statusText()).toHaveAttribute("data-status", "awaiting_review");
-    expect(button(/^Duyệt$/)).toBeInTheDocument();
-    expect(button(/^Từ chối$/)).toBeInTheDocument();
+    expect(button(/^Approve$/)).toBeInTheDocument();
+    expect(button(/^Reject$/)).toBeInTheDocument();
     // The backend allowlist has no `awaiting_review -> published` pair.
-    expect(button(/^Xuất bản$/)).not.toBeInTheDocument();
+    expect(button(/^Publish$/)).not.toBeInTheDocument();
   });
 
   test("approved offers publish only", async () => {
     mockedGetJob.mockResolvedValue(job("approved"));
     renderPreview();
 
-    await waitFor(() => expect(statusText()).toHaveTextContent(/ĐÃ DUYỆT/));
-    expect(button(/^Xuất bản$/)).toBeInTheDocument();
-    expect(button(/^Duyệt$/)).not.toBeInTheDocument();
-    expect(button(/^Từ chối$/)).not.toBeInTheDocument();
+    await waitFor(() => expect(statusText()).toHaveTextContent(/APPROVED/));
+    expect(button(/^Publish$/)).toBeInTheDocument();
+    expect(button(/^Approve$/)).not.toBeInTheDocument();
+    expect(button(/^Reject$/)).not.toBeInTheDocument();
   });
 
   test("a rejected job offers no action at all", async () => {
     mockedGetJob.mockResolvedValue(job("rejected"));
     renderPreview();
 
-    await waitFor(() => expect(statusText()).toHaveTextContent(/ĐÃ TỪ CHỐI/));
+    await waitFor(() => expect(statusText()).toHaveTextContent(/REJECTED/));
     expect(screen.queryAllByRole("button")).toHaveLength(0);
-    expect(reviewPanel()).toHaveTextContent(/không thể xuất bản/i);
+    expect(reviewPanel()).toHaveTextContent(/cannot be published/i);
   });
 
   test.each([
-    ["published", /ĐÃ XUẤT BẢN/],
-    ["failed", /THẤT BẠI/],
-    ["generated", /ĐANG CHUYỂN DUYỆT/],
-    ["processing", /ĐANG SINH NỘI DUNG/],
+    ["published", /PUBLISHED/],
+    ["failed", /GENERATION FAILED/],
+    ["generated", /QUEUING REVIEW/],
+    ["processing", /GENERATING CONTENT/],
   ] as [AIGenerationJobStatus, RegExp][])(
     "the %s state renders without any reviewer action",
     async (status, label) => {
@@ -133,15 +133,15 @@ describe("AI generation job review panel", () => {
     mockedApprove.mockResolvedValue(job("approved", { version: 5 }));
     renderPreview();
 
-    await waitFor(() => expect(button(/^Duyệt$/)).toBeInTheDocument());
-    fireEvent.click(button(/^Duyệt$/) as HTMLElement);
+    await waitFor(() => expect(button(/^Approve$/)).toBeInTheDocument());
+    fireEvent.click(button(/^Approve$/) as HTMLElement);
 
     await waitFor(() =>
       expect(mockedApprove).toHaveBeenCalledWith("job-1", 4),
     );
-    await waitFor(() => expect(statusText()).toHaveTextContent(/ĐÃ DUYỆT/));
+    await waitFor(() => expect(statusText()).toHaveTextContent(/APPROVED/));
     // Publish becomes reachable only after the approval landed.
-    expect(button(/^Xuất bản$/)).toBeInTheDocument();
+    expect(button(/^Publish$/)).toBeInTheDocument();
     expect(mockedToastAdd).toHaveBeenCalledWith(
       expect.objectContaining({ type: "success" }),
     );
@@ -152,12 +152,12 @@ describe("AI generation job review panel", () => {
     mockedReject.mockResolvedValue(job("rejected", { version: 5 }));
     renderPreview();
 
-    await waitFor(() => expect(button(/^Từ chối$/)).toBeInTheDocument());
-    fireEvent.click(button(/^Từ chối$/) as HTMLElement);
+    await waitFor(() => expect(button(/^Reject$/)).toBeInTheDocument());
+    fireEvent.click(button(/^Reject$/) as HTMLElement);
 
     await waitFor(() => expect(mockedReject).toHaveBeenCalledWith("job-1", 4));
-    await waitFor(() => expect(statusText()).toHaveTextContent(/ĐÃ TỪ CHỐI/));
-    expect(button(/^Xuất bản$/)).not.toBeInTheDocument();
+    await waitFor(() => expect(statusText()).toHaveTextContent(/REJECTED/));
+    expect(button(/^Publish$/)).not.toBeInTheDocument();
   });
 
   test("publishing sends placement fields only and revalidates the job", async () => {
@@ -167,8 +167,8 @@ describe("AI generation job review panel", () => {
     mockedPublish.mockResolvedValue({ job_id: "job-1", status: "published" });
     renderPreview();
 
-    await waitFor(() => expect(button(/^Xuất bản$/)).toBeInTheDocument());
-    fireEvent.click(button(/^Xuất bản$/) as HTMLElement);
+    await waitFor(() => expect(button(/^Publish$/)).toBeInTheDocument());
+    fireEvent.click(button(/^Publish$/) as HTMLElement);
 
     await waitFor(() => expect(mockedPublish).toHaveBeenCalledTimes(1));
     expect(mockedPublish).toHaveBeenCalledWith(
@@ -176,7 +176,7 @@ describe("AI generation job review panel", () => {
       { title: "AI-generated questions", topic_id: null },
       4,
     );
-    await waitFor(() => expect(statusText()).toHaveTextContent(/ĐÃ XUẤT BẢN/));
+    await waitFor(() => expect(statusText()).toHaveTextContent(/PUBLISHED/));
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
@@ -190,16 +190,16 @@ describe("AI generation job review panel", () => {
     );
     renderPreview();
 
-    await waitFor(() => expect(button(/^Duyệt$/)).toBeInTheDocument());
-    fireEvent.click(button(/^Duyệt$/) as HTMLElement);
+    await waitFor(() => expect(button(/^Approve$/)).toBeInTheDocument());
+    fireEvent.click(button(/^Approve$/) as HTMLElement);
 
-    await waitFor(() => expect(button(/^Duyệt$/)).toBeDisabled());
-    expect(button(/^Từ chối$/)).toBeDisabled();
-    expect(button(/^Duyệt$/)).toHaveAttribute("aria-busy", "true");
-    expect(button(/^Từ chối$/)).toHaveAttribute("aria-busy", "false");
+    await waitFor(() => expect(button(/^Approve$/)).toBeDisabled());
+    expect(button(/^Reject$/)).toBeDisabled();
+    expect(button(/^Approve$/)).toHaveAttribute("aria-busy", "true");
+    expect(button(/^Reject$/)).toHaveAttribute("aria-busy", "false");
 
     settle(job("approved", { version: 5 }));
-    await waitFor(() => expect(statusText()).toHaveTextContent(/ĐÃ DUYỆT/));
+    await waitFor(() => expect(statusText()).toHaveTextContent(/APPROVED/));
     expect(mockedReject).not.toHaveBeenCalled();
   });
 
@@ -208,7 +208,7 @@ describe("AI generation job review panel", () => {
     renderPreview();
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      /ĐANG TẢI TRẠNG THÁI DUYỆT/,
+      /LOADING REVIEW STATUS/,
     );
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     await Promise.resolve();
@@ -227,7 +227,7 @@ describe("AI generation job review panel", () => {
 
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(
-        /KHÔNG TẢI ĐƯỢC TRẠNG THÁI DUYỆT/,
+        /REVIEW STATUS UNAVAILABLE/,
       ),
     );
     expect(screen.queryAllByRole("button")).toHaveLength(0);
@@ -251,8 +251,8 @@ describe("AI generation job review panel", () => {
     });
     renderPreview();
 
-    await waitFor(() => expect(button(/^Duyệt$/)).toBeInTheDocument());
-    fireEvent.click(button(/^Duyệt$/) as HTMLElement);
+    await waitFor(() => expect(button(/^Approve$/)).toBeInTheDocument());
+    fireEvent.click(button(/^Approve$/) as HTMLElement);
 
     await waitFor(() =>
       expect(mockedToastAdd).toHaveBeenCalledWith({
@@ -269,7 +269,7 @@ describe("AI generation job review panel", () => {
       expect.objectContaining({ type: "success" }),
     );
     // The panel re-reads rather than optimistically advancing.
-    expect(statusText()).toHaveTextContent(/ĐANG CHỜ DUYỆT/);
+    expect(statusText()).toHaveTextContent(/AWAITING REVIEW/);
     expect(JSON.stringify(mockedToastAdd.mock.calls)).not.toContain("canary");
     expect(JSON.stringify(consoleError.mock.calls)).not.toContain("canary");
     consoleError.mockRestore();
@@ -279,7 +279,7 @@ describe("AI generation job review panel", () => {
     renderPreview({ questions: [{ content: "Question" }] });
 
     await waitFor(() =>
-      expect(reviewPanel()).toHaveTextContent(/chưa gắn với phiên duyệt/i),
+      expect(reviewPanel()).toHaveTextContent(/not attached to a review session/i),
     );
     expect(mockedGetJob).not.toHaveBeenCalled();
     expect(screen.queryAllByRole("button")).toHaveLength(0);
@@ -298,7 +298,7 @@ describe("AI generation job review panel", () => {
     mockedGetJob.mockResolvedValue(job("awaiting_review"));
     renderPreview();
 
-    await waitFor(() => expect(button(/^Duyệt$/)).toBeInTheDocument());
+    await waitFor(() => expect(button(/^Approve$/)).toBeInTheDocument());
     for (const element of [reviewPanel(), ...screen.getAllByRole("button")]) {
       expect(element.className).not.toMatch(
         /\b(?:bg|text|border)-(?:red|green|blue|yellow|amber|gray|slate|zinc)/,

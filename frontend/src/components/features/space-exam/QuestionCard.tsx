@@ -20,7 +20,7 @@ export function QuestionCard({ questionText, imageUrl, children }: QuestionCardP
       {imageUrl && (
         <div className="w-full h-48 md:h-64 rounded-lg mt-4 border border-black bg-white flex flex-col items-center justify-center text-black gap-2">
           <ImageIcon className="w-10 h-10 text-black" />
-          <span className="text-xs font-mono uppercase tracking-wider">Hình ảnh minh họa</span>
+          <span className="text-xs font-mono uppercase tracking-wider">Question illustration</span>
         </div>
       )}
       {children && (

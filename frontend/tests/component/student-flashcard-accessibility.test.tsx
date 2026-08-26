@@ -57,7 +57,7 @@ describe("Student flashcard accessibility", () => {
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("button", { name: "[TỐT]" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "[GOOD]" })).toBeVisible();
   });
 
   test("exposes both matching columns as pressed-state buttons", () => {
@@ -134,11 +134,11 @@ describe("Student flashcard accessibility", () => {
     );
 
     const summary = screen.getByTestId("mobile-matching-summary");
-    expect(summary).toHaveTextContent("Các cặp đã nối");
+    expect(summary).toHaveTextContent("Matched pairs");
     expect(summary).toHaveTextContent("One→Hai");
 
     const correctMatches = screen.getByTestId("mobile-correct-matches");
-    expect(correctMatches).toHaveTextContent("Đáp án đúng");
+    expect(correctMatches).toHaveTextContent("Correct answer");
     expect(correctMatches).toHaveTextContent("One→Một");
     expect(correctMatches).toHaveTextContent("Two→Hai");
   });

@@ -38,7 +38,7 @@ export default function StudentHeader() {
             href="/student/home"
           >
             <AppIcon name="home" className="" aria-hidden="true" />
-            <span className="hidden sm:inline">Trang chủ</span>
+            <span className="hidden sm:inline">Home</span>
           </Link>
 
           <Link
@@ -48,13 +48,13 @@ export default function StudentHeader() {
             href="/student/profile"
           >
             <AppIcon name="person" className="" aria-hidden="true" />
-            <span className="hidden sm:inline">Trang cá nhân</span>
+            <span className="hidden sm:inline">Profile</span>
           </Link>
         </nav>
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-3">
             <span className="font-mono text-sm font-bold uppercase truncate max-w-[150px]">
-              {profile?.full_name || profile?.email || "Học viên"}
+              {profile?.full_name || profile?.email || "Student"}
             </span>
             <div className="w-10 h-10 border-2 border-black bg-white flex items-center justify-center overflow-hidden relative shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
               {profile?.avatar_url ? (
@@ -68,7 +68,7 @@ export default function StudentHeader() {
             onClick={handleLogout}
             aria-label="Log out"
             className="w-12 h-12 flex items-center justify-center bg-white border-4 border-black text-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-black hover:text-white transition-all"
-            title="Đăng xuất"
+            title="Sign out"
           >
             <AppIcon name="logout" className="" />
           </button>

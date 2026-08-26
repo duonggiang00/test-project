@@ -29,7 +29,7 @@ export default function ExamDetailPage({
   const questions = exam?.questions || [];
   const { confirm, ConfirmDialog } = useConfirm();
 
-  // Global questions for "Ngân Hàng Câu Hỏi"
+  // Global questions for the question bank.
   const [globalPage, setGlobalPage] = useState(1);
   const [globalTopicId, setGlobalTopicId] = useState<string | null>(null);
   const { topics: globalTopics } = useTopics({ size: 100 });
@@ -62,12 +62,12 @@ export default function ExamDetailPage({
     setIsAddingBulk(true);
     try {
       await bulkAddQuestionsToExam(exam!.id, selectedGlobalQuestionIds);
-      toast.add({ title: "Thành công", description: `Đã thêm ${selectedGlobalQuestionIds.length} câu hỏi vào đề thi.`, type: "success" });
+      toast.add({ title: "Questions added", description: `Added ${selectedGlobalQuestionIds.length} questions to the exam.`, type: "success" });
       setSelectedGlobalQuestionIds([]);
       await Promise.all([mutate(), mutateGlobalQuestions()]);
     } catch (error) {
       logBackendError("Exam question bulk add failed", error);
-      toast.add({ title: "Lỗi", description: "Không thể thêm câu hỏi", type: "error" });
+      toast.add({ title: "Add failed", description: "Questions could not be added.", type: "error" });
     } finally {
       setIsAddingBulk(false);
     }
@@ -192,7 +192,7 @@ export default function ExamDetailPage({
 
   const handleSave = async () => {
     if (!content.trim()) {
-      toast.add({ title: "Thông báo", description: "Question content is required.", type: "info" });
+      toast.add({ title: "Question required", description: "Question content is required.", type: "info" });
       return;
     }
     setIsSaving(true);
@@ -202,7 +202,7 @@ export default function ExamDetailPage({
       
       if (questionType === "MATCHING") {
         if (matchingPairs.length < 2) {
-          toast.add({ title: "Thông báo", description: "Matching questions require at least 2 pairs.", type: "info" });
+          toast.add({ title: "More pairs required", description: "Matching questions require at least 2 pairs.", type: "info" });
           setIsSaving(false);
           return;
         }
@@ -232,7 +232,7 @@ export default function ExamDetailPage({
       handleCloseModal();
     } catch (error) {
       logBackendError("Exam question save failed", error);
-      toast.add({ title: "Thông báo", description: "Failed to save question", type: "error" });
+      toast.add({ title: "Save failed", description: "Failed to save question", type: "error" });
     } finally {
       setIsSaving(false);
     }
@@ -246,7 +246,7 @@ export default function ExamDetailPage({
       await mutate();
     } catch (error) {
       logBackendError("Exam question delete failed", error);
-      toast.add({ title: "Thông báo", description: "Failed to delete question", type: "error" });
+      toast.add({ title: "Delete failed", description: "Failed to delete question", type: "error" });
     } finally {
       setIsDeleting(null);
     }
@@ -262,39 +262,39 @@ export default function ExamDetailPage({
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold uppercase tracking-widest font-mono">Chi Tiết Đề Thi</h1>
+          <h1 className="text-3xl font-bold uppercase tracking-widest font-mono">Exam Details</h1>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cột trái: Thông tin đề thi */}
+        {/* Left column: exam information */}
         <div className="lg:col-span-1 space-y-8">
           <div className="border-4 border-black p-6 bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
-            <h2 className="text-xl font-bold uppercase tracking-widest font-mono mb-6 border-b-4 border-black pb-4">Thông tin chung</h2>
+            <h2 className="text-xl font-bold uppercase tracking-widest font-mono mb-6 border-b-4 border-black pb-4">General Information</h2>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black mb-2">Tiêu đề</label>
+                <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black mb-2">Title</label>
                 <div className="font-bold text-xl">{exam.title}</div>
               </div>
               <div>
-                <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black mb-2">Thời gian</label>
-                <div className="font-mono text-lg font-bold">{exam.duration_minutes} PHÚT</div>
+                <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black mb-2">Duration</label>
+                <div className="font-mono text-lg font-bold">{exam.duration_minutes} MINUTES</div>
               </div>
               <div>
-                <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black mb-2">Trạng thái</label>
+                <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black mb-2">Status</label>
                 <div className={`inline-block px-3 py-1 font-bold text-sm uppercase font-mono border-2 border-black ${exam.is_published ? 'bg-black text-white' : 'bg-white text-black'}`}>
-                  {exam.is_published ? "ĐÃ XUẤT BẢN" : "BẢN NHÁP"}
+                  {exam.is_published ? "PUBLISHED" : "DRAFT"}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black mb-2">Mô tả</label>
-                <div className="text-base font-mono">{exam.description || "Không có mô tả"}</div>
+                <label className="block text-sm font-bold uppercase tracking-widest font-mono text-black mb-2">Description</label>
+                <div className="text-base font-mono">{exam.description || "No description"}</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Cột phải: Danh sách câu hỏi */}
+        {/* Right column: question list */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="exam_questions" className="w-full">
             <TabsList className="w-full justify-start border-b-4 border-black bg-transparent p-0 h-auto rounded-none flex mb-8">
@@ -302,32 +302,32 @@ export default function ExamDetailPage({
                 value="exam_questions"
                 className="rounded-none border-t-4 border-l-4 border-r-4 border-black bg-white data-[state=active]:bg-white data-[state=active]:text-black font-mono font-bold uppercase py-3 px-6 -mb-1 flex-1 sm:flex-none data-[state=active]:border-b-white z-10"
               >
-                Câu Hỏi Đề Thi ({questions.length})
+                Exam Questions ({questions.length})
               </TabsTrigger>
               <TabsTrigger 
                 value="question_bank"
                 className="rounded-none border-t-4 border-r-4 border-black border-l-0 sm:border-l-4 bg-white data-[state=active]:bg-white data-[state=active]:text-black font-mono font-bold uppercase py-3 px-6 -mb-1 flex-1 sm:flex-none data-[state=active]:border-b-white z-10"
               >
-                Ngân Hàng Câu Hỏi
+                Question Bank
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="exam_questions" className="m-0 outline-none space-y-8">
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold uppercase tracking-widest font-mono">Danh sách Câu hỏi ({questions.length})</h2>
+                <h2 className="text-2xl font-bold uppercase tracking-widest font-mono">Question List ({questions.length})</h2>
                 <button
               data-testid="add-question-button"
               onClick={() => handleOpenModal()}
               className="flex items-center gap-3 border-4 border-black bg-black text-white px-6 py-3 font-bold uppercase font-mono tracking-widest hover:bg-white hover:text-black transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]"
             >
-              <Plus size={20} /> Thêm Câu hỏi
+              <Plus size={20} /> Add Question
             </button>
           </div>
 
           {questions.length === 0 ? (
             <div className="p-16 border-4 border-dashed border-black text-center bg-white">
-              <p className="font-bold uppercase font-mono tracking-widest text-lg text-black mb-4">Chưa có câu hỏi nào trong đề thi này.</p>
-              <p className="text-sm font-mono text-black">Bấm &quot;Thêm Câu hỏi&quot; để bắt đầu xây dựng nội dung.</p>
+              <p className="font-bold uppercase font-mono tracking-widest text-lg text-black mb-4">This exam has no questions.</p>
+              <p className="text-sm font-mono text-black">Select &quot;Add Question&quot; to start building the exam.</p>
             </div>
           ) : (
             <div className="space-y-8">
@@ -336,8 +336,8 @@ export default function ExamDetailPage({
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex-1 pr-6">
                       <div className="flex gap-3 mb-4 flex-wrap">
-                        <span className="border-2 border-black px-3 py-1 text-sm font-bold uppercase font-mono bg-white">CÂU {index + 1}</span>
-                        <span className="border-2 border-black px-3 py-1 text-sm font-bold uppercase font-mono bg-white">{q.points} ĐIỂM</span>
+                        <span className="border-2 border-black px-3 py-1 text-sm font-bold uppercase font-mono bg-white">QUESTION {index + 1}</span>
+                        <span className="border-2 border-black px-3 py-1 text-sm font-bold uppercase font-mono bg-white">{q.points} POINTS</span>
                         <span className="border-2 border-black px-3 py-1 text-sm font-bold uppercase font-mono bg-white">{q.question_type?.replace(/_/g, " ")}</span>
                       </div>
                       <h3 className="text-xl font-bold whitespace-pre-wrap">{q.content}</h3>
@@ -346,7 +346,7 @@ export default function ExamDetailPage({
                       <button
                         onClick={() => handleOpenModal(q)}
                         className="p-3 border-4 border-black hover:bg-black hover:text-white transition-colors bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-                        title="Sửa"
+                        title="Edit"
                       >
                         <Pencil size={20} />
                       </button>
@@ -355,7 +355,7 @@ export default function ExamDetailPage({
                         onClick={() => handleDelete(q.id)}
                         disabled={isDeleting === q.id}
                         className="p-3 border-4 border-black hover:bg-black hover:text-white transition-colors bg-white disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-                        title="Xóa"
+                        title="Delete"
                       >
                         {isDeleting === q.id ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
                       </button>
@@ -407,14 +407,14 @@ export default function ExamDetailPage({
             <TabsContent value="question_bank" className="m-0 outline-none">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div className="flex gap-4 items-center bg-white p-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex-1">
-                  <label htmlFor="exam-question-bank-topic-filter" className="font-mono text-sm font-bold uppercase text-black whitespace-nowrap">Lọc theo Chủ đề:</label>
+                  <label htmlFor="exam-question-bank-topic-filter" className="font-mono text-sm font-bold uppercase text-black whitespace-nowrap">Filter by topic:</label>
                   <select
                     id="exam-question-bank-topic-filter"
                     value={effectiveGlobalTopicId}
                     onChange={(e) => { setGlobalTopicId(e.target.value); setGlobalPage(1); }}
                     className="border-4 border-black p-2 font-mono uppercase text-sm font-bold bg-white focus:outline-none w-full"
                   >
-                    <option value="">-- TẤT CẢ CHỦ ĐỀ --</option>
+                    <option value="">-- ALL TOPICS --</option>
                     {globalTopics?.map((topic: Topic) => (
                       <option key={topic.id} value={topic.id}>{topic.name}</option>
                     ))}
@@ -425,7 +425,7 @@ export default function ExamDetailPage({
                   disabled={selectedGlobalQuestionIds.length === 0 || isAddingBulk}
                   className="border-4 border-black bg-white text-black px-6 py-3 font-bold uppercase font-mono hover:bg-black hover:text-white transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50 disabled:shadow-none whitespace-nowrap"
                 >
-                  {isAddingBulk ? <Loader2 className="animate-spin w-5 h-5 inline-block" /> : `Thêm vào Bài thi (${selectedGlobalQuestionIds.length})`}
+                  {isAddingBulk ? <Loader2 className="animate-spin w-5 h-5 inline-block" /> : `Add to Exam (${selectedGlobalQuestionIds.length})`}
                 </button>
               </div>
 
@@ -451,7 +451,7 @@ export default function ExamDetailPage({
                       </div>
                       <div className="flex-1">
                         <div className="flex gap-3 mb-4 flex-wrap">
-                          <span className="border-2 border-black px-3 py-1 text-sm font-bold uppercase font-mono bg-white">{q.points} ĐIỂM</span>
+                          <span className="border-2 border-black px-3 py-1 text-sm font-bold uppercase font-mono bg-white">{q.points} POINTS</span>
                           <span className="border-2 border-black px-3 py-1 text-sm font-bold uppercase font-mono bg-white">{q.question_type?.replace(/_/g, " ")}</span>
                         </div>
                         <h3 className="text-xl font-bold whitespace-pre-wrap">{q.content}</h3>
@@ -493,7 +493,7 @@ export default function ExamDetailPage({
           <div className="bg-white border-4 border-black w-full max-w-4xl max-h-[90vh] flex flex-col shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]">
             <div className="flex justify-between items-center p-6 border-b-4 border-black">
               <h2 className="text-2xl font-bold uppercase tracking-widest font-mono">
-                {editingQuestionId ? "Sửa Câu hỏi" : "Thêm Câu hỏi mới"}
+                {editingQuestionId ? "Edit Question" : "Add New Question"}
               </h2>
               <button onClick={handleCloseModal} className="p-2 hover:bg-black hover:text-white border-4 border-black bg-white transition-colors">
                 <X size={24} />
@@ -503,15 +503,15 @@ export default function ExamDetailPage({
             <div className="p-8 overflow-y-auto flex-1 space-y-8">
               <div className="space-y-3">
                 <div className="flex justify-between items-end">
-                  <label className="block text-sm font-bold uppercase tracking-widest font-mono">Nội dung câu hỏi</label>
+                  <label className="block text-sm font-bold uppercase tracking-widest font-mono">Question content</label>
                   {questionType === "FILL_IN_BLANK" && (
                     <button
                       type="button"
                       onClick={handleInsertBlank}
                       className="text-xs font-bold uppercase tracking-widest font-mono border-4 border-black bg-black text-white px-4 py-2 hover:bg-white hover:text-black transition-colors flex items-center gap-2 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
-                      title="Bôi đen chữ và bấm để tự động tạo [BLANK] + Đáp án"
+                      title="Select text and click to create a [BLANK] with its answer"
                     >
-                      <Plus size={16} /> Chèn [BLANK]
+                      <Plus size={16} /> Insert [BLANK]
                     </button>
                   )}
                 </div>
@@ -521,40 +521,40 @@ export default function ExamDetailPage({
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   className="w-full border-4 border-black p-4 min-h-[120px] focus:outline-none focus:ring-4 focus:ring-black/20 font-mono text-base resize-y"
-                  placeholder="Nhập nội dung..."
+                  placeholder="Enter content..."
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-3">
-                  <label className="block text-sm font-bold uppercase tracking-widest font-mono">Loại</label>
+                  <label className="block text-sm font-bold uppercase tracking-widest font-mono">Type</label>
                   <select
                     data-testid="question-type-select"
                     value={questionType}
                     onChange={(e) => setQuestionType(e.target.value as QuestionType)}
                     className="w-full border-4 border-black p-4 focus:outline-none focus:ring-4 focus:ring-black/20 uppercase font-mono text-sm font-bold bg-white"
                   >
-                    <option value="SINGLE_CHOICE">MỘT LỰA CHỌN</option>
-                    <option value="MULTIPLE_CHOICE">NHIỀU LỰA CHỌN</option>
-                    <option value="FILL_IN_BLANK">ĐIỀN KHUYẾT</option>
-                    <option value="MATCHING">NỐI ĐÁP ÁN</option>
+                    <option value="SINGLE_CHOICE">SINGLE CHOICE</option>
+                    <option value="MULTIPLE_CHOICE">MULTIPLE CHOICE</option>
+                    <option value="FILL_IN_BLANK">FILL IN THE BLANK</option>
+                    <option value="MATCHING">MATCHING</option>
                   </select>
                 </div>
                 <div className="space-y-3">
-                  <label className="block text-sm font-bold uppercase tracking-widest font-mono">Độ khó</label>
+                  <label className="block text-sm font-bold uppercase tracking-widest font-mono">Difficulty</label>
                   <select
                     data-testid="exam-question-difficulty-select"
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
                     className="w-full border-4 border-black p-4 focus:outline-none focus:ring-4 focus:ring-black/20 uppercase font-mono text-sm font-bold bg-white"
                   >
-                    <option value="EASY">DỄ</option>
-                    <option value="MEDIUM">TRUNG BÌNH</option>
-                    <option value="HARD">KHÓ</option>
+                    <option value="EASY">EASY</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HARD">HARD</option>
                   </select>
                 </div>
                 <div className="space-y-3">
-                  <label className="block text-sm font-bold uppercase tracking-widest font-mono">Điểm số</label>
+                  <label className="block text-sm font-bold uppercase tracking-widest font-mono">Points</label>
                   <input
                     data-testid="question-points-input"
                     type="number"
@@ -574,13 +574,13 @@ export default function ExamDetailPage({
                 ) : (
                   <>
                     <div className="flex justify-between items-center">
-                      <label className="block text-sm font-bold uppercase tracking-widest font-mono">Đáp án</label>
+                      <label className="block text-sm font-bold uppercase tracking-widest font-mono">Answers</label>
                       <button
                         data-testid="add-option-button"
                         onClick={handleAddOption}
                         className="text-sm font-bold uppercase tracking-widest font-mono border-4 border-black bg-white px-4 py-2 hover:bg-black hover:text-white transition-colors flex items-center gap-2 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
                       >
-                        <Plus size={16} /> Thêm Đáp án
+                        <Plus size={16} /> Add Answer
                       </button>
                     </div>
                     
@@ -594,7 +594,7 @@ export default function ExamDetailPage({
                             value={opt.content}
                             onChange={(e) => handleOptionChange(i, "content", e.target.value)}
                             className="flex-1 border-4 border-black p-3 focus:outline-none focus:ring-4 focus:ring-black/20 font-mono text-base"
-                            placeholder="Nội dung đáp án..."
+                            placeholder="Answer content..."
                           />
                           <label className="flex items-center gap-3 mt-3 cursor-pointer select-none">
                             <input
@@ -605,12 +605,12 @@ export default function ExamDetailPage({
                               onChange={(e) => handleOptionChange(i, "is_correct", e.target.checked)}
                               className="w-6 h-6 accent-black cursor-pointer border-4 border-black"
                             />
-                            <span className="text-sm font-bold uppercase tracking-widest font-mono">Đúng</span>
+                            <span className="text-sm font-bold uppercase tracking-widest font-mono">Correct</span>
                           </label>
                           <button
                             onClick={() => handleRemoveOption(i)}
                             className="mt-2 p-2 border-4 border-black hover:bg-black hover:text-white transition-colors bg-white"
-                            title="Xóa"
+                            title="Delete"
                           >
                             <Trash2 size={20} />
                           </button>
@@ -628,7 +628,7 @@ export default function ExamDetailPage({
                 disabled={isSaving}
                 className="px-8 py-3 border-4 border-black bg-white font-bold uppercase tracking-widest font-mono hover:bg-white transition-colors disabled:opacity-50"
               >
-                Hủy
+                Cancel
               </button>
               <button
                 data-testid="save-question-button"
@@ -637,7 +637,7 @@ export default function ExamDetailPage({
                 className="px-8 py-3 border-4 border-black bg-black text-white font-bold uppercase tracking-widest font-mono hover:bg-white hover:text-black transition-colors disabled:opacity-50 flex items-center gap-3 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]"
               >
                 {isSaving && <Loader2 className="animate-spin" size={20} />}
-                {editingQuestionId ? "Lưu thay đổi" : "Tạo câu hỏi"}
+                {editingQuestionId ? "Save Changes" : "Create Question"}
               </button>
             </div>
           </div>

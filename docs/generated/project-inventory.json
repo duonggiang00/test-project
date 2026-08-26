@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.0.1",
   "provenance": {
-    "source_commit": "55f01d8433610929ca8f34838a126204e599e11a",
-    "source_commit_timestamp": "2026-08-25T23:07:48+07:00",
-    "source_tree_sha256": "6f1c1e11312af0bd791b39dc69dd56001b20b3e316e87bd9371d1fa1777e5ca3",
-    "relevant_file_count": 430,
+    "source_commit": "5b1a8fcf7e5aadec659b38a1fcfc4686a5a5498f",
+    "source_commit_timestamp": "2026-08-26T03:32:54+07:00",
+    "source_tree_sha256": "999df4f69f11f69a930c5252170de93f7dcfa241fd42ca913c2938834f6e8478",
+    "relevant_file_count": 444,
     "alembic_heads": [
       "a74c9d2e6f10"
     ]
@@ -18,7 +18,7 @@
     "frontend_hooks": 16,
     "frontend_services": 2,
     "backend_test_functions": 330,
-    "frontend_test_calls": 135
+    "frontend_test_calls": 160
   },
   "backend": {
     "models": [
@@ -7971,6 +7971,11 @@
         "test_count": 2
       },
       {
+        "path": "frontend/tests/component/data-hooks-contract.test.ts",
+        "tier": "component",
+        "test_count": 6
+      },
+      {
         "path": "frontend/tests/component/exam-builder-flow.test.tsx",
         "tier": "component",
         "test_count": 5
@@ -7979,6 +7984,11 @@
         "path": "frontend/tests/component/exam-creation-flow.test.tsx",
         "tier": "component",
         "test_count": 4
+      },
+      {
+        "path": "frontend/tests/component/exam-result-view.test.tsx",
+        "tier": "component",
+        "test_count": 3
       },
       {
         "path": "frontend/tests/component/featured-exam-list.states.test.tsx",
@@ -8026,14 +8036,34 @@
         "test_count": 1
       },
       {
+        "path": "frontend/tests/component/students-management.test.tsx",
+        "tier": "component",
+        "test_count": 7
+      },
+      {
         "path": "frontend/tests/component/submission-grade-override.test.tsx",
         "tier": "component",
         "test_count": 11
       },
       {
+        "path": "frontend/tests/component/submissions-history.test.tsx",
+        "tier": "component",
+        "test_count": 2
+      },
+      {
         "path": "frontend/tests/component/topic-material-delete.test.tsx",
         "tier": "component",
         "test_count": 3
+      },
+      {
+        "path": "frontend/tests/component/topics-management.test.tsx",
+        "tier": "component",
+        "test_count": 3
+      },
+      {
+        "path": "frontend/tests/component/translated-ui-contracts.test.tsx",
+        "tier": "component",
+        "test_count": 4
       },
       {
         "path": "frontend/tests/e2e/admin-flow.spec.ts",
@@ -8067,7 +8097,7 @@
     "frontend": {
       "provider": "Jest v8 coverage",
       "command": "npm run test:unit:coverage",
-      "baseline_percent": 0.75,
+      "baseline_percent": 76.97,
       "baseline_status": "measured"
     },
     "changed_code_lines_target_percent": 80

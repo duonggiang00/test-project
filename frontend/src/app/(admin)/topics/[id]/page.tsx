@@ -94,9 +94,9 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
     try {
       await updateTopic(topicId, settingsForm);
       mutateTopic();
-      toast.add({ title: "Thông báo", description: "Settings saved successfully.", type: "info" });
+      toast.add({ title: "Settings saved", description: "Topic settings were saved.", type: "info" });
     } catch {
-      toast.add({ title: "Thông báo", description: "Failed to save settings.", type: "error" });
+      toast.add({ title: "Save failed", description: "Topic settings could not be saved.", type: "error" });
     } finally {
       setIsSavingSettings(false);
     }
@@ -108,9 +108,9 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
     try {
       await updateTopicBrief(topicId, { brief_content: briefContent });
       mutateTopic();
-      toast.add({ title: "Thông báo", description: "Topic brief saved successfully.", type: "info" });
+      toast.add({ title: "Brief saved", description: "The topic brief was saved.", type: "info" });
     } catch {
-      toast.add({ title: "Thông báo", description: "Failed to save topic brief.", type: "error" });
+      toast.add({ title: "Save failed", description: "The topic brief could not be saved.", type: "error" });
     } finally {
       setIsSavingBrief(false);
     }
@@ -118,7 +118,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
 
   const handleGenerateAi = async () => {
     if (!selectedMaterialId) {
-      toast.add({ title: "Thông báo", description: "Please select a material first.", type: "info" });
+      toast.add({ title: "Material required", description: "Select a material first.", type: "info" });
       return;
     }
     setIsGeneratingAi(true);
@@ -126,9 +126,9 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
       await generateTopicKitAi(selectedMaterialId, topicId);
       mutateTopic();
       mutateDecks();
-      toast.add({ title: "Thông báo", description: "AI Generation completed successfully.", type: "info" });
+      toast.add({ title: "Generation complete", description: "AI content generation completed.", type: "info" });
     } catch {
-      toast.add({ title: "Thông báo", description: "Failed to generate with AI.", type: "error" });
+      toast.add({ title: "Generation failed", description: "AI content generation failed.", type: "error" });
     } finally {
       setIsGeneratingAi(false);
     }
@@ -144,7 +144,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
       setIsDeckModalOpen(false);
       setDeckForm({ title: "", description: "" });
     } catch {
-      toast.add({ title: "Thông báo", description: "Failed to create deck.", type: "error" });
+      toast.add({ title: "Deck creation failed", description: "The flashcard deck could not be created.", type: "error" });
     } finally {
       setIsCreatingDeck(false);
     }
@@ -300,7 +300,7 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
                 className="border-4 border-black rounded-none bg-white text-black hover:bg-black hover:text-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] font-bold uppercase shrink-0 w-full md:w-auto"
               >
                 {isGeneratingAi ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wand2 className="w-4 h-4 mr-2" />}
-                Tạo Tự Động Bằng AI
+                Generate with AI
               </Button>
             </div>
           </div>
@@ -387,8 +387,8 @@ function TopicEditor({ topic, topicId, mutateTopic, decks, isLoadingDecks, mutat
             </Button>
           </div>
           <div className="text-center p-8 border-4 border-black border-dashed">
-            <p className="font-bold">Quản lý câu hỏi đang được phát triển...</p>
-            <p className="text-sm mt-2">Tính năng này sẽ cho phép duyệt và sửa câu hỏi thuộc Topic này.</p>
+            <p className="font-bold">Question management is under development.</p>
+            <p className="text-sm mt-2">This area will support reviewing and editing questions for this topic.</p>
           </div>
         </TabsContent>
       </Tabs>

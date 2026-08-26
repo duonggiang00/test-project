@@ -8,7 +8,7 @@ export function SpaceExamHeader() {
         <button type="button" className="bg-white text-black p-3 rounded-full hover:bg-white transition-colors border border-black">
           <AppIcon name="close" className="font-label-bold text-label-bold" data-icon="close" />
         </button>
-        <h1 className="font-headline-md text-headline-md text-black tracking-tight">Thử thách Không gian</h1>
+        <h1 className="font-headline-md text-headline-md text-black tracking-tight">Space Challenge</h1>
       </div>
       {/* Sun Timer */}
       <div className="relative w-16 h-16 flex items-center justify-center">
