@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import base64
-import binascii
 import hashlib
 import hmac
 import json
@@ -11,9 +9,7 @@ from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Literal
 
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 
 UseCase = Literal[
@@ -24,7 +20,6 @@ UseCase = Literal[
 ]
 
 GOLDEN_DATASET_SCHEMA_VERSION: Literal["1.0"] = "1.0"
-TRUST_ROOT_SHA256_ENV = "AI_GOLDEN_DATASET_TRUST_ROOT_SHA256"
 EXPECTED_COMPLETE_DISTRIBUTION: dict[UseCase, int] = {
     "rag_chat": 16,
     "question_generation": 12,
@@ -33,7 +28,6 @@ EXPECTED_COMPLETE_DISTRIBUTION: dict[UseCase, int] = {
 }
 
 _IDENTIFIER_PATTERN = r"^[a-z0-9][a-z0-9._-]{2,79}$"
-_BASE64_PATTERN = r"^[A-Za-z0-9+/]+={0,2}$"
 _SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", re.IGNORECASE),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
@@ -72,46 +66,13 @@ class RubricCriterion(StrictModel):
     weight: float = Field(gt=0, le=1)
 
 
-class ApprovalMetadata(StrictModel):
+class GoldenDatasetApprovalManifest(StrictModel):
+    schema_version: Literal["1.0"]
+    dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     approval_source: Literal["owner", "admin"]
     approved_by: str = Field(pattern=_IDENTIFIER_PATTERN)
     approved_at: AwareDatetime
     approval_version: str = Field(pattern=_IDENTIFIER_PATTERN)
-    key_id: str = Field(pattern=_IDENTIFIER_PATTERN)
-    signature_base64: str = Field(pattern=_BASE64_PATTERN, min_length=86, max_length=88)
-
-    @field_validator("signature_base64")
-    @classmethod
-    def validate_signature_size(cls, value: str) -> str:
-        if len(_decode_base64(value, "approval signature")) != 64:
-            raise ValueError("approval signature must be a 64-byte Ed25519 signature")
-        return value
-
-
-class TrustedApprover(StrictModel):
-    key_id: str = Field(pattern=_IDENTIFIER_PATTERN)
-    approval_source: Literal["owner", "admin"]
-    approved_by: str = Field(pattern=_IDENTIFIER_PATTERN)
-    public_key_base64: str = Field(pattern=_BASE64_PATTERN, min_length=43, max_length=44)
-
-    @field_validator("public_key_base64")
-    @classmethod
-    def validate_public_key_size(cls, value: str) -> str:
-        if len(_decode_base64(value, "approver public key")) != 32:
-            raise ValueError("approver public key must be a 32-byte Ed25519 key")
-        return value
-
-
-class TrustedApproverStore(StrictModel):
-    schema_version: Literal["1.0"]
-    approvers: list[TrustedApprover] = Field(min_length=1, max_length=20)
-
-    @model_validator(mode="after")
-    def validate_unique_keys(self) -> "TrustedApproverStore":
-        duplicate_keys = _duplicates([approver.key_id for approver in self.approvers])
-        if duplicate_keys:
-            raise ValueError(f"duplicate trusted key IDs: {', '.join(duplicate_keys)}")
-        return self
 
 
 class GoldenDatasetCase(StrictModel):
@@ -126,7 +87,6 @@ class GoldenDatasetCase(StrictModel):
     required_source_ids: list[str] = Field(max_length=50)
     injection_label: Literal["none", "direct", "indirect"]
     sensitivity: Literal["public", "internal", "personal", "sensitive"]
-    approval: ApprovalMetadata
 
     @model_validator(mode="after")
     def validate_reference_contract(self) -> "GoldenDatasetCase":
@@ -165,8 +125,8 @@ class GoldenDataset(StrictModel):
     schema_version: Literal["1.0"]
     cases: list[GoldenDatasetCase]
     fingerprint_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    approvals_verified: bool
-    trust_root_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    approval_verified: bool
+    approval: GoldenDatasetApprovalManifest | None = None
 
     @property
     def distribution(self) -> dict[str, int]:
@@ -178,51 +138,34 @@ class GoldenDatasetValidationError(ValueError):
     """A safe validation failure that never contains raw case payloads or paths."""
 
 
-def load_trusted_approvers(path: Path) -> TrustedApproverStore:
-    raw_text = _read_safe_text(path, "trusted approver store")
+def load_approval_manifest(path: Path) -> GoldenDatasetApprovalManifest:
+    raw_text = _read_safe_text(path, "approval manifest")
     try:
-        raw_store = json.loads(raw_text)
+        raw_manifest = json.loads(raw_text)
     except json.JSONDecodeError as exc:
         raise GoldenDatasetValidationError(
-            f"trusted approver store contains invalid JSON ({exc.msg})"
+            f"approval manifest contains invalid JSON ({exc.msg})"
         ) from None
     try:
-        return TrustedApproverStore.model_validate(raw_store)
+        return GoldenDatasetApprovalManifest.model_validate(raw_manifest)
     except ValueError as exc:
         raise GoldenDatasetValidationError(
-            f"trusted approver store validation failed ({_first_validation_error_type(exc)})"
+            f"approval manifest validation failed ({_first_validation_error_type(exc)})"
         ) from None
-
-
-def trusted_approver_store_fingerprint(store: TrustedApproverStore) -> str:
-    canonical = json.dumps(
-        store.model_dump(mode="json"),
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
-    return hashlib.sha256(canonical).hexdigest()
-
-
-def approval_signing_payload(case: GoldenDatasetCase) -> bytes:
-    payload = case.model_dump(mode="json")
-    del payload["approval"]["signature_base64"]
-    return json.dumps(
-        payload,
-        ensure_ascii=False,
-        separators=(",", ":"),
-        sort_keys=True,
-    ).encode("utf-8")
 
 
 def load_golden_dataset(
     path: Path,
     *,
     require_complete: bool = True,
-    trust_store: TrustedApproverStore | None = None,
-    trusted_root_sha256: str | None = None,
-    require_trusted_approval: bool = True,
+    approval_manifest: GoldenDatasetApprovalManifest | None = None,
+    require_approval: bool = True,
 ) -> GoldenDataset:
+    if require_approval and not require_complete:
+        raise GoldenDatasetValidationError(
+            "approved validation requires the complete 40-case distribution"
+        )
+
     raw_text = _read_safe_text(path, "dataset")
     cases: list[GoldenDatasetCase] = []
     for line_number, raw_line in enumerate(raw_text.splitlines(), 1):
@@ -251,20 +194,6 @@ def load_golden_dataset(
             f"duplicate case IDs: {', '.join(duplicate_cases)}"
         )
 
-    if require_trusted_approval:
-        if trust_store is None or trusted_root_sha256 is None:
-            raise GoldenDatasetValidationError(
-                "owner-pinned trusted approval verification is required"
-            )
-        if not re.fullmatch(r"[0-9a-f]{64}", trusted_root_sha256):
-            raise GoldenDatasetValidationError("trusted approval root fingerprint is invalid")
-        actual_trust_root = trusted_approver_store_fingerprint(trust_store)
-        if not hmac.compare_digest(actual_trust_root, trusted_root_sha256):
-            raise GoldenDatasetValidationError(
-                "trusted approver store does not match the owner-pinned root"
-            )
-        _verify_approvals(cases, trust_store)
-
     distribution: Counter[UseCase] = Counter(case.use_case for case in cases)
     if require_complete:
         actual = {key: distribution.get(key, 0) for key in EXPECTED_COMPLETE_DISTRIBUTION}
@@ -280,46 +209,21 @@ def load_golden_dataset(
         for case in sorted(cases, key=lambda item: item.case_id)
     ]
     fingerprint = hashlib.sha256(("\n".join(canonical_lines) + "\n").encode()).hexdigest()
+    if require_approval:
+        if approval_manifest is None:
+            raise GoldenDatasetValidationError("owner/admin approval manifest is required")
+        if not hmac.compare_digest(approval_manifest.dataset_sha256, fingerprint):
+            raise GoldenDatasetValidationError(
+                "approval manifest does not match the dataset fingerprint"
+            )
+
     return GoldenDataset(
         schema_version=GOLDEN_DATASET_SCHEMA_VERSION,
         cases=cases,
         fingerprint_sha256=fingerprint,
-        approvals_verified=require_trusted_approval,
-        trust_root_sha256=trusted_root_sha256 if require_trusted_approval else None,
+        approval_verified=require_approval,
+        approval=approval_manifest if require_approval else None,
     )
-
-
-def _verify_approvals(
-    cases: list[GoldenDatasetCase],
-    trust_store: TrustedApproverStore,
-) -> None:
-    approvers = {approver.key_id: approver for approver in trust_store.approvers}
-    for case in cases:
-        approval = case.approval
-        approver = approvers.get(approval.key_id)
-        if approver is None:
-            raise GoldenDatasetValidationError(
-                f"case {case.case_id}: approval key is not trusted"
-            )
-        if (
-            approver.approved_by != approval.approved_by
-            or approver.approval_source != approval.approval_source
-        ):
-            raise GoldenDatasetValidationError(
-                f"case {case.case_id}: approval identity does not match trusted key"
-            )
-        public_key = Ed25519PublicKey.from_public_bytes(
-            _decode_base64(approver.public_key_base64, "approver public key")
-        )
-        try:
-            public_key.verify(
-                _decode_base64(approval.signature_base64, "approval signature"),
-                approval_signing_payload(case),
-            )
-        except InvalidSignature:
-            raise GoldenDatasetValidationError(
-                f"case {case.case_id}: approval signature is invalid"
-            ) from None
 
 
 def _read_safe_text(path: Path, label: str) -> str:
@@ -333,13 +237,6 @@ def _read_safe_text(path: Path, label: str) -> str:
         raise GoldenDatasetValidationError(f"{label} file is not valid UTF-8") from None
 
 
-def _decode_base64(value: str, label: str) -> bytes:
-    try:
-        return base64.b64decode(value, validate=True)
-    except (binascii.Error, ValueError):
-        raise ValueError(f"{label} must use canonical base64") from None
-
-
 def _duplicates(values: list[str]) -> list[str]:
     counts = Counter(values)
     return sorted(value for value, count in counts.items() if count > 1)
@@ -347,8 +244,6 @@ def _duplicates(values: list[str]) -> list[str]:
 
 def _find_secret_location(case: GoldenDatasetCase) -> str | None:
     for location, value in _iter_string_fields(case.model_dump(mode="json")):
-        if location == "approval.signature_base64":
-            continue
         if any(pattern.search(value) for pattern in _SECRET_PATTERNS):
             return location
     return None

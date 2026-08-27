@@ -2,9 +2,9 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "74db96251c32ed99dc796b44602ccc1cdeee7c8c",
-    "source_commit_timestamp": "2026-08-27T00:27:13+07:00",
-    "source_tree_sha256": "1f2958050c5fbc2c2899fda038878dfb67049c5829e2aa621e790d923fbe8d7b",
+    "source_commit": "ec7dcc19e4543abb05269e269966c279e526d6f3",
+    "source_commit_timestamp": "2026-08-27T09:27:11+07:00",
+    "source_tree_sha256": "6d932b1b2fa60f35f1a22f3d94cc566ded49322d0b3cca8c239f3e5410487847",
     "relevant_file_count": 453,
     "alembic_heads": [
       "a74c9d2e6f10"
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 348,
+    "backend_test_functions": 350,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -6803,132 +6803,110 @@
         "path": "tests/unit/test_ai_golden_dataset.py",
         "tests": [
           {
-            "line": 98,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_partial_dataset_validates_signatures_and_deterministic_fingerprint"
+            "line": 65,
+            "markers": [],
+            "name": "test_structure_validation_has_deterministic_order_independent_fingerprint"
           },
           {
-            "line": 130,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_complete_dataset_enforces_approved_distribution"
+            "line": 86,
+            "markers": [],
+            "name": "test_exact_manifest_fingerprint_is_accepted"
           },
           {
-            "line": 146,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_incomplete_dataset_is_not_accepted_as_complete"
+            "line": 101,
+            "markers": [],
+            "name": "test_content_change_invalidates_manifest"
           },
           {
-            "line": 160,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_trusted_approval_is_required_by_default"
+            "line": 116,
+            "markers": [],
+            "name": "test_approval_manifest_is_required_by_default"
           },
           {
-            "line": 169,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_forged_signature_is_rejected"
+            "line": 124,
+            "markers": [],
+            "name": "test_library_never_approves_a_partial_dataset"
           },
           {
-            "line": 185,
+            "line": 164,
             "markers": [
-              "unit"
+              "parametrize"
             ],
-            "name": "test_untrusted_approval_identity_is_rejected"
+            "name": "test_invalid_manifest_is_rejected_safely"
           },
           {
-            "line": 202,
-            "markers": [
-              "unit"
-            ],
+            "line": 174,
+            "markers": [],
+            "name": "test_manifest_invalid_json_and_extra_fields_are_rejected"
+          },
+          {
+            "line": 188,
+            "markers": [],
+            "name": "test_complete_distribution_is_enforced"
+          },
+          {
+            "line": 198,
+            "markers": [],
+            "name": "test_incomplete_distribution_reports_counts_without_payload"
+          },
+          {
+            "line": 209,
+            "markers": [],
             "name": "test_duplicate_case_id_is_rejected"
           },
           {
-            "line": 228,
+            "line": 243,
             "markers": [
-              "parametrize",
-              "unit"
+              "parametrize"
             ],
-            "name": "test_invalid_case_contract_is_rejected_without_echoing_payload"
+            "name": "test_invalid_case_contract_is_rejected"
           },
           {
-            "line": 259,
-            "markers": [
-              "parametrize",
-              "unit"
-            ],
-            "name": "test_common_secret_formats_are_rejected_without_echoing_value"
+            "line": 255,
+            "markers": [],
+            "name": "test_rubric_can_replace_expected_answer"
           },
           {
-            "line": 279,
-            "markers": [
-              "unit"
-            ],
+            "line": 275,
+            "markers": [],
             "name": "test_secret_scanning_covers_identifier_fields"
           },
           {
             "line": 297,
             "markers": [
-              "unit"
+              "parametrize"
             ],
-            "name": "test_rubric_can_replace_expected_answer"
+            "name": "test_secret_like_content_is_rejected_without_echo"
           },
           {
-            "line": 318,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_cli_reports_verified_counts_without_case_content"
+            "line": 310,
+            "markers": [],
+            "name": "test_missing_and_invalid_files_have_safe_errors"
           },
           {
-            "line": 346,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_cli_rejects_unpinned_caller_supplied_trust_store"
+            "line": 327,
+            "markers": [],
+            "name": "test_structure_only_cli_reports_fingerprint_without_approval"
           },
           {
-            "line": 369,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_cli_requires_external_owner_trust_anchor"
+            "line": 341,
+            "markers": [],
+            "name": "test_cli_requires_manifest_for_final_validation"
           },
           {
-            "line": 391,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_structure_only_cli_never_claims_approval"
+            "line": 352,
+            "markers": [],
+            "name": "test_cli_never_approves_partial_dataset"
           },
           {
-            "line": 404,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_invalid_json_reports_line_without_payload"
+            "line": 378,
+            "markers": [],
+            "name": "test_cli_accepts_matching_manifest"
           },
           {
-            "line": 419,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_invalid_utf8_cli_error_has_no_traceback_or_path"
-          },
-          {
-            "line": 432,
-            "markers": [
-              "unit"
-            ],
-            "name": "test_missing_file_cli_error_does_not_echo_path"
+            "line": 400,
+            "markers": [],
+            "name": "test_cli_rejects_mismatched_manifest_without_payload"
           }
         ],
         "tier": "unit"

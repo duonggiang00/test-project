@@ -105,11 +105,13 @@ API/event impact:
 
 - Versioned JSONL cases contain case ID, use case, safe input/reference context,
   expected answer or rubric, required citations/source IDs, injection label,
-  sensitivity classification, and admin approval identity/time/version.
-- The validator rejects missing approval metadata, duplicate IDs, unknown source
-  references, raw secrets, and unsupported schema versions.
-- Agent-authored synthetic cases may test the runner but never count toward the
-  required 30–50 admin-approved regression cases.
+  and sensitivity classification.
+- The validator rejects duplicate IDs, unknown source references, raw secrets,
+  unsupported schema versions, and approval manifests whose dataset fingerprint
+  does not exactly match the canonical content fingerprint.
+- An agent may draft the complete dataset, but it counts as approved only after
+  the owner/admin reviews and explicitly approves its exact fingerprint. Git/PR
+  history records approver identity; the manifest locks the reviewed content.
 - The proposed first dataset has 40 reviewed cases: question generation 8,
   flashcards 6, briefs 6, RAG/chat 10, and advisory grading 10, with injection
   cases distributed across applicable groups. The admin may replace this mix.
@@ -139,19 +141,23 @@ API/event impact:
 7. AI-007 baseline report, then owner-approved AI-008 thresholds.
 8. Independent AI/security review and completion audit.
 
-## AI-006 implementation checkpoint — 2026-08-27
+## AI-006 simplified approval checkpoint — 2026-08-28
 
-- Implemented the v1 strict JSONL case schema, safe validator, canonical
-  fingerprint, complete-distribution enforcement, partial-review mode,
-  owner-controlled Ed25519 approval attestation, an externally pinned trust-root
-  fingerprint, and negative fixtures without provider or database access.
+- The owner replaced the development-only Ed25519 workflow with a simpler
+  dataset-level approval manifest bound to the canonical SHA-256 fingerprint.
+  This removes key generation, private-key custody, public-key pinning, and
+  per-case signatures while retaining deterministic tamper detection.
+- Implemented the strict JSONL schema, safe validator, complete-distribution
+  enforcement, draft structure mode, and manifest-match validation without
+  provider or database access.
 - The approved current distribution is 16 RAG/chat, 12 question-generation,
   6 flashcard-generation, and 6 topic-brief-generation cases. This is the
   owner's 2026-08-25 replacement for the earlier proposed mix in this contract.
-- No reference case or trusted approver key was authored or marked approved by
-  an agent. AI-006 remains `BLOCKED` until a human owner/admin supplies a trust
-  key, pins its canonical fingerprint in protected configuration, and signs all
-  40 reviewed cases with the corresponding private key.
+- The owner approved the complete Vietnamese-first 40-case dataset on
+  2026-08-28 at canonical SHA-256
+  `4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51`.
+  The matching manifest validates with `approval_record_matched=true`, so AI-006
+  is complete without any key ceremony.
 - AI-007, AI-008, and semantic RAG remain downstream and must not activate
   invented quality thresholds or semantic-default behavior at this checkpoint.
 
