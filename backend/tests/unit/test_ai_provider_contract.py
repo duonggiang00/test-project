@@ -5,6 +5,8 @@ not the SDK client object itself -- so these tests actually exercise the
 adapter's request construction and response/error parsing, with no real
 network call.
 """
+import json
+
 import httpx
 import pytest
 
@@ -12,7 +14,7 @@ from app.ai.openrouter_adapter import OpenRouterAdapter
 from app.ai.provider import AIProviderError, GenerateRequest
 
 
-def _adapter(sync_handler=None, async_handler=None) -> OpenRouterAdapter:
+def _adapter(sync_handler=None, async_handler=None, *, max_retries: int = 2) -> OpenRouterAdapter:
     sync_client = (
         httpx.Client(transport=httpx.MockTransport(sync_handler))
         if sync_handler is not None
@@ -27,6 +29,7 @@ def _adapter(sync_handler=None, async_handler=None) -> OpenRouterAdapter:
         api_key="test-key",
         sync_http_client=sync_client,
         async_http_client=async_client,
+        max_retries=max_retries,
     )
 
 
@@ -51,7 +54,10 @@ def _completion_body(**overrides):
 
 @pytest.mark.unit
 def test_generate_returns_typed_text_provider_model_usage_and_latency():
+    sent_body = {}
+
     def handler(request):
+        sent_body.update(json.loads(request.content))
         return httpx.Response(200, json=_completion_body())
 
     adapter = _adapter(sync_handler=handler)
@@ -60,6 +66,8 @@ def test_generate_returns_typed_text_provider_model_usage_and_latency():
         GenerateRequest(
             messages=[{"role": "user", "content": "hi"}],
             model="meta-llama/llama-3.1-8b-instruct",
+            temperature=0.0,
+            max_tokens=321,
         )
     )
 
@@ -71,6 +79,64 @@ def test_generate_returns_typed_text_provider_model_usage_and_latency():
     assert result.finish_reason == "stop"
     assert result.latency_ms >= 0
     assert result.tool_calls is None
+    assert sent_body["temperature"] == 0.0
+    assert sent_body["max_tokens"] == 321
+
+
+@pytest.mark.unit
+def test_generate_omits_optional_parameters_and_reports_the_response_model():
+    sent_body = {}
+
+    def handler(request):
+        sent_body.update(json.loads(request.content))
+        return httpx.Response(200, json=_completion_body(model="resolved/model-v2"))
+
+    result = _adapter(sync_handler=handler).generate(
+        GenerateRequest(
+            messages=[{"role": "user", "content": "hi"}],
+            model="requested/model-v1",
+        )
+    )
+
+    assert "temperature" not in sent_body
+    assert "max_tokens" not in sent_body
+    assert result.model == "resolved/model-v2"
+
+
+@pytest.mark.unit
+def test_generate_with_retries_disabled_makes_one_http_attempt_and_sanitizes_failure():
+    attempts = 0
+
+    def handler(request):
+        nonlocal attempts
+        attempts += 1
+        return httpx.Response(500, json={"error": {"message": "private-detail"}})
+
+    adapter = _adapter(sync_handler=handler, max_retries=0)
+
+    with pytest.raises(AIProviderError, match="AI_INTERNAL_ERROR"):
+        adapter.generate(
+            GenerateRequest(
+                messages=[{"role": "user", "content": "hi"}],
+                model="requested/model-v1",
+            )
+        )
+
+    assert attempts == 1
+
+
+@pytest.mark.unit
+def test_generate_sanitizes_a_response_without_choices():
+    def handler(request):
+        return httpx.Response(200, json=_completion_body(choices=[]))
+
+    with pytest.raises(AIProviderError, match="AI_INTERNAL_ERROR"):
+        _adapter(sync_handler=handler).generate(
+            GenerateRequest(
+                messages=[{"role": "user", "content": "hi"}],
+                model="requested/model-v1",
+            )
+        )
 
 
 @pytest.mark.unit

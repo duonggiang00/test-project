@@ -20,6 +20,33 @@ from app.ai.evaluation.runner import (
     load_evaluation_observations,
     write_evaluation_report,
 )
+from app.ai.evaluation.live_baseline import (
+    BASELINE_PROMPT_VERSION,
+    BaselineCampaignFile,
+    BaselineRunDescriptor,
+    BaselineRunFile,
+    BaselineValidationError,
+    build_candidate_messages,
+    collect_approved_live_baseline,
+    load_baseline_campaign,
+    load_baseline_run,
+    validate_approved_campaign_binding,
+)
+from app.ai.evaluation.baseline_review import (
+    BaselineReviewError,
+    BaselineReviewScore,
+    load_baseline_review_scores,
+    prepare_reviewed_observations,
+    write_reviewed_observations,
+)
+from app.ai.evaluation.baseline_comparison import (
+    APPROVED_JUDGE_VERSION,
+    BaselineComparison,
+    BaselineComparisonError,
+    compare_baselines,
+    load_evaluation_report,
+    write_baseline_comparison,
+)
 
 __all__ = [
     "GOLDEN_DATASET_SCHEMA_VERSION",
@@ -38,4 +65,25 @@ __all__ = [
     "load_evaluation_observations",
     "load_golden_dataset",
     "write_evaluation_report",
+    "BASELINE_PROMPT_VERSION",
+    "BaselineCampaignFile",
+    "BaselineRunDescriptor",
+    "BaselineRunFile",
+    "BaselineValidationError",
+    "build_candidate_messages",
+    "collect_approved_live_baseline",
+    "load_baseline_campaign",
+    "load_baseline_run",
+    "validate_approved_campaign_binding",
+    "BaselineReviewError",
+    "BaselineReviewScore",
+    "load_baseline_review_scores",
+    "prepare_reviewed_observations",
+    "write_reviewed_observations",
+    "APPROVED_JUDGE_VERSION",
+    "BaselineComparison",
+    "BaselineComparisonError",
+    "compare_baselines",
+    "load_evaluation_report",
+    "write_baseline_comparison",
 ]

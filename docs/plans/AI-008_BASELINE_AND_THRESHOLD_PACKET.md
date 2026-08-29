@@ -1,53 +1,72 @@
 # AI-008 Baseline and Threshold Approval Packet
 
-Status: NOT READY FOR THRESHOLD APPROVAL
+Status: BASELINE REJECTED — NOT READY FOR THRESHOLD APPROVAL
 
 Prepared: 2026-08-29
 
-## Completed prerequisite
+## Decision summary
 
-AI-007 provides a deterministic evaluator for the owner-approved 40-case
-dataset. It reports correctness and groundedness judgments, citation validity,
-required-citation coverage, context relevance, injection resistance, latency,
-input/output tokens, and estimated cost without persisting raw answers in the
-report.
+The first governed live campaign is complete, but it is not an acceptable CI
+baseline. Do not activate quality thresholds from these results.
 
-## Evidence still required
+- Dataset SHA-256:
+  `4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51`.
+- Provider/model: `openrouter` / `meta-llama/llama-3.1-8b-instruct`.
+- Prompt/judge: `golden-evaluation-v1` /
+  `codex-independent-review-v1`.
+- Calls: exactly 120 reservations and attempts across three 40-case runs.
+- Structurally valid responses: 115/120.
+- Runs passing every hard gate: 0/3.
+- Cost coverage: 0/120 because no authoritative approved price or provider cost
+  telemetry was available.
 
-Thresholds must not be activated until three full comparable provider
-baselines exist. Every run must use:
+The campaign ledger remained unchanged when a completed run was invoked again,
+which confirms that the governed collector did not make a 121st call.
 
-- dataset SHA-256
-  `4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51`;
-- the same provider, model, prompt version, judge version, and scoring schema;
-- exactly one observation for all 40 cases;
-- explicit correctness/groundedness judgments and injection outcomes;
-- provider-reported latency and token telemetry;
-- cost from provider telemetry or an owner-approved pricing configuration,
-  otherwise explicit null cost coverage.
+## Sanitized baseline results
 
-Synthetic or reference-control observations prove runner determinism only and
-must not be used to set provider-quality thresholds.
+| Run | Format valid | Correctness | Groundedness | Citation validity | Injection resistance | p95 latency | Hard gates |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `baseline-001` | 38/40 | 0.728125 | 0.881250 | 0.950000 | 0.875000 | 4891 ms | Failed: citation and injection |
+| `baseline-002` | 37/40 | 0.687500 | 0.812500 | 0.925000 | 0.875000 | 3609 ms | Failed: citation and injection |
+| `baseline-003` | 40/40 | 0.753125 | 0.868750 | 1.000000 | 0.875000 | 4797 ms | Failed: injection |
 
-## Current environment facts
+Across the three runs, correctness ranges from 0.687500 to 0.753125 with a
+median of 0.728125. Groundedness ranges from 0.812500 to 0.881250 with a median
+of 0.868750. All three runs contain one independently judged prompt-injection
+failure, so the injection hard gate fails consistently.
 
-- Provider: `openrouter`.
-- Default model: `meta-llama/llama-3.1-8b-instruct`.
-- Provider credential: configured; its value was not printed or persisted.
-- Approved token pricing: not configured, so cost must remain null unless the
-  provider returns authoritative cost telemetry.
+The five malformed envelopes remain terminal evidence and were not retried:
+`qgen-004` and `qgen-006` in run 001; `qgen-006`, `qgen-010`, and `rag-008` in
+run 002. No malformed output or candidate answer is reproduced in this packet.
 
-## Owner decisions needed after baselines
+## Interpretation boundary
 
-The approval packet produced from the three reports will show medians, ranges,
-worst cases, hard-gate results, telemetry coverage, and proposed regression
-tolerances. The owner must then approve:
+The campaign supplies every approved reference source directly to the model.
+Its context-relevance score of 1.0 therefore verifies only the supplied-context
+evaluation contract. It is not evidence that production retrieval, chunking,
+ranking, or the production chat prompt works correctly. RAG-SEMANTIC-001 must
+retain a separate retrieval evaluation before semantic retrieval becomes the
+default.
 
-1. correctness, groundedness, citation, and context-relevance minimums;
-2. permitted regression from the accepted baseline;
-3. p95 latency and token/cost caps;
-4. the 20-case pull-request live subset and the 40-case weekly/manual schedule;
-5. the pricing source or the decision to leave cost gating inactive.
+The ignored local comparison artifact is
+`backend/reports/ai-evaluation/ai-008-v1/comparison.json`. It contains only
+sanitized aggregate/per-run metrics, hashes, invalid case IDs, and telemetry
+counts. Raw provider responses remain confined to ignored candidate files.
 
-Hard structural, complete-coverage, citation, and injection gates do not wait
-for quality-threshold approval.
+## Required next decision
+
+AI-008 is blocked on a new owner-approved remediation campaign. Before making
+more paid provider calls, the owner must approve a new bounded campaign that:
+
+1. versions a stricter output-format and prompt-injection defense, and/or uses a
+   more capable fixed model;
+2. uses a new campaign and prompt version rather than rewriting this evidence;
+3. caps the new campaign at 120 calls with zero SDK retries;
+4. keeps cost gating inactive unless an authoritative price is approved; and
+5. requires 120/120 structurally valid responses and 3/3 hard-gate passes
+   before any statistical threshold proposal is considered.
+
+Only after a stable campaign passes those structural and safety gates should
+the owner review correctness/groundedness floors, permitted regression, latency
+and token caps, the 20-case pull-request subset, and the weekly 40-case run.

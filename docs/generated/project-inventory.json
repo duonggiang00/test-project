@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "547fa95e010918e08409d1e28b1e5a798de6b552",
-    "source_commit_timestamp": "2026-08-28T04:57:40+07:00",
-    "source_tree_sha256": "3a3abf3950873306f93651f3873b32a7e3e21f7172164fb1533130d045af3aa4",
-    "relevant_file_count": 456,
+    "source_commit": "723e7cf110f3e9a41ff7b416ffb33dc85a043762",
+    "source_commit_timestamp": "2026-08-29T09:47:17+07:00",
+    "source_tree_sha256": "b7c5f58868afbcd69133dfc18922680fff93ff8d5317ac9da0c2a8025f4873e1",
+    "relevant_file_count": 465,
     "alembic_heads": [
       "a74c9d2e6f10"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 373,
+    "backend_test_functions": 399,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -6748,6 +6748,68 @@
         "tier": "integration"
       },
       {
+        "path": "tests/unit/test_ai_baseline_comparison.py",
+        "tests": [
+          {
+            "line": 96,
+            "markers": [],
+            "name": "test_comparison_requires_exact_three_runs_and_reports"
+          },
+          {
+            "line": 121,
+            "markers": [],
+            "name": "test_comparison_keeps_invalid_response_visible_and_not_ready"
+          },
+          {
+            "line": 147,
+            "markers": [],
+            "name": "test_comparison_rejects_report_metadata_mismatch"
+          },
+          {
+            "line": 169,
+            "markers": [],
+            "name": "test_comparison_rejects_tampered_observations_or_report"
+          },
+          {
+            "line": 202,
+            "markers": [],
+            "name": "test_comparison_writer_is_create_only"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_baseline_review.py",
+        "tests": [
+          {
+            "line": 88,
+            "markers": [],
+            "name": "test_review_scores_bind_to_all_candidates_and_pass_into_ai007"
+          },
+          {
+            "line": 117,
+            "markers": [],
+            "name": "test_review_binding_rejects_incomplete_candidate_or_score_coverage"
+          },
+          {
+            "line": 130,
+            "markers": [],
+            "name": "test_review_binding_rejects_non_campaign_provider_metadata"
+          },
+          {
+            "line": 140,
+            "markers": [],
+            "name": "test_review_score_loader_is_strict_and_value_safe"
+          },
+          {
+            "line": 153,
+            "markers": [],
+            "name": "test_reviewed_observation_writer_is_create_only"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_evaluation_runner.py",
         "tests": [
           {
@@ -7085,6 +7147,81 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_ai_live_baseline.py",
+        "tests": [
+          {
+            "line": 70,
+            "markers": [],
+            "name": "test_successful_attempt_requires_format_valid_flag"
+          },
+          {
+            "line": 127,
+            "markers": [],
+            "name": "test_candidate_prompt_is_deterministic_and_separates_untrusted_sources"
+          },
+          {
+            "line": 141,
+            "markers": [],
+            "name": "test_candidate_response_requires_the_exact_strict_envelope"
+          },
+          {
+            "line": 154,
+            "markers": [],
+            "name": "test_collection_caps_calls_and_resume_never_repeats_a_case"
+          },
+          {
+            "line": 196,
+            "markers": [],
+            "name": "test_collection_refuses_metadata_changes_before_calling_provider"
+          },
+          {
+            "line": 224,
+            "markers": [],
+            "name": "test_provider_failure_is_sanitized_persisted_and_not_retried"
+          },
+          {
+            "line": 261,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_invalid_provider_response_is_terminal_and_not_counted_complete"
+          },
+          {
+            "line": 297,
+            "markers": [],
+            "name": "test_campaign_rejects_a_different_self_consistent_approved_dataset"
+          },
+          {
+            "line": 328,
+            "markers": [],
+            "name": "test_interrupted_attempt_and_concurrent_lock_fail_without_a_call"
+          },
+          {
+            "line": 348,
+            "markers": [],
+            "name": "test_completed_baseline_is_an_idempotent_no_call"
+          },
+          {
+            "line": 374,
+            "markers": [],
+            "name": "test_campaign_allows_only_the_three_approved_runs"
+          },
+          {
+            "line": 417,
+            "markers": [],
+            "name": "test_cli_uses_canonical_paths_and_disables_sdk_retries"
+          },
+          {
+            "line": 456,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_cli_rejects_missing_credential_before_reserving_or_calling"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_model_policy.py",
         "tests": [
           {
@@ -7127,21 +7264,42 @@
         "path": "tests/unit/test_ai_provider_contract.py",
         "tests": [
           {
-            "line": 53,
+            "line": 56,
             "markers": [
               "unit"
             ],
             "name": "test_generate_returns_typed_text_provider_model_usage_and_latency"
           },
           {
-            "line": 77,
+            "line": 87,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generate_omits_optional_parameters_and_reports_the_response_model"
+          },
+          {
+            "line": 107,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generate_with_retries_disabled_makes_one_http_attempt_and_sanitizes_failure"
+          },
+          {
+            "line": 129,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generate_sanitizes_a_response_without_choices"
+          },
+          {
+            "line": 143,
             "markers": [
               "unit"
             ],
             "name": "test_generate_parses_tool_calls_from_a_non_streaming_response"
           },
           {
-            "line": 125,
+            "line": 191,
             "markers": [
               "asyncio",
               "unit"
@@ -7149,28 +7307,28 @@
             "name": "test_stream_yields_text_and_tool_call_deltas_matching_the_wire_shape"
           },
           {
-            "line": 169,
+            "line": 235,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_with_no_raw_text_on_malformed_response"
           },
           {
-            "line": 191,
+            "line": 257,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_on_timeout"
           },
           {
-            "line": 214,
+            "line": 280,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_on_rate_limit"
           },
           {
-            "line": 236,
+            "line": 302,
             "markers": [
               "asyncio",
               "unit"
@@ -7178,7 +7336,7 @@
             "name": "test_stream_raises_provider_error_on_timeout"
           },
           {
-            "line": 258,
+            "line": 324,
             "markers": [
               "asyncio",
               "unit"
