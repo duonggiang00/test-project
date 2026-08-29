@@ -8,12 +8,14 @@ import pytest
 
 from app.ai.evaluation.baseline_comparison import (
     APPROVED_JUDGE_VERSION,
+    BaselineComparison,
     BaselineComparisonError,
     compare_baselines,
     write_baseline_comparison,
 )
 from app.ai.evaluation.baseline_review import prepare_reviewed_observations
 from app.ai.evaluation.live_baseline import (
+    V2_APPROVED_CAMPAIGN_ID,
     APPROVED_RUN_IDS,
     BaselineRunFile,
 )
@@ -117,6 +119,16 @@ def test_comparison_requires_exact_three_runs_and_reports(tmp_path: Path) -> Non
             _dataset(), candidates[:-1], reports[:-1], observations, reviews
         )
 
+    with pytest.raises(BaselineComparisonError, match="requested campaign"):
+        compare_baselines(
+            _dataset(),
+            candidates,
+            reports,
+            observations,
+            reviews,
+            expected_campaign_id=V2_APPROVED_CAMPAIGN_ID,
+        )
+
 
 def test_comparison_keeps_invalid_response_visible_and_not_ready(
     tmp_path: Path,
@@ -210,3 +222,18 @@ def test_comparison_writer_is_create_only(tmp_path: Path) -> None:
         write_baseline_comparison(output, comparison)
 
     assert output.read_bytes() == original
+
+
+def test_legacy_v1_comparison_remains_readable_without_v2_metadata(
+    tmp_path: Path,
+) -> None:
+    payload = _compare(_candidates(tmp_path)).model_dump(mode="json")
+    payload.pop("campaign_id")
+    payload.pop("response_format")
+    payload.pop("routing_policy_sha256")
+    payload.pop("case_order_sha256")
+
+    loaded = BaselineComparison.model_validate(payload)
+
+    assert loaded.campaign_id == "ai-008-v1"
+    assert loaded.response_format is None

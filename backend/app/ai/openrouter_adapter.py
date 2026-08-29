@@ -14,9 +14,12 @@ build if any other module imports `openai`.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import time
 from collections.abc import AsyncIterator
-from typing import Any, cast
+from dataclasses import dataclass
+from typing import Any, Literal, cast
 
 import httpx
 from openai import AsyncOpenAI, OpenAI
@@ -25,6 +28,7 @@ from app.ai.provider import (
     AIProviderError,
     GenerateRequest,
     GenerateResult,
+    ProviderExecutionBinding,
     StreamChunk,
     ToolCall,
     ToolCallDelta,
@@ -37,6 +41,24 @@ PROVIDER_NAME = "openrouter"
 BASE_URL = "https://openrouter.ai/api/v1"
 
 
+@dataclass(frozen=True)
+class OpenRouterRoutingPolicy:
+    """Provider-specific routing constraints configured at the adapter edge."""
+
+    only: tuple[str, ...]
+    allow_fallbacks: bool
+    require_parameters: bool
+    data_collection: Literal["allow", "deny"]
+
+    def request_body(self) -> dict[str, object]:
+        return {
+            "only": list(self.only),
+            "allow_fallbacks": self.allow_fallbacks,
+            "require_parameters": self.require_parameters,
+            "data_collection": self.data_collection,
+        }
+
+
 class OpenRouterAdapter:
     """OpenRouter-backed implementation of `AIProvider`."""
 
@@ -47,6 +69,7 @@ class OpenRouterAdapter:
         sync_http_client: httpx.Client | None = None,
         async_http_client: httpx.AsyncClient | None = None,
         max_retries: int = 2,
+        routing_policy: OpenRouterRoutingPolicy | None = None,
     ) -> None:
         resolved_key = api_key or getattr(settings, "OPENROUTER_API_KEY", None) or "mock_key"
         self._sync_client = OpenAI(
@@ -61,6 +84,26 @@ class OpenRouterAdapter:
             http_client=async_http_client,
             max_retries=max_retries,
         )
+        self._routing_policy = routing_policy
+        self._max_retries = max_retries
+
+    @property
+    def execution_binding(self) -> ProviderExecutionBinding:
+        """Attest the effective retry and provider-routing configuration."""
+        routing_sha256 = None
+        if self._routing_policy is not None:
+            routing_sha256 = hashlib.sha256(
+                json.dumps(
+                    self._routing_policy.request_body(),
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                    sort_keys=True,
+                ).encode("utf-8")
+            ).hexdigest()
+        return ProviderExecutionBinding(
+            max_retries=self._max_retries,
+            routing_policy_sha256=routing_sha256,
+        )
 
     def generate(self, request: GenerateRequest) -> GenerateResult:
         """Run one non-streaming completion (used by material generation)."""
@@ -71,6 +114,14 @@ class OpenRouterAdapter:
                 optional_arguments["temperature"] = request.temperature
             if request.max_tokens is not None:
                 optional_arguments["max_tokens"] = request.max_tokens
+            if request.response_format is not None:
+                optional_arguments["response_format"] = {
+                    "type": request.response_format
+                }
+            if self._routing_policy is not None:
+                optional_arguments["extra_body"] = {
+                    "provider": self._routing_policy.request_body()
+                }
             response = self._sync_client.chat.completions.create(
                 model=request.model,
                 messages=cast(Any, request.messages),
@@ -105,6 +156,7 @@ class OpenRouterAdapter:
                 ),
                 latency_ms=latency_ms,
                 finish_reason=getattr(choice, "finish_reason", None),
+                provider_variant=getattr(response, "provider", None),
             )
         except Exception as exc:
             raise AIProviderError(sanitize_error(exc)) from exc
@@ -112,12 +164,22 @@ class OpenRouterAdapter:
     async def stream(self, request: GenerateRequest) -> AsyncIterator[StreamChunk]:
         """Run one streaming completion (used by the AI Studio chat endpoint)."""
         try:
+            optional_arguments: dict[str, Any] = {}
+            if request.response_format is not None:
+                optional_arguments["response_format"] = {
+                    "type": request.response_format
+                }
+            if self._routing_policy is not None:
+                optional_arguments["extra_body"] = {
+                    "provider": self._routing_policy.request_body()
+                }
             response: Any = await self._async_client.chat.completions.create(
                 model=request.model,
                 messages=cast(Any, request.messages),
                 tools=cast(Any, request.tools),
                 stream=True,
                 max_tokens=request.max_tokens,
+                **optional_arguments,
             )
         except Exception as exc:
             raise AIProviderError(sanitize_error(exc)) from exc

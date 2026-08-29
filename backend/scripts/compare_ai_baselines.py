@@ -21,9 +21,11 @@ from app.ai.evaluation.dataset import (
     load_golden_dataset,
 )
 from app.ai.evaluation.live_baseline import (
-    APPROVED_CAMPAIGN_ROOT,
+    APPROVED_CAMPAIGN_ID,
     APPROVED_RUN_IDS,
+    V2_APPROVED_CAMPAIGN_ID,
     BaselineValidationError,
+    approved_campaign_root,
     load_baseline_run,
 )
 from app.ai.evaluation.runner import (
@@ -38,35 +40,41 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("dataset", type=Path)
     parser.add_argument("--approval-manifest", type=Path, required=True)
+    parser.add_argument(
+        "--campaign",
+        choices=(APPROVED_CAMPAIGN_ID, V2_APPROVED_CAMPAIGN_ID),
+        default=APPROVED_CAMPAIGN_ID,
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
     try:
+        campaign_root = approved_campaign_root(arguments.campaign)
         dataset = load_golden_dataset(
             arguments.dataset,
             approval_manifest=load_approval_manifest(arguments.approval_manifest),
         )
         candidates = [
             load_baseline_run(
-                APPROVED_CAMPAIGN_ROOT / f"{run_id}.candidates.json"
+                campaign_root / f"{run_id}.candidates.json"
             )
             for run_id in APPROVED_RUN_IDS
         ]
         reports = [
-            load_evaluation_report(APPROVED_CAMPAIGN_ROOT / f"{run_id}.report.json")
+            load_evaluation_report(campaign_root / f"{run_id}.report.json")
             for run_id in APPROVED_RUN_IDS
         ]
         observations_by_run = {
             run_id: load_evaluation_observations(
-                APPROVED_CAMPAIGN_ROOT / f"{run_id}.observations.jsonl"
+                campaign_root / f"{run_id}.observations.jsonl"
             )
             for run_id in APPROVED_RUN_IDS
         }
         reviews_by_run = {
             run_id: load_baseline_review_scores(
-                APPROVED_CAMPAIGN_ROOT / f"{run_id}.review.jsonl"
+                campaign_root / f"{run_id}.review.jsonl"
             )
             for run_id in APPROVED_RUN_IDS
         }
@@ -76,9 +84,10 @@ def main(argv: list[str] | None = None) -> int:
             reports,
             observations_by_run,
             reviews_by_run,
+            expected_campaign_id=arguments.campaign,
         )
         write_baseline_comparison(
-            APPROVED_CAMPAIGN_ROOT / "comparison.json", comparison
+            campaign_root / "comparison.json", comparison
         )
     except (
         GoldenDatasetValidationError,

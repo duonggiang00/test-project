@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "723e7cf110f3e9a41ff7b416ffb33dc85a043762",
-    "source_commit_timestamp": "2026-08-29T09:47:17+07:00",
-    "source_tree_sha256": "b7c5f58868afbcd69133dfc18922680fff93ff8d5317ac9da0c2a8025f4873e1",
-    "relevant_file_count": 465,
+    "source_commit": "086bd5f10b1a997718038d7481bec6e93640dc95",
+    "source_commit_timestamp": "2026-08-29T14:59:27+07:00",
+    "source_tree_sha256": "3496b9d06a4cb5a9d0c3268f9a0abe6c0aec2c9b25fef8377f29b6024c9dc493",
+    "relevant_file_count": 468,
     "alembic_heads": [
       "a74c9d2e6f10"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 399,
+    "backend_test_functions": 413,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -6748,32 +6748,75 @@
         "tier": "integration"
       },
       {
+        "path": "tests/unit/test_ai_baseline_canary.py",
+        "tests": [
+          {
+            "line": 128,
+            "markers": [],
+            "name": "test_canary_pass_requires_all_automatic_and_independent_gates"
+          },
+          {
+            "line": 147,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_canary_fails_when_any_injection_judgment_fails"
+          },
+          {
+            "line": 172,
+            "markers": [],
+            "name": "test_canary_fails_on_invalid_response_format"
+          },
+          {
+            "line": 183,
+            "markers": [],
+            "name": "test_canary_rejects_incomplete_coverage_and_safety_fields_on_normal_case"
+          },
+          {
+            "line": 201,
+            "markers": [],
+            "name": "test_canary_rejects_tampered_provider_metadata"
+          },
+          {
+            "line": 214,
+            "markers": [],
+            "name": "test_canary_report_is_create_only_and_binds_resume_attempts"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_baseline_comparison.py",
         "tests": [
           {
-            "line": 96,
+            "line": 98,
             "markers": [],
             "name": "test_comparison_requires_exact_three_runs_and_reports"
           },
           {
-            "line": 121,
+            "line": 133,
             "markers": [],
             "name": "test_comparison_keeps_invalid_response_visible_and_not_ready"
           },
           {
-            "line": 147,
+            "line": 159,
             "markers": [],
             "name": "test_comparison_rejects_report_metadata_mismatch"
           },
           {
-            "line": 169,
+            "line": 181,
             "markers": [],
             "name": "test_comparison_rejects_tampered_observations_or_report"
           },
           {
-            "line": 202,
+            "line": 214,
             "markers": [],
             "name": "test_comparison_writer_is_create_only"
+          },
+          {
+            "line": 227,
+            "markers": [],
+            "name": "test_legacy_v1_comparison_remains_readable_without_v2_metadata"
           }
         ],
         "tier": "unit"
@@ -7150,69 +7193,101 @@
         "path": "tests/unit/test_ai_live_baseline.py",
         "tests": [
           {
-            "line": 70,
+            "line": 108,
             "markers": [],
             "name": "test_successful_attempt_requires_format_valid_flag"
           },
           {
-            "line": 127,
+            "line": 173,
             "markers": [],
             "name": "test_candidate_prompt_is_deterministic_and_separates_untrusted_sources"
           },
           {
-            "line": 141,
+            "line": 187,
+            "markers": [],
+            "name": "test_v2_prompt_is_deterministic_and_requires_refusal_plus_safe_continuation"
+          },
+          {
+            "line": 203,
+            "markers": [],
+            "name": "test_v2_collection_is_hard_stopped_at_ten_calls_without_canary_report"
+          },
+          {
+            "line": 254,
+            "markers": [],
+            "name": "test_v2_rejects_unattested_provider_policy_before_writing_or_calling"
+          },
+          {
+            "line": 273,
+            "markers": [],
+            "name": "test_passing_canary_authorizes_first_run_resume_and_later_runs"
+          },
+          {
+            "line": 386,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_v2_rejects_wrong_upstream_or_incomplete_response"
+          },
+          {
+            "line": 410,
             "markers": [],
             "name": "test_candidate_response_requires_the_exact_strict_envelope"
           },
           {
-            "line": 154,
+            "line": 423,
             "markers": [],
             "name": "test_collection_caps_calls_and_resume_never_repeats_a_case"
           },
           {
-            "line": 196,
+            "line": 465,
             "markers": [],
             "name": "test_collection_refuses_metadata_changes_before_calling_provider"
           },
           {
-            "line": 224,
+            "line": 493,
             "markers": [],
             "name": "test_provider_failure_is_sanitized_persisted_and_not_retried"
           },
           {
-            "line": 261,
+            "line": 530,
             "markers": [
               "parametrize"
             ],
             "name": "test_invalid_provider_response_is_terminal_and_not_counted_complete"
           },
           {
-            "line": 297,
+            "line": 566,
             "markers": [],
             "name": "test_campaign_rejects_a_different_self_consistent_approved_dataset"
           },
           {
-            "line": 328,
+            "line": 597,
             "markers": [],
             "name": "test_interrupted_attempt_and_concurrent_lock_fail_without_a_call"
           },
           {
-            "line": 348,
+            "line": 617,
             "markers": [],
             "name": "test_completed_baseline_is_an_idempotent_no_call"
           },
           {
-            "line": 374,
+            "line": 643,
             "markers": [],
             "name": "test_campaign_allows_only_the_three_approved_runs"
           },
           {
-            "line": 417,
+            "line": 686,
             "markers": [],
             "name": "test_cli_uses_canonical_paths_and_disables_sdk_retries"
           },
           {
-            "line": 456,
+            "line": 725,
+            "markers": [],
+            "name": "test_v2_cli_pins_routing_json_mode_and_ten_call_canary"
+          },
+          {
+            "line": 769,
             "markers": [
               "parametrize"
             ],
@@ -7264,42 +7339,49 @@
         "path": "tests/unit/test_ai_provider_contract.py",
         "tests": [
           {
-            "line": 56,
+            "line": 64,
             "markers": [
               "unit"
             ],
             "name": "test_generate_returns_typed_text_provider_model_usage_and_latency"
           },
           {
-            "line": 87,
+            "line": 95,
             "markers": [
               "unit"
             ],
             "name": "test_generate_omits_optional_parameters_and_reports_the_response_model"
           },
           {
-            "line": 107,
+            "line": 120,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generate_maps_json_mode_and_exact_routing_policy"
+          },
+          {
+            "line": 164,
             "markers": [
               "unit"
             ],
             "name": "test_generate_with_retries_disabled_makes_one_http_attempt_and_sanitizes_failure"
           },
           {
-            "line": 129,
+            "line": 186,
             "markers": [
               "unit"
             ],
             "name": "test_generate_sanitizes_a_response_without_choices"
           },
           {
-            "line": 143,
+            "line": 200,
             "markers": [
               "unit"
             ],
             "name": "test_generate_parses_tool_calls_from_a_non_streaming_response"
           },
           {
-            "line": 191,
+            "line": 248,
             "markers": [
               "asyncio",
               "unit"
@@ -7307,28 +7389,28 @@
             "name": "test_stream_yields_text_and_tool_call_deltas_matching_the_wire_shape"
           },
           {
-            "line": 235,
+            "line": 292,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_with_no_raw_text_on_malformed_response"
           },
           {
-            "line": 257,
+            "line": 314,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_on_timeout"
           },
           {
-            "line": 280,
+            "line": 337,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_on_rate_limit"
           },
           {
-            "line": 302,
+            "line": 359,
             "markers": [
               "asyncio",
               "unit"
@@ -7336,7 +7418,7 @@
             "name": "test_stream_raises_provider_error_on_timeout"
           },
           {
-            "line": 324,
+            "line": 381,
             "markers": [
               "asyncio",
               "unit"

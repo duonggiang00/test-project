@@ -18,9 +18,11 @@ from app.ai.evaluation.dataset import (
     load_golden_dataset,
 )
 from app.ai.evaluation.live_baseline import (
-    APPROVED_CAMPAIGN_ROOT,
+    APPROVED_CAMPAIGN_ID,
     APPROVED_RUN_IDS,
+    V2_APPROVED_CAMPAIGN_ID,
     BaselineValidationError,
+    approved_campaign_root,
     load_baseline_run,
 )
 
@@ -32,14 +34,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("dataset", type=Path)
     parser.add_argument("--approval-manifest", type=Path, required=True)
     parser.add_argument("--run-id", choices=APPROVED_RUN_IDS, required=True)
+    parser.add_argument(
+        "--campaign",
+        choices=(APPROVED_CAMPAIGN_ID, V2_APPROVED_CAMPAIGN_ID),
+        default=APPROVED_CAMPAIGN_ID,
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
-    baseline_path = APPROVED_CAMPAIGN_ROOT / f"{arguments.run_id}.candidates.json"
-    review_scores_path = APPROVED_CAMPAIGN_ROOT / f"{arguments.run_id}.review.jsonl"
-    output_path = APPROVED_CAMPAIGN_ROOT / f"{arguments.run_id}.observations.jsonl"
+    campaign_root = approved_campaign_root(arguments.campaign)
+    baseline_path = campaign_root / f"{arguments.run_id}.candidates.json"
+    review_scores_path = campaign_root / f"{arguments.run_id}.review.jsonl"
+    output_path = campaign_root / f"{arguments.run_id}.observations.jsonl"
     try:
         dataset = load_golden_dataset(
             arguments.dataset,

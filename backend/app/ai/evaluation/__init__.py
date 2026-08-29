@@ -47,6 +47,16 @@ from app.ai.evaluation.baseline_comparison import (
     load_evaluation_report,
     write_baseline_comparison,
 )
+from app.ai.evaluation.baseline_canary import (
+    BaselineCanaryError,
+    CanaryReport,
+    CanaryReviewScore,
+    evaluate_canary,
+    load_canary_report,
+    load_canary_review_scores,
+    validate_canary_resume,
+    write_canary_report,
+)
 
 __all__ = [
     "GOLDEN_DATASET_SCHEMA_VERSION",
@@ -86,4 +96,12 @@ __all__ = [
     "compare_baselines",
     "load_evaluation_report",
     "write_baseline_comparison",
+    "BaselineCanaryError",
+    "CanaryReport",
+    "CanaryReviewScore",
+    "evaluate_canary",
+    "load_canary_report",
+    "load_canary_review_scores",
+    "validate_canary_resume",
+    "write_canary_report",
 ]

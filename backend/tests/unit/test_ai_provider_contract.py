@@ -10,11 +10,18 @@ import json
 import httpx
 import pytest
 
-from app.ai.openrouter_adapter import OpenRouterAdapter
+from app.ai.openrouter_adapter import OpenRouterAdapter, OpenRouterRoutingPolicy
+from app.ai.evaluation.live_baseline import V2_ROUTING_POLICY_SHA256
 from app.ai.provider import AIProviderError, GenerateRequest
 
 
-def _adapter(sync_handler=None, async_handler=None, *, max_retries: int = 2) -> OpenRouterAdapter:
+def _adapter(
+    sync_handler=None,
+    async_handler=None,
+    *,
+    max_retries: int = 2,
+    routing_policy: OpenRouterRoutingPolicy | None = None,
+) -> OpenRouterAdapter:
     sync_client = (
         httpx.Client(transport=httpx.MockTransport(sync_handler))
         if sync_handler is not None
@@ -30,6 +37,7 @@ def _adapter(sync_handler=None, async_handler=None, *, max_retries: int = 2) -> 
         sync_http_client=sync_client,
         async_http_client=async_client,
         max_retries=max_retries,
+        routing_policy=routing_policy,
     )
 
 
@@ -91,7 +99,8 @@ def test_generate_omits_optional_parameters_and_reports_the_response_model():
         sent_body.update(json.loads(request.content))
         return httpx.Response(200, json=_completion_body(model="resolved/model-v2"))
 
-    result = _adapter(sync_handler=handler).generate(
+    adapter = _adapter(sync_handler=handler)
+    result = adapter.generate(
         GenerateRequest(
             messages=[{"role": "user", "content": "hi"}],
             model="requested/model-v1",
@@ -100,7 +109,55 @@ def test_generate_omits_optional_parameters_and_reports_the_response_model():
 
     assert "temperature" not in sent_body
     assert "max_tokens" not in sent_body
+    assert "response_format" not in sent_body
+    assert "provider" not in sent_body
     assert result.model == "resolved/model-v2"
+    assert adapter.execution_binding.max_retries == 2
+    assert adapter.execution_binding.routing_policy_sha256 is None
+
+
+@pytest.mark.unit
+def test_generate_maps_json_mode_and_exact_routing_policy() -> None:
+    sent_body = {}
+
+    def handler(request):
+        sent_body.update(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json=_completion_body(provider="DeepInfra"),
+        )
+
+    adapter = _adapter(
+        sync_handler=handler,
+        max_retries=0,
+        routing_policy=OpenRouterRoutingPolicy(
+            only=("deepinfra",),
+            allow_fallbacks=False,
+            require_parameters=True,
+            data_collection="deny",
+        ),
+    )
+    result = adapter.generate(
+        GenerateRequest(
+            messages=[{"role": "user", "content": "hi"}],
+            model="meta-llama/llama-3.1-8b-instruct",
+            response_format="json_object",
+        )
+    )
+
+    assert sent_body["response_format"] == {"type": "json_object"}
+    assert sent_body["provider"] == {
+        "only": ["deepinfra"],
+        "allow_fallbacks": False,
+        "require_parameters": True,
+        "data_collection": "deny",
+    }
+    assert result.provider_variant == "DeepInfra"
+    assert adapter.execution_binding.max_retries == 0
+    assert (
+        adapter.execution_binding.routing_policy_sha256
+        == V2_ROUTING_POLICY_SHA256
+    )
 
 
 @pytest.mark.unit

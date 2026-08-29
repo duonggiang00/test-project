@@ -4,6 +4,10 @@ Status: BLOCKED
 
 Risk level: L3 governed AI evaluation
 
+This handoff records the rejected v1 campaign. The separately approved v2
+remediation also failed its mandatory ten-call canary and must not resume; see
+`AI-008-V2-REMEDIATION.md` for the current blocker.
+
 ## Outcome
 
 - Added a capped, resumable, canonical-path live collector for exactly three
@@ -49,9 +53,9 @@ responses are not copied into documentation, stdout, or tracked files.
   did not satisfy the required JSON envelope.
 - Context relevance is not production retrieval evidence because this campaign
   supplies the approved sources directly.
-- A new campaign needs explicit owner approval because the approved 120-call
-  budget is exhausted. It must use a new campaign/prompt version and preserve
-  this failed campaign as evidence.
+- The approved v2 campaign preserved this evidence but failed its mandatory
+  canary. Any further attempt now requires a separately approved v3 campaign
+  and must preserve both rejected campaigns.
 - RAG-SEMANTIC-001 remains downstream and must not use these results as proof of
   retrieval quality.
 

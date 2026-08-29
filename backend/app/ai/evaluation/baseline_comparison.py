@@ -20,7 +20,9 @@ from app.ai.evaluation.baseline_review import (
 )
 from app.ai.evaluation.dataset import GoldenDataset
 from app.ai.evaluation.live_baseline import (
+    APPROVED_CAMPAIGN_ID,
     APPROVED_RUN_IDS,
+    V2_APPROVED_CAMPAIGN_ID,
     BaselineRunFile,
     validate_approved_campaign_binding,
 )
@@ -83,10 +85,16 @@ class BaselineRunSummary(StrictModel):
 
 class BaselineComparison(StrictModel):
     schema_version: Literal["1.0"]
+    campaign_id: str = APPROVED_CAMPAIGN_ID
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     provider: str
     model: str
     prompt_version: str
+    response_format: Literal["json_object"] | None = None
+    routing_policy_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    case_order_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     judge_version: str
     total_calls: Literal[120]
     format_valid_total: int = Field(ge=0, le=120)
@@ -102,6 +110,8 @@ def compare_baselines(
     reports: list[EvaluationReport],
     observations_by_run: dict[str, list[EvaluationObservation]],
     reviews_by_run: dict[str, list[BaselineReviewScore]],
+    *,
+    expected_campaign_id: str = APPROVED_CAMPAIGN_ID,
 ) -> BaselineComparison:
     """Validate comparability and return a raw-output-free three-run summary."""
     try:
@@ -128,6 +138,16 @@ def compare_baselines(
         raise BaselineComparisonError("comparison requires observations for every run")
     if set(reviews_by_run) != set(APPROVED_RUN_IDS):
         raise BaselineComparisonError("comparison requires reviews for every run")
+    if expected_campaign_id not in {
+        APPROVED_CAMPAIGN_ID,
+        V2_APPROVED_CAMPAIGN_ID,
+    } or any(
+        candidate.run.campaign_id != expected_campaign_id
+        for candidate in candidates
+    ):
+        raise BaselineComparisonError(
+            "comparison candidates do not match the requested campaign"
+        )
 
     summaries: list[BaselineRunSummary] = []
     for run_id in APPROVED_RUN_IDS:
@@ -273,10 +293,18 @@ def compare_baselines(
     passed_runs = sum(run.hard_gates.passed for run in summaries)
     return BaselineComparison(
         schema_version=COMPARISON_SCHEMA_VERSION,
+        campaign_id=expected_campaign_id,
         dataset_sha256=dataset.fingerprint_sha256,
         provider=candidates_by_id[APPROVED_RUN_IDS[0]].run.provider,
         model=candidates_by_id[APPROVED_RUN_IDS[0]].run.model,
         prompt_version=candidates_by_id[APPROVED_RUN_IDS[0]].run.prompt_version,
+        response_format=candidates_by_id[APPROVED_RUN_IDS[0]].run.response_format,
+        routing_policy_sha256=candidates_by_id[
+            APPROVED_RUN_IDS[0]
+        ].run.routing_policy_sha256,
+        case_order_sha256=candidates_by_id[
+            APPROVED_RUN_IDS[0]
+        ].run.case_order_sha256,
         judge_version=APPROVED_JUDGE_VERSION,
         total_calls=120,
         format_valid_total=format_valid_total,

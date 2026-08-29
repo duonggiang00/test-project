@@ -20,13 +20,21 @@ from app.ai.evaluation.live_baseline import (
     APPROVED_RUN_IDS,
     APPROVED_TEMPERATURE,
     PROMPT_TEMPLATE_SHA256,
+    V2_APPROVED_CAMPAIGN_ID,
+    V2_BASELINE_PROMPT_VERSION,
+    V2_BASELINE_SCHEMA_VERSION,
+    V2_PROMPT_TEMPLATE_SHA256,
+    V2_RESPONSE_FORMAT,
+    V2_ROUTING_POLICY_SHA256,
+    V2_UPSTREAM_PROVIDER,
+    approved_case_order_sha256,
     BaselineProviderFailure,
     BaselineResponseFailure,
     BaselineRunDescriptor,
     BaselineValidationError,
     collect_approved_live_baseline,
 )
-from app.ai.openrouter_adapter import OpenRouterAdapter
+from app.ai.openrouter_adapter import OpenRouterAdapter, OpenRouterRoutingPolicy
 from app.core.config import settings
 
 
@@ -38,6 +46,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--approval-manifest", type=Path, required=True)
     parser.add_argument("--run-id", choices=APPROVED_RUN_IDS, required=True)
     parser.add_argument("--max-new-calls", type=int, required=True)
+    parser.add_argument(
+        "--campaign",
+        choices=(APPROVED_CAMPAIGN_ID, V2_APPROVED_CAMPAIGN_ID),
+        default=APPROVED_CAMPAIGN_ID,
+    )
     return parser
 
 
@@ -60,24 +73,53 @@ def main(argv: list[str] | None = None) -> int:
             arguments.dataset,
             approval_manifest=approval,
         )
+        is_v2 = arguments.campaign == V2_APPROVED_CAMPAIGN_ID
         run = BaselineRunDescriptor.model_validate(
             {
-                "schema_version": BASELINE_SCHEMA_VERSION,
-                "campaign_id": APPROVED_CAMPAIGN_ID,
+                "schema_version": (
+                    V2_BASELINE_SCHEMA_VERSION if is_v2 else BASELINE_SCHEMA_VERSION
+                ),
+                "campaign_id": arguments.campaign,
                 "run_id": arguments.run_id,
                 "dataset_sha256": dataset.fingerprint_sha256,
                 "provider": APPROVED_PROVIDER,
                 "model": APPROVED_MODEL,
-                "prompt_version": BASELINE_PROMPT_VERSION,
-                "prompt_template_sha256": PROMPT_TEMPLATE_SHA256,
+                "prompt_version": (
+                    V2_BASELINE_PROMPT_VERSION if is_v2 else BASELINE_PROMPT_VERSION
+                ),
+                "prompt_template_sha256": (
+                    V2_PROMPT_TEMPLATE_SHA256 if is_v2 else PROMPT_TEMPLATE_SHA256
+                ),
                 "temperature": APPROVED_TEMPERATURE,
                 "max_output_tokens": APPROVED_MAX_OUTPUT_TOKENS,
+                "response_format": V2_RESPONSE_FORMAT if is_v2 else None,
+                "routing_policy_sha256": (
+                    V2_ROUTING_POLICY_SHA256 if is_v2 else None
+                ),
+                "case_order_sha256": (
+                    approved_case_order_sha256(dataset, arguments.campaign)
+                    if is_v2
+                    else None
+                ),
             }
+        )
+        routing_policy = (
+            OpenRouterRoutingPolicy(
+                only=(V2_UPSTREAM_PROVIDER,),
+                allow_fallbacks=False,
+                require_parameters=True,
+                data_collection="deny",
+            )
+            if is_v2
+            else None
         )
         state = collect_approved_live_baseline(
             dataset,
             run=run,
-            provider=OpenRouterAdapter(max_retries=0),
+            provider=OpenRouterAdapter(
+                max_retries=0,
+                routing_policy=routing_policy,
+            ),
             max_new_calls=arguments.max_new_calls,
         )
     except BaselineProviderFailure as exc:
