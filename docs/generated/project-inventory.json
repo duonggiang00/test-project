@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "ec7dcc19e4543abb05269e269966c279e526d6f3",
-    "source_commit_timestamp": "2026-08-27T09:27:11+07:00",
-    "source_tree_sha256": "6d932b1b2fa60f35f1a22f3d94cc566ded49322d0b3cca8c239f3e5410487847",
-    "relevant_file_count": 453,
+    "source_commit": "547fa95e010918e08409d1e28b1e5a798de6b552",
+    "source_commit_timestamp": "2026-08-28T04:57:40+07:00",
+    "source_tree_sha256": "3a3abf3950873306f93651f3873b32a7e3e21f7172164fb1533130d045af3aa4",
+    "relevant_file_count": 456,
     "alembic_heads": [
       "a74c9d2e6f10"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 350,
+    "backend_test_functions": 373,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -6746,6 +6746,131 @@
           }
         ],
         "tier": "integration"
+      },
+      {
+        "path": "tests/unit/test_ai_evaluation_runner.py",
+        "tests": [
+          {
+            "line": 80,
+            "markers": [],
+            "name": "test_complete_control_replay_measures_all_required_groups"
+          },
+          {
+            "line": 101,
+            "markers": [],
+            "name": "test_three_replays_and_jsonl_order_have_identical_fingerprints"
+          },
+          {
+            "line": 118,
+            "markers": [],
+            "name": "test_report_contains_hashes_but_not_raw_answers"
+          },
+          {
+            "line": 130,
+            "markers": [],
+            "name": "test_judged_incorrect_answer_reduces_correctness_without_hiding_metrics"
+          },
+          {
+            "line": 150,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_case_coverage_must_exactly_match_approved_dataset"
+          },
+          {
+            "line": 165,
+            "markers": [],
+            "name": "test_direct_evaluator_rejects_duplicate_and_secret_observations"
+          },
+          {
+            "line": 183,
+            "markers": [],
+            "name": "test_evaluator_rechecks_approval_and_case_fingerprint"
+          },
+          {
+            "line": 195,
+            "markers": [],
+            "name": "test_rubric_scores_must_exactly_match_approved_criteria"
+          },
+          {
+            "line": 209,
+            "markers": [],
+            "name": "test_correctness_judgments_must_match_the_case_contract"
+          },
+          {
+            "line": 239,
+            "markers": [],
+            "name": "test_invalid_citation_and_successful_injection_fail_hard_gates"
+          },
+          {
+            "line": 261,
+            "markers": [],
+            "name": "test_citation_is_invalid_when_source_was_not_retrieved"
+          },
+          {
+            "line": 273,
+            "markers": [],
+            "name": "test_missing_performance_telemetry_remains_explicitly_unmeasured"
+          },
+          {
+            "line": 289,
+            "markers": [],
+            "name": "test_one_sided_token_telemetry_does_not_convert_missing_values_to_zero"
+          },
+          {
+            "line": 302,
+            "markers": [],
+            "name": "test_observation_loader_rejects_duplicates_and_secret_output_safely"
+          },
+          {
+            "line": 329,
+            "markers": [],
+            "name": "test_secret_like_identifiers_do_not_leak_from_coverage_or_rubric_errors"
+          },
+          {
+            "line": 363,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_observation_contract_rejects_coercive_or_nonfinite_values"
+          },
+          {
+            "line": 375,
+            "markers": [],
+            "name": "test_injection_outcome_is_required"
+          },
+          {
+            "line": 385,
+            "markers": [],
+            "name": "test_secret_like_run_metadata_is_rejected_without_echo"
+          },
+          {
+            "line": 395,
+            "markers": [],
+            "name": "test_cli_writes_sanitized_report_and_returns_hard_gate_status"
+          },
+          {
+            "line": 435,
+            "markers": [],
+            "name": "test_cli_returns_failure_for_hard_gate_regression"
+          },
+          {
+            "line": 472,
+            "markers": [],
+            "name": "test_cli_refuses_to_overwrite_an_input_path"
+          },
+          {
+            "line": 505,
+            "markers": [],
+            "name": "test_report_writer_does_not_overwrite_existing_output"
+          },
+          {
+            "line": 516,
+            "markers": [],
+            "name": "test_report_writer_preserves_concurrent_output_and_cleans_temp_file"
+          }
+        ],
+        "tier": "unit"
       },
       {
         "path": "tests/unit/test_ai_generation_transitions.py",

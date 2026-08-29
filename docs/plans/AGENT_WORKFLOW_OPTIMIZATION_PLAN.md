@@ -4,7 +4,7 @@ Status: Active
 Plan owner: Project owner  
 Execution owner: Primary coding agent  
 Created: 2026-08-05  
-Last updated: 2026-08-26
+Last updated: 2026-08-29
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
 Approved remaining-work execution plan:
 [`REMAINING_WORK_EXECUTION_PLAN_2026-08-25.md`](REMAINING_WORK_EXECUTION_PLAN_2026-08-25.md)
@@ -66,13 +66,13 @@ Milestones 1 and 2 may partially overlap. Feature development may resume under t
 
 ### 3.1 Current open work
 
-Verified on 2026-08-28, the milestone tables contain 95 `DONE`, 3 `TODO`,
+Verified on 2026-08-29, the milestone tables contain 96 `DONE`, 2 `TODO`,
 1 `SUPERSEDED`, and no `REVIEW`, `BLOCKED`, `IN_PROGRESS`, or `DEFERRED`
 tasks. The remaining work is:
 
 | Category | IDs | Current evidence | Completion condition |
 |---|---|---|---|
-| Remaining AI evaluation | AI-007, AI-008 | AI-006 is complete: the owner approved the 40-case Vietnamese-first dataset fingerprint, and the matching manifest passes final validation. No cryptographic key ceremony is required in development. | Establish three stable baselines, then implement deterministic and capped live regression tiers with owner-approved thresholds. |
+| Remaining AI evaluation | AI-008 | AI-007 is complete: the strict provider-neutral evaluator reports all required quality, safety, performance, token, and cost metrics; deterministic control replay and independent L3 review pass. | Establish three comparable full provider baselines, obtain owner approval for proposed thresholds and pricing/null-cost policy, then implement deterministic and capped live regression tiers. |
 | Semantic retrieval | RAG-SEMANTIC-001 | Active chat remains keyword/last-chunk retrieval; local PostgreSQL does not yet provide pgvector. | Install/verify pgvector, pass evaluation gates, implement hybrid retrieval with lexical rollback, and remove the approved legacy endpoint. |
 
 ## 4. Milestone 0 — Durable specification and plan
@@ -285,7 +285,7 @@ Goal: Ensure AI output is reviewable, tenant-safe, measurable, and regression-te
 | AI-004 | Add redaction and access controls for sensitive AI logs | DONE | AI-003, SEC-002 | Rendered prompts/raw output live only in `ai_restricted_payloads`, readable by owner/admin with cross-tenant probes indistinguishable from missing; a planted canary reaches no audit row; §6.3's 30-day expiry runs through the existing purge path without loosening its allowlist |
 | AI-005 | Enforce tenant-safe retrieval | DONE | SEC-002, TEST-004 | AI chat/process/background generation require one authorized material and cross-owner/missing probes never invoke the provider or enter retrieval context |
 | AI-006 | Build the first admin-approved golden dataset | DONE | AI-001 | The owner approved the complete 16/12/6/6 Vietnamese-first v1 dataset fingerprint `4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51`; the matching manifest passes final validation with `approval_record_matched=true`. See `../handoffs/AI-006-DATASET-VALIDATOR.md` |
-| AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | TODO | AI-006 | Versioned evaluator emits aggregate/per-case metrics without committing raw provider payloads; structure, citation, and injection remain hard gates |
+| AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | DONE | AI-006 | Strict versioned observations produce deterministic aggregate/per-case quality, safety, performance, token, and cost coverage without raw provider payloads; complete coverage, citation, and injection are hard gates. Focused tests pass 57/57, backend passes 385 unit + 24 contract + 171 PostgreSQL integration, fast passes 13/13 including 182 frontend tests/build, and independent L3 review reports no P1/P2/P3. See `../handoffs/AI-007-EVALUATOR.md` |
 | AI-008 | Add prompt/model regression thresholds to CI | TODO | AI-007 | After three stable full baselines, deterministic PR checks and a capped 20-case live subset enforce approved thresholds while all 40 run weekly/manual |
 | AI-009 | Verify AI grading remains advisory until teacher/admin approval | DONE | AI-002, AI-007 | `AIGradeSuggestion` starts `awaiting_review` and its creation cannot change awarded points, submission totals, or result release; the existing deterministic `GradingService` is untouched and not reclassified. No AI grading exists yet, so the invariant is established ahead of it rather than retrofitted |
 | AI-RAG-HIDE-001 | Temporarily disable RAG/material chat while preserving content generation | SUPERSEDED | AI-001–005 | Implemented and verified, then superseded by the owner's 2026-08-25 decision to return RAG/material chat to the active MVP surface; retained as historical evidence |
@@ -419,6 +419,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-27 | WORKFLOW-TOKEN-001 / TOK-001-005 | Completed | Progressive-disclosure rules, live bounded context, compact/redacted verification evidence, conservative resume, model routing, and six fixed scenarios are implemented. Focused script tests pass 22/22; fast passes 534 tests plus build with the complete 182-test frontend Jest project executed once; exact resume reuses 13/13 safe steps; median L0-L2 context reduction is 79.71% and compact success stdout falls 49.60%. Final independent L2 review found no P1/P2/P3. See `WORKFLOW-TOKEN-001_CHANGE_CONTRACT.md` and `../handoffs/WORKFLOW-TOKEN-001.md`. |
 | 2026-08-27 | AI-006 dataset validator | Blocked | Implemented the versioned strict JSONL contract, Ed25519 approval verification rooted in an externally pinned owner fingerprint, recursive secret screening, sanitized file failures, canonical fingerprint, approved 40-case distribution check, and partial-review mode. Focused tests pass 28/28, canonical fast passes 562 tests plus build, and final independent L3 review reports no P1/P2/P3. No trusted owner key, protected trust-root fingerprint, or approved dataset file was added. AI-006 remains blocked until owner/admin supplies and pins the key and signs all 40 cases; AI-007/008 and RAG-SEMANTIC-001 remain downstream. See `../handoffs/AI-006-DATASET-VALIDATOR.md`. |
 | 2026-08-28 | AI-006 simplified owner approval | Completed | Replaced the development Ed25519 ceremony with the owner's requested dataset-level fingerprint approval. The owner explicitly approved the complete 40-case Vietnamese-first dataset at SHA-256 `4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51`; the matching manifest passes final validation with `approval_record_matched=true`. Focused tests pass 29/29, final fast passes 13/13, final backend passes 357 unit + 24 contract + 171 PostgreSQL integration, and independent L3 review is approved with no remaining P1/P2/P3. AI-007 is now unblocked. See `../handoffs/AI-006-DATASET-VALIDATOR.md`. |
+| 2026-08-29 | AI-007 deterministic evaluator | Completed | Added a strict provider-neutral observation contract and deterministic evaluator for all 40 approved cases. Reports expose correctness, groundedness, citation validity/coverage, context relevance, injection resistance, latency, separate token coverage, and cost coverage while retaining only answer hashes. Complete coverage, citation, and injection remain hard gates; missing telemetry remains null; secret-like input is rejected safely; report publication is create-if-absent. Focused tests pass 57/57, backend passes 385 unit + 24 contract + 171 PostgreSQL integration, fast passes 13/13, and independent L3 review is approved with no remaining P1/P2/P3. AI-008 remains inactive pending three comparable live baselines and owner-approved thresholds. See `../handoffs/AI-007-EVALUATOR.md`. |
 
 ## 18. Known program risks
 

@@ -161,6 +161,26 @@ API/event impact:
 - AI-007, AI-008, and semantic RAG remain downstream and must not activate
   invented quality thresholds or semantic-default behavior at this checkpoint.
 
+## AI-007 deterministic evaluator checkpoint — 2026-08-29
+
+- Implemented a strict versioned observation contract and provider-neutral
+  evaluator for the approved 40-case dataset.
+- Correctness and groundedness come from the declared judge/reviewer process;
+  the evaluator validates and aggregates those scores without claiming lexical
+  similarity is semantic judgment.
+- Citation validity requires an approved source that was actually retrieved;
+  complete case coverage, citation validity/coverage, and injection resistance
+  are hard gates independent of later quality thresholds.
+- Sanitized deterministic reports retain answer hashes and metrics but exclude
+  candidate answers, prompts, and reference context. Missing latency, token, or
+  cost telemetry remains explicit null data with separate coverage counts.
+- Focused tests pass 57/57; canonical backend passes 385 unit, 24 contract, and
+  171 PostgreSQL integration tests; canonical fast passes 13/13; inventory and
+  diff checks pass. Independent L3 review approved with no P1/P2/P3 findings.
+- AI-008 remains inactive. Three comparable full provider baselines and explicit
+  owner approval are still required before enabling regression thresholds or CI
+  policy.
+
 ## Verification contract
 
 - Provider adapter contract tests for normal/tool/stream/malformed/timeout/rate-

@@ -52,7 +52,7 @@ _SECRET_PATTERNS = (
 
 
 class StrictModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, frozen=True)
 
 
 class ContextSource(StrictModel):
@@ -204,11 +204,7 @@ def load_golden_dataset(
                 f"complete dataset requires {expected_text}; found {actual_text}"
             )
 
-    canonical_lines = [
-        json.dumps(case.model_dump(mode="json"), ensure_ascii=False, sort_keys=True)
-        for case in sorted(cases, key=lambda item: item.case_id)
-    ]
-    fingerprint = hashlib.sha256(("\n".join(canonical_lines) + "\n").encode()).hexdigest()
+    fingerprint = golden_dataset_fingerprint(cases)
     if require_approval:
         if approval_manifest is None:
             raise GoldenDatasetValidationError("owner/admin approval manifest is required")
@@ -224,6 +220,15 @@ def load_golden_dataset(
         approval_verified=require_approval,
         approval=approval_manifest if require_approval else None,
     )
+
+
+def golden_dataset_fingerprint(cases: list[GoldenDatasetCase]) -> str:
+    """Return the canonical content fingerprint for a collection of cases."""
+    canonical_lines = [
+        json.dumps(case.model_dump(mode="json"), ensure_ascii=False, sort_keys=True)
+        for case in sorted(cases, key=lambda item: item.case_id)
+    ]
+    return hashlib.sha256(("\n".join(canonical_lines) + "\n").encode()).hexdigest()
 
 
 def _read_safe_text(path: Path, label: str) -> str:
@@ -247,6 +252,15 @@ def _find_secret_location(case: GoldenDatasetCase) -> str | None:
         if any(pattern.search(value) for pattern in _SECRET_PATTERNS):
             return location
     return None
+
+
+def contains_secret_like_content(value: object) -> bool:
+    """Return whether any nested string resembles a credential or raw secret."""
+    return any(
+        pattern.search(text)
+        for _, text in _iter_string_fields(value)
+        for pattern in _SECRET_PATTERNS
+    )
 
 
 def _iter_string_fields(value: object, prefix: str = "") -> Iterator[tuple[str, str]]:

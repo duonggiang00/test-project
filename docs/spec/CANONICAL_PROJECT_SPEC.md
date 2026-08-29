@@ -283,7 +283,10 @@ AI regression evaluation must measure:
 - Latency.
 - Token usage and cost.
 
-No golden dataset currently exists. An admin is responsible for approving the reference answers. The initial target is a small, high-quality dataset before expanding coverage.
+The owner-approved v1 golden dataset contains 40 Vietnamese-first cases across
+RAG/chat, question generation, flashcard generation, and topic-brief generation.
+Its approval manifest is bound to the canonical dataset SHA-256. Future dataset
+versions or semantic changes require a new owner/admin approval.
 
 ### 9.5 Active RAG and material chat
 

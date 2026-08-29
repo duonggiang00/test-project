@@ -6,8 +6,19 @@ from app.ai.evaluation.dataset import (
     GoldenDatasetApprovalManifest,
     GoldenDatasetCase,
     GoldenDatasetValidationError,
+    golden_dataset_fingerprint,
     load_approval_manifest,
     load_golden_dataset,
+)
+from app.ai.evaluation.runner import (
+    EVALUATION_SCHEMA_VERSION,
+    EvaluationObservation,
+    EvaluationReport,
+    EvaluationRunDescriptor,
+    EvaluationValidationError,
+    evaluate_dataset,
+    load_evaluation_observations,
+    write_evaluation_report,
 )
 
 __all__ = [
@@ -16,6 +27,15 @@ __all__ = [
     "GoldenDatasetApprovalManifest",
     "GoldenDatasetCase",
     "GoldenDatasetValidationError",
+    "golden_dataset_fingerprint",
+    "EVALUATION_SCHEMA_VERSION",
+    "EvaluationObservation",
+    "EvaluationReport",
+    "EvaluationRunDescriptor",
+    "EvaluationValidationError",
+    "evaluate_dataset",
     "load_approval_manifest",
+    "load_evaluation_observations",
     "load_golden_dataset",
+    "write_evaluation_report",
 ]
