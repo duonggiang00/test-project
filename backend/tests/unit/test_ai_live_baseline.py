@@ -12,7 +12,9 @@ import scripts.run_ai_live_baseline as live_baseline_cli
 from app.ai.evaluation.baseline_canary import (
     CanaryReviewScore,
     evaluate_canary,
+    evaluate_failure_replay,
     write_canary_report,
+    write_failure_replay_report,
 )
 from app.ai.evaluation.baseline_comparison import APPROVED_JUDGE_VERSION
 from app.ai.evaluation.baseline_review import (
@@ -50,6 +52,13 @@ from app.ai.evaluation.live_baseline import (
     V4_BASELINE_SCHEMA_VERSION,
     V4_PROMPT_TEMPLATE_SHA256,
     V4_RESPONSE_PARSE_MODE,
+    V5_APPROVED_CAMPAIGN_ID,
+    V5_APPROVED_MODEL,
+    V5_BASELINE_PROMPT_VERSION,
+    V5_BASELINE_SCHEMA_VERSION,
+    V5_CANARY_CASE_IDS,
+    V5_PROMPT_TEMPLATE_SHA256,
+    V5_RESPONSE_PARSE_MODE,
     BaselineProviderFailure,
     BaselineAttempt,
     BaselineCampaignFile,
@@ -175,6 +184,30 @@ def _v4_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
     return BaselineRunDescriptor.model_validate(values)
 
 
+def _v5_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
+    dataset = _dataset()
+    values = {
+        "schema_version": V5_BASELINE_SCHEMA_VERSION,
+        "campaign_id": V5_APPROVED_CAMPAIGN_ID,
+        "run_id": run_id,
+        "dataset_sha256": dataset.fingerprint_sha256,
+        "provider": "openrouter",
+        "model": V5_APPROVED_MODEL,
+        "prompt_version": V5_BASELINE_PROMPT_VERSION,
+        "prompt_template_sha256": V5_PROMPT_TEMPLATE_SHA256,
+        "temperature": 0.0,
+        "max_output_tokens": 1000,
+        "response_format": V2_RESPONSE_FORMAT,
+        "routing_policy_sha256": V2_ROUTING_POLICY_SHA256,
+        "case_order_sha256": approved_case_order_sha256(
+            dataset, V5_APPROVED_CAMPAIGN_ID
+        ),
+        "response_parse_mode": V5_RESPONSE_PARSE_MODE,
+    }
+    values.update(updates)
+    return BaselineRunDescriptor.model_validate(values)
+
+
 def _canary_reviews() -> list[CanaryReviewScore]:
     cases_by_id = {case.case_id: case for case in _dataset().cases}
     return [
@@ -190,6 +223,23 @@ def _canary_reviews() -> list[CanaryReviewScore]:
         )
         for case_id in V2_CANARY_CASE_IDS
     ]
+
+
+def _write_v5_failure_replay_evidence(
+    root: Path, state: live_baseline.BaselineRunFile
+) -> None:
+    replay_ids = set(V5_CANARY_CASE_IDS[:5])
+    reviews = [
+        review for review in _canary_reviews() if review.case_id in replay_ids
+    ]
+    (root / "baseline-001.failure-replay.review.jsonl").write_text(
+        "\n".join(review.model_dump_json() for review in reviews) + "\n",
+        encoding="utf-8",
+    )
+    write_failure_replay_report(
+        root / "baseline-001.failure-replay.report.json",
+        evaluate_failure_replay(_dataset(), state, reviews),
+    )
 
 
 def _full_reviews() -> list[BaselineReviewScore]:
@@ -316,6 +366,183 @@ def test_v3_prompt_requires_silent_indirect_rejection_and_safe_completion() -> N
     assert "A refusal alone is incomplete" in system
     assert "complete every safe requirement" in system
     assert json.loads(messages[1]["content"])["task"] == case.input
+
+
+def test_v5_prompt_requires_atomic_use_case_deliverables_and_bounded_refusal() -> None:
+    case = next(case for case in _dataset().cases if case.case_id == "rag-016")
+
+    messages = build_candidate_messages(
+        case, prompt_version=V5_BASELINE_PROMPT_VERSION
+    )
+
+    system = messages[0]["content"]
+    normalized = " ".join(system.split())
+    assert "identify every legitimate task requirement internally" in normalized
+    assert "ignore them silently, never mention them" in system
+    assert "actual source-grounded questions" in system
+    assert "concrete front and back content" in system
+    assert "answer must begin with exactly one short Vietnamese sentence" in normalized
+    assert "inside the answer field" in normalized
+
+
+def test_v5_collection_reuses_v4_extraction_and_raw_evidence(tmp_path: Path) -> None:
+    payload = json.dumps(
+        {"answer": "Câu trả lời kiểm soát.", "cited_source_ids": ["source-001"]},
+        ensure_ascii=False,
+    )
+    raw = "Provider prefix.\n" + payload
+    state = _collect_live_baseline(
+        _dataset(),
+        output_path=tmp_path / "baseline-001.candidates.json",
+        budget_path=tmp_path / "campaign.json",
+        run=_v5_run(),
+        provider=FakeProvider(raw_text=raw, provider_variant="DeepInfra"),
+        max_new_calls=1,
+    )
+
+    assert state.attempts[0].status == "succeeded"
+    evidence = json.loads(
+        (tmp_path / "baseline-001.candidates.raw.jsonl").read_text(encoding="utf-8")
+    )
+    assert evidence["response_sha256"] == hashlib.sha256(
+        raw.encode("utf-8")
+    ).hexdigest()
+
+
+def test_v5_failure_replay_order_precedes_remaining_canary_cases() -> None:
+    order = live_baseline.approved_case_order(_dataset(), V5_APPROVED_CAMPAIGN_ID)
+
+    assert order[:5] == list(V5_CANARY_CASE_IDS[:5])
+    assert order[:4] == ["brief-006", "flash-006", "qgen-006", "rag-016"]
+    assert set(order[:10]) == set(V2_CANARY_CASE_IDS)
+
+
+def test_v5_rejects_ten_call_plan_before_provider_spend(tmp_path: Path) -> None:
+    provider = FakeProvider(provider_variant="DeepInfra")
+
+    with pytest.raises(BaselineValidationError, match="before call six"):
+        _collect_live_baseline(
+            _dataset(),
+            output_path=tmp_path / "baseline-001.candidates.json",
+            budget_path=tmp_path / "campaign.json",
+            run=_v5_run(),
+            provider=provider,
+            max_new_calls=10,
+        )
+
+    assert provider.requests == []
+    assert load_baseline_run(tmp_path / "baseline-001.candidates.json").attempts == []
+    campaign = BaselineCampaignFile.model_validate_json(
+        (tmp_path / "campaign.json").read_text(encoding="utf-8")
+    )
+    assert campaign.reservations == []
+
+
+def test_v5_requires_hash_bound_failure_replay_before_call_six(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "baseline-001.candidates.json"
+    budget = tmp_path / "campaign.json"
+    first_provider = FakeProvider(provider_variant="DeepInfra")
+    first = _collect_live_baseline(
+        _dataset(),
+        output_path=output,
+        budget_path=budget,
+        run=_v5_run(),
+        provider=first_provider,
+        max_new_calls=5,
+    )
+    assert len(first_provider.requests) == 5
+
+    blocked_provider = FakeProvider(provider_variant="DeepInfra")
+    with pytest.raises(BaselineValidationError, match="before call six"):
+        _collect_live_baseline(
+            _dataset(),
+            output_path=output,
+            budget_path=budget,
+            run=_v5_run(),
+            provider=blocked_provider,
+            max_new_calls=1,
+        )
+    assert blocked_provider.requests == []
+
+    _write_v5_failure_replay_evidence(tmp_path, first)
+    second_provider = FakeProvider(provider_variant="DeepInfra")
+    completed_canary = _collect_live_baseline(
+        _dataset(),
+        output_path=output,
+        budget_path=budget,
+        run=_v5_run(),
+        provider=second_provider,
+        max_new_calls=5,
+    )
+    assert len(second_provider.requests) == 5
+    assert len(completed_canary.attempts) == 10
+
+
+def test_v5_rejects_failed_failure_replay_report_before_call_six(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "baseline-001.candidates.json"
+    budget = tmp_path / "campaign.json"
+    first = _collect_live_baseline(
+        _dataset(),
+        output_path=output,
+        budget_path=budget,
+        run=_v5_run(),
+        provider=FakeProvider(provider_variant="DeepInfra"),
+        max_new_calls=5,
+    )
+    _write_v5_failure_replay_evidence(tmp_path, first)
+    report_path = tmp_path / "baseline-001.failure-replay.report.json"
+    report_payload = json.loads(report_path.read_text(encoding="utf-8"))
+    report_payload["passed"] = False
+    report_path.write_text(json.dumps(report_payload), encoding="utf-8")
+
+    provider = FakeProvider(provider_variant="DeepInfra")
+    with pytest.raises(BaselineValidationError, match="missing or invalid"):
+        _collect_live_baseline(
+            _dataset(),
+            output_path=output,
+            budget_path=budget,
+            run=_v5_run(),
+            provider=provider,
+            max_new_calls=1,
+        )
+    assert provider.requests == []
+
+
+def test_v5_rejects_future_run_reservation_after_valid_failure_replay(
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "baseline-001.candidates.json"
+    budget = tmp_path / "campaign.json"
+    first = _collect_live_baseline(
+        _dataset(),
+        output_path=output,
+        budget_path=budget,
+        run=_v5_run(),
+        provider=FakeProvider(provider_variant="DeepInfra"),
+        max_new_calls=5,
+    )
+    _write_v5_failure_replay_evidence(tmp_path, first)
+    campaign_payload = json.loads(budget.read_text(encoding="utf-8"))
+    campaign_payload["reservations"].append(
+        {"run_id": "baseline-002", "case_id": V5_CANARY_CASE_IDS[0]}
+    )
+    budget.write_text(json.dumps(campaign_payload), encoding="utf-8")
+
+    provider = FakeProvider(provider_variant="DeepInfra")
+    with pytest.raises(BaselineValidationError, match="ledger sequence"):
+        _collect_live_baseline(
+            _dataset(),
+            output_path=output,
+            budget_path=budget,
+            run=_v5_run(),
+            provider=provider,
+            max_new_calls=1,
+        )
+    assert provider.requests == []
 
 
 def test_v4_parser_extracts_only_one_json_payload_before_strict_validation() -> None:
@@ -1178,6 +1405,41 @@ def test_v3_cli_uses_fixed_campaign_model_without_changing_default(
     assert len(received) == 1
     assert len(provider.requests) == 10
     assert {request.model for request in provider.requests} == {V3_APPROVED_MODEL}
+    assert all(request.response_format == "json_object" for request in provider.requests)
+    assert "AI_BASELINE_PARTIAL" in capsys.readouterr().out
+
+
+def test_v5_cli_uses_fixed_model_routing_parse_policy_and_call_cap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
+) -> None:
+    provider = FakeProvider(provider_variant="DeepInfra")
+    received = []
+    monkeypatch.setattr(live_baseline, "V5_APPROVED_CAMPAIGN_ROOT", tmp_path)
+
+    def build_provider(*, max_retries: int, routing_policy):
+        received.append((max_retries, routing_policy))
+        return provider
+
+    monkeypatch.setattr(live_baseline_cli, "OpenRouterAdapter", build_provider)
+
+    exit_code = live_baseline_cli.main(
+        [
+            str(DATASET_PATH),
+            "--approval-manifest",
+            str(APPROVAL_PATH),
+            "--campaign",
+            V5_APPROVED_CAMPAIGN_ID,
+            "--run-id",
+            "baseline-001",
+            "--max-new-calls",
+            "5",
+        ]
+    )
+
+    assert exit_code == 0
+    assert received[0][0] == 0
+    assert len(provider.requests) == 5
+    assert {request.model for request in provider.requests} == {V5_APPROVED_MODEL}
     assert all(request.response_format == "json_object" for request in provider.requests)
     assert "AI_BASELINE_PARTIAL" in capsys.readouterr().out
 

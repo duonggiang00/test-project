@@ -24,6 +24,12 @@ from app.ai.evaluation.live_baseline import (
     V3_BASELINE_PROMPT_VERSION,
     V3_BASELINE_SCHEMA_VERSION,
     V3_PROMPT_TEMPLATE_SHA256,
+    V5_APPROVED_CAMPAIGN_ID,
+    V5_APPROVED_MODEL,
+    V5_BASELINE_PROMPT_VERSION,
+    V5_BASELINE_SCHEMA_VERSION,
+    V5_PROMPT_TEMPLATE_SHA256,
+    V5_RESPONSE_PARSE_MODE,
     BaselineRunFile,
     approved_case_order_sha256,
 )
@@ -67,6 +73,35 @@ def _v3_candidates(tmp_path: Path) -> list[BaselineRunFile]:
                             "case_order_sha256": approved_case_order_sha256(
                                 dataset, V3_APPROVED_CAMPAIGN_ID
                             ),
+                        }
+                    ),
+                }
+            ).model_dump(mode="python")
+        )
+        for candidate in _candidates(tmp_path)
+    ]
+
+
+def _v5_candidates(tmp_path: Path) -> list[BaselineRunFile]:
+    dataset = _dataset()
+    return [
+        BaselineRunFile.model_validate(
+            candidate.model_copy(
+                update={
+                    "schema_version": V5_BASELINE_SCHEMA_VERSION,
+                    "run": candidate.run.model_copy(
+                        update={
+                            "schema_version": V5_BASELINE_SCHEMA_VERSION,
+                            "campaign_id": V5_APPROVED_CAMPAIGN_ID,
+                            "model": V5_APPROVED_MODEL,
+                            "prompt_version": V5_BASELINE_PROMPT_VERSION,
+                            "prompt_template_sha256": V5_PROMPT_TEMPLATE_SHA256,
+                            "response_format": V2_RESPONSE_FORMAT,
+                            "routing_policy_sha256": V2_ROUTING_POLICY_SHA256,
+                            "case_order_sha256": approved_case_order_sha256(
+                                dataset, V5_APPROVED_CAMPAIGN_ID
+                            ),
+                            "response_parse_mode": V5_RESPONSE_PARSE_MODE,
                         }
                     ),
                 }
@@ -183,6 +218,27 @@ def test_comparison_accepts_the_versioned_v3_campaign(tmp_path: Path) -> None:
 
     assert comparison.campaign_id == V3_APPROVED_CAMPAIGN_ID
     assert comparison.model == V3_APPROVED_MODEL
+    assert comparison.baseline_acceptance_ready is True
+
+
+def test_comparison_accepts_the_versioned_v5_campaign(tmp_path: Path) -> None:
+    candidates = _v5_candidates(tmp_path)
+    evidence = {
+        candidate.run.run_id: _evidence(candidate) for candidate in candidates
+    }
+
+    comparison = compare_baselines(
+        _dataset(),
+        candidates,
+        [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+        {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+        {run_id: evidence[run_id][2] for run_id in APPROVED_RUN_IDS},
+        expected_campaign_id=V5_APPROVED_CAMPAIGN_ID,
+    )
+
+    assert comparison.campaign_id == V5_APPROVED_CAMPAIGN_ID
+    assert comparison.model == V5_APPROVED_MODEL
+    assert comparison.response_parse_mode == V5_RESPONSE_PARSE_MODE
     assert comparison.baseline_acceptance_ready is True
 
 def test_comparison_keeps_invalid_response_visible_and_not_ready(

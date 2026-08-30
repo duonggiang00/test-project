@@ -8,8 +8,10 @@ from app.ai.evaluation.baseline_canary import (
     BaselineCanaryError,
     CanaryReviewScore,
     evaluate_canary,
+    evaluate_failure_replay,
     load_canary_report,
     validate_canary_resume,
+    validate_failure_replay_resume,
     write_canary_report,
 )
 from app.ai.evaluation.dataset import load_approval_manifest, load_golden_dataset
@@ -34,6 +36,13 @@ from app.ai.evaluation.live_baseline import (
     V4_BASELINE_SCHEMA_VERSION,
     V4_PROMPT_TEMPLATE_SHA256,
     V4_RESPONSE_PARSE_MODE,
+    V5_APPROVED_CAMPAIGN_ID,
+    V5_APPROVED_MODEL,
+    V5_BASELINE_PROMPT_VERSION,
+    V5_BASELINE_SCHEMA_VERSION,
+    V5_CANARY_CASE_IDS,
+    V5_PROMPT_TEMPLATE_SHA256,
+    V5_RESPONSE_PARSE_MODE,
     BaselineAttempt,
     BaselineRunDescriptor,
     BaselineRunFile,
@@ -175,6 +184,33 @@ def _v4_baseline() -> BaselineRunFile:
     )
 
 
+def _v5_baseline() -> BaselineRunFile:
+    dataset = _dataset()
+    run = BaselineRunDescriptor(
+        schema_version=V5_BASELINE_SCHEMA_VERSION,
+        campaign_id=V5_APPROVED_CAMPAIGN_ID,
+        run_id="baseline-001",
+        dataset_sha256=dataset.fingerprint_sha256,
+        provider="openrouter",
+        model=V5_APPROVED_MODEL,
+        prompt_version=V5_BASELINE_PROMPT_VERSION,
+        prompt_template_sha256=V5_PROMPT_TEMPLATE_SHA256,
+        temperature=0.0,
+        max_output_tokens=1000,
+        response_format=V2_RESPONSE_FORMAT,
+        routing_policy_sha256=V2_ROUTING_POLICY_SHA256,
+        case_order_sha256=approved_case_order_sha256(
+            dataset, V5_APPROVED_CAMPAIGN_ID
+        ),
+        response_parse_mode=V5_RESPONSE_PARSE_MODE,
+    )
+    return BaselineRunFile(
+        schema_version=V5_BASELINE_SCHEMA_VERSION,
+        run=run,
+        attempts=[_attempt(case_id) for case_id in V2_CANARY_CASE_IDS],
+    )
+
+
 def _reviews() -> list[CanaryReviewScore]:
     cases_by_id = {case.case_id: case for case in _dataset().cases}
     return [
@@ -217,6 +253,48 @@ def test_canary_accepts_the_versioned_v4_campaign() -> None:
     assert report.campaign_id == V4_APPROVED_CAMPAIGN_ID
     assert report.prompt_version == V4_BASELINE_PROMPT_VERSION
     assert report.passed is True
+
+
+def test_canary_accepts_the_versioned_v5_campaign() -> None:
+    report = evaluate_canary(_dataset(), _v5_baseline(), _reviews())
+
+    assert report.campaign_id == V5_APPROVED_CAMPAIGN_ID
+    assert report.prompt_version == V5_BASELINE_PROMPT_VERSION
+    assert report.passed is True
+
+
+def test_v5_failure_replay_binds_exact_five_attempts_and_reviews() -> None:
+    full = _v5_baseline()
+    replay_ids = set(V5_CANARY_CASE_IDS[:5])
+    replay = BaselineRunFile(
+        schema_version=full.schema_version,
+        run=full.run,
+        attempts=[
+            attempt for attempt in full.attempts if attempt.case_id in replay_ids
+        ],
+    )
+    reviews = [review for review in _reviews() if review.case_id in replay_ids]
+
+    report = evaluate_failure_replay(_dataset(), replay, reviews)
+
+    assert report.passed is True
+    assert report.format_valid == 5
+    assert report.citation_valid == 5
+    assert report.injection_resistant == 5
+    assert report.safe_continuations == 5
+    assert report.explicit_refusals == 1
+    validate_failure_replay_resume(replay, report)
+
+    tampered = replay.model_copy(
+        update={
+            "attempts": [
+                replay.attempts[0].model_copy(update={"answer": "tampered"}),
+                *replay.attempts[1:],
+            ]
+        }
+    )
+    with pytest.raises(BaselineCanaryError, match="does not match"):
+        validate_failure_replay_resume(tampered, report)
 
 
 @pytest.mark.parametrize(
