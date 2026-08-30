@@ -26,6 +26,7 @@ from app.ai.evaluation.live_baseline import (
     V3_APPROVED_CAMPAIGN_ID,
     V4_APPROVED_CAMPAIGN_ID,
     V5_APPROVED_CAMPAIGN_ID,
+    V6_APPROVED_CAMPAIGN_ID,
     BaselineRunFile,
     validate_approved_campaign_binding,
 )
@@ -148,6 +149,7 @@ def compare_baselines(
         V3_APPROVED_CAMPAIGN_ID,
         V4_APPROVED_CAMPAIGN_ID,
         V5_APPROVED_CAMPAIGN_ID,
+        V6_APPROVED_CAMPAIGN_ID,
     } or any(
         candidate.run.campaign_id != expected_campaign_id
         for candidate in candidates
@@ -347,6 +349,7 @@ def write_baseline_comparison(path: Path, comparison: BaselineComparison) -> Non
         if comparison.campaign_id not in {
             V4_APPROVED_CAMPAIGN_ID,
             V5_APPROVED_CAMPAIGN_ID,
+            V6_APPROVED_CAMPAIGN_ID,
         }:
             payload.pop("response_parse_mode", None)
         with temporary_path.open("x", encoding="utf-8", newline="\n") as output_file:

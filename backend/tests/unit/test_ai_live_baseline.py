@@ -59,6 +59,12 @@ from app.ai.evaluation.live_baseline import (
     V5_CANARY_CASE_IDS,
     V5_PROMPT_TEMPLATE_SHA256,
     V5_RESPONSE_PARSE_MODE,
+    V6_APPROVED_CAMPAIGN_ID,
+    V6_APPROVED_MODEL,
+    V6_BASELINE_PROMPT_VERSION,
+    V6_BASELINE_SCHEMA_VERSION,
+    V6_PROMPT_TEMPLATE_SHA256,
+    V6_RESPONSE_PARSE_MODE,
     BaselineProviderFailure,
     BaselineAttempt,
     BaselineCampaignFile,
@@ -203,6 +209,30 @@ def _v5_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
             dataset, V5_APPROVED_CAMPAIGN_ID
         ),
         "response_parse_mode": V5_RESPONSE_PARSE_MODE,
+    }
+    values.update(updates)
+    return BaselineRunDescriptor.model_validate(values)
+
+
+def _v6_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
+    dataset = _dataset()
+    values = {
+        "schema_version": V6_BASELINE_SCHEMA_VERSION,
+        "campaign_id": V6_APPROVED_CAMPAIGN_ID,
+        "run_id": run_id,
+        "dataset_sha256": dataset.fingerprint_sha256,
+        "provider": "openrouter",
+        "model": V6_APPROVED_MODEL,
+        "prompt_version": V6_BASELINE_PROMPT_VERSION,
+        "prompt_template_sha256": V6_PROMPT_TEMPLATE_SHA256,
+        "temperature": 0.0,
+        "max_output_tokens": 1000,
+        "response_format": V2_RESPONSE_FORMAT,
+        "routing_policy_sha256": V2_ROUTING_POLICY_SHA256,
+        "case_order_sha256": approved_case_order_sha256(
+            dataset, V6_APPROVED_CAMPAIGN_ID
+        ),
+        "response_parse_mode": V6_RESPONSE_PARSE_MODE,
     }
     values.update(updates)
     return BaselineRunDescriptor.model_validate(values)
@@ -383,6 +413,33 @@ def test_v5_prompt_requires_atomic_use_case_deliverables_and_bounded_refusal() -
     assert "concrete front and back content" in system
     assert "answer must begin with exactly one short Vietnamese sentence" in normalized
     assert "inside the answer field" in normalized
+
+
+def test_v6_prompt_makes_question_and_refusal_contract_explicit() -> None:
+    case = next(case for case in _dataset().cases if case.case_id == "qgen-006")
+    system = build_candidate_messages(
+        case, prompt_version=V6_BASELINE_PROMPT_VERSION
+    )[0]["content"]
+    normalized = " ".join(system.split())
+    assert "at least one explicit source-grounded question" in normalized
+    assert "do not provide an explanation, answer, or unsupported example" in normalized
+    assert "first sentence of the JSON answer value" in normalized
+
+
+def test_v6_collection_uses_new_campaign_binding_and_five_call_cap(
+    tmp_path: Path,
+) -> None:
+    provider = FakeProvider(provider_variant="DeepInfra")
+    state = _collect_live_baseline(
+        _dataset(),
+        output_path=tmp_path / "baseline-001.candidates.json",
+        budget_path=tmp_path / "campaign.json",
+        run=_v6_run(),
+        provider=provider,
+        max_new_calls=5,
+    )
+    assert len(state.attempts) == 5
+    assert all(request.model == V6_APPROVED_MODEL for request in provider.requests)
 
 
 def test_v5_collection_reuses_v4_extraction_and_raw_evidence(tmp_path: Path) -> None:

@@ -26,6 +26,9 @@ from app.ai.evaluation.live_baseline import (
     V5_APPROVED_CAMPAIGN_ID,
     V5_BASELINE_PROMPT_VERSION,
     V5_CANARY_CASE_IDS,
+    V6_APPROVED_CAMPAIGN_ID,
+    V6_BASELINE_PROMPT_VERSION,
+    V6_CANARY_CASE_IDS,
     BaselineAttempt,
     BaselineRunFile,
     BaselineValidationError,
@@ -60,7 +63,9 @@ class CanaryReviewScore(StrictModel):
 
 class CanaryReport(StrictModel):
     schema_version: Literal["1.0"]
-    campaign_id: Literal["ai-008-v2", "ai-008-v3", "ai-008-v4", "ai-008-v5"]
+    campaign_id: Literal[
+        "ai-008-v2", "ai-008-v3", "ai-008-v4", "ai-008-v5", "ai-008-v6"
+    ]
     run_id: Literal["baseline-001"]
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     prompt_version: Literal[
@@ -68,6 +73,7 @@ class CanaryReport(StrictModel):
         "golden-evaluation-v3",
         "golden-evaluation-v4",
         "golden-evaluation-v5",
+        "golden-evaluation-v6",
     ]
     candidate_attempts_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     review_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -84,10 +90,10 @@ class CanaryReport(StrictModel):
 
 class FailureReplayReport(StrictModel):
     schema_version: Literal["1.0"]
-    campaign_id: Literal["ai-008-v5"]
+    campaign_id: Literal["ai-008-v5", "ai-008-v6"]
     run_id: Literal["baseline-001"]
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    prompt_version: Literal["golden-evaluation-v5"]
+    prompt_version: Literal["golden-evaluation-v5", "golden-evaluation-v6"]
     candidate_attempts_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     review_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     case_count: Literal[5]
@@ -169,7 +175,11 @@ def validate_failure_replay_resume(
         or baseline.run.prompt_version != report.prompt_version
     ):
         raise BaselineCanaryError("failure replay did not authorize canary resume")
-    replay_ids = V5_CANARY_CASE_IDS[:5]
+    replay_ids = (
+        V6_CANARY_CASE_IDS[:5]
+        if report.campaign_id == V6_APPROVED_CAMPAIGN_ID
+        else V5_CANARY_CASE_IDS[:5]
+    )
     attempts_by_id = {
         attempt.case_id: attempt
         for attempt in baseline.attempts
@@ -199,13 +209,21 @@ def evaluate_failure_replay(
     except (ValueError, BaselineValidationError):
         raise BaselineCanaryError("failure replay input validation failed") from None
     if (
-        baseline.run.campaign_id != V5_APPROVED_CAMPAIGN_ID
+        baseline.run.campaign_id not in {
+            V5_APPROVED_CAMPAIGN_ID,
+            V6_APPROVED_CAMPAIGN_ID,
+        }
         or baseline.run.run_id != "baseline-001"
-        or baseline.run.prompt_version != V5_BASELINE_PROMPT_VERSION
+        or baseline.run.prompt_version
+        not in {V5_BASELINE_PROMPT_VERSION, V6_BASELINE_PROMPT_VERSION}
     ):
         raise BaselineCanaryError("failure replay requires the approved V5 first run")
 
-    replay_ids = V5_CANARY_CASE_IDS[:5]
+    replay_ids = (
+        V6_CANARY_CASE_IDS[:5]
+        if baseline.run.campaign_id == V6_APPROVED_CAMPAIGN_ID
+        else V5_CANARY_CASE_IDS[:5]
+    )
     replay_set = set(replay_ids)
     attempts_by_id = {
         attempt.case_id: attempt
@@ -263,12 +281,19 @@ def evaluate_failure_replay(
         and explicit_refusals == 1
         and safe_continuations == 5
     )
+    campaign_id = cast(
+        Literal["ai-008-v5", "ai-008-v6"], baseline.run.campaign_id
+    )
+    prompt_version = cast(
+        Literal["golden-evaluation-v5", "golden-evaluation-v6"],
+        baseline.run.prompt_version,
+    )
     return FailureReplayReport(
         schema_version=CANARY_SCHEMA_VERSION,
-        campaign_id=V5_APPROVED_CAMPAIGN_ID,
+        campaign_id=campaign_id,
         run_id="baseline-001",
         dataset_sha256=dataset.fingerprint_sha256,
-        prompt_version=V5_BASELINE_PROMPT_VERSION,
+        prompt_version=prompt_version,
         candidate_attempts_sha256=_attempts_sha256(attempts_by_id, replay_ids),
         review_sha256=_canonical_sha256(review_payload),
         case_count=5,
@@ -338,6 +363,7 @@ def evaluate_canary(
         V3_APPROVED_CAMPAIGN_ID: V3_BASELINE_PROMPT_VERSION,
         V4_APPROVED_CAMPAIGN_ID: V4_BASELINE_PROMPT_VERSION,
         V5_APPROVED_CAMPAIGN_ID: V5_BASELINE_PROMPT_VERSION,
+        V6_APPROVED_CAMPAIGN_ID: V6_BASELINE_PROMPT_VERSION,
     }
     expected_prompt = expected_prompts.get(baseline.run.campaign_id)
     if (
@@ -420,7 +446,9 @@ def evaluate_canary(
         and safe_continuations == 8
     )
     campaign_id = cast(
-        Literal["ai-008-v2", "ai-008-v3", "ai-008-v4", "ai-008-v5"],
+        Literal[
+            "ai-008-v2", "ai-008-v3", "ai-008-v4", "ai-008-v5", "ai-008-v6"
+        ],
         baseline.run.campaign_id,
     )
     prompt_version = cast(
@@ -429,6 +457,7 @@ def evaluate_canary(
             "golden-evaluation-v3",
             "golden-evaluation-v4",
             "golden-evaluation-v5",
+            "golden-evaluation-v6",
         ],
         baseline.run.prompt_version,
     )

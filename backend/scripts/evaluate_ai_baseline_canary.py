@@ -25,6 +25,7 @@ from app.ai.evaluation.live_baseline import (
     V3_APPROVED_CAMPAIGN_ID,
     V4_APPROVED_CAMPAIGN_ID,
     V5_APPROVED_CAMPAIGN_ID,
+    V6_APPROVED_CAMPAIGN_ID,
     BaselineValidationError,
     approved_campaign_root,
     load_baseline_run,
@@ -44,6 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
             V3_APPROVED_CAMPAIGN_ID,
             V4_APPROVED_CAMPAIGN_ID,
             V5_APPROVED_CAMPAIGN_ID,
+            V6_APPROVED_CAMPAIGN_ID,
         ),
         default=V2_APPROVED_CAMPAIGN_ID,
     )
@@ -66,9 +68,12 @@ def main(argv: list[str] | None = None) -> int:
         baseline = load_baseline_run(campaign_root / "baseline-001.candidates.json")
         report: FailureReplayReport | CanaryReport
         if arguments.checkpoint == "failure-replay":
-            if arguments.campaign != V5_APPROVED_CAMPAIGN_ID:
+            if arguments.campaign not in {
+                V5_APPROVED_CAMPAIGN_ID,
+                V6_APPROVED_CAMPAIGN_ID,
+            }:
                 raise BaselineCanaryError(
-                    "failure replay is allowlisted only for the V5 campaign"
+                    "failure replay is allowlisted only for governed v5/v6 campaigns"
                 )
             reviews = load_canary_review_scores(
                 campaign_root / "baseline-001.failure-replay.review.jsonl"
