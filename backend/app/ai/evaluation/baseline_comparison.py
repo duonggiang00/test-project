@@ -24,6 +24,7 @@ from app.ai.evaluation.live_baseline import (
     APPROVED_RUN_IDS,
     V2_APPROVED_CAMPAIGN_ID,
     V3_APPROVED_CAMPAIGN_ID,
+    V4_APPROVED_CAMPAIGN_ID,
     BaselineRunFile,
     validate_approved_campaign_binding,
 )
@@ -92,6 +93,7 @@ class BaselineComparison(StrictModel):
     model: str
     prompt_version: str
     response_format: Literal["json_object"] | None = None
+    response_parse_mode: Literal["extract_json_payload"] | None = None
     routing_policy_sha256: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
@@ -143,6 +145,7 @@ def compare_baselines(
         APPROVED_CAMPAIGN_ID,
         V2_APPROVED_CAMPAIGN_ID,
         V3_APPROVED_CAMPAIGN_ID,
+        V4_APPROVED_CAMPAIGN_ID,
     } or any(
         candidate.run.campaign_id != expected_campaign_id
         for candidate in candidates
@@ -301,6 +304,7 @@ def compare_baselines(
         model=candidates_by_id[APPROVED_RUN_IDS[0]].run.model,
         prompt_version=candidates_by_id[APPROVED_RUN_IDS[0]].run.prompt_version,
         response_format=candidates_by_id[APPROVED_RUN_IDS[0]].run.response_format,
+        response_parse_mode=candidates_by_id[APPROVED_RUN_IDS[0]].run.response_parse_mode,
         routing_policy_sha256=candidates_by_id[
             APPROVED_RUN_IDS[0]
         ].run.routing_policy_sha256,
@@ -337,10 +341,13 @@ def write_baseline_comparison(path: Path, comparison: BaselineComparison) -> Non
     temporary_path = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
+        payload = comparison.model_dump(mode="json")
+        if comparison.campaign_id not in {V4_APPROVED_CAMPAIGN_ID}:
+            payload.pop("response_parse_mode", None)
         with temporary_path.open("x", encoding="utf-8", newline="\n") as output_file:
             output_file.write(
                 json.dumps(
-                    comparison.model_dump(mode="json"),
+                    payload,
                     ensure_ascii=False,
                     indent=2,
                     sort_keys=True,

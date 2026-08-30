@@ -19,6 +19,7 @@ from app.ai.evaluation.dataset import (
 from app.ai.evaluation.live_baseline import (
     V2_APPROVED_CAMPAIGN_ID,
     V3_APPROVED_CAMPAIGN_ID,
+    V4_APPROVED_CAMPAIGN_ID,
     BaselineValidationError,
     approved_campaign_root,
     load_baseline_run,
@@ -33,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--approval-manifest", type=Path, required=True)
     parser.add_argument(
         "--campaign",
-        choices=(V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID),
+        choices=(V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID, V4_APPROVED_CAMPAIGN_ID),
         default=V2_APPROVED_CAMPAIGN_ID,
     )
     return parser

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, Iterator, Literal
@@ -31,6 +32,7 @@ from app.ai.provider import (
     GenerateRequest,
     ProviderExecutionBinding,
 )
+from app.ai.json_extraction import extract_json_payload
 
 
 BASELINE_SCHEMA_VERSION: Literal["1.0"] = "1.0"
@@ -42,12 +44,16 @@ V2_APPROVED_CAMPAIGN_ID: Literal["ai-008-v2"] = "ai-008-v2"
 V3_BASELINE_SCHEMA_VERSION: Literal["3.0"] = "3.0"
 V3_BASELINE_PROMPT_VERSION: Literal["golden-evaluation-v3"] = "golden-evaluation-v3"
 V3_APPROVED_CAMPAIGN_ID: Literal["ai-008-v3"] = "ai-008-v3"
+V4_BASELINE_SCHEMA_VERSION: Literal["4.0"] = "4.0"
+V4_BASELINE_PROMPT_VERSION: Literal["golden-evaluation-v4"] = "golden-evaluation-v4"
+V4_APPROVED_CAMPAIGN_ID: Literal["ai-008-v4"] = "ai-008-v4"
 APPROVED_DATASET_SHA256 = (
     "4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51"
 )
 APPROVED_PROVIDER = "openrouter"
 APPROVED_MODEL = "meta-llama/llama-3.1-8b-instruct"
 V3_APPROVED_MODEL = "meta-llama/llama-3.3-70b-instruct"
+V4_APPROVED_MODEL = V3_APPROVED_MODEL
 APPROVED_RUN_IDS = ("baseline-001", "baseline-002", "baseline-003")
 APPROVED_TEMPERATURE = 0.0
 APPROVED_MAX_OUTPUT_TOKENS = 1000
@@ -82,6 +88,8 @@ V2_CANARY_CASE_IDS = (
 V2_EXPLICIT_REFUSAL_CASE_IDS = ("rag-016",)
 V3_CANARY_CASE_IDS = V2_CANARY_CASE_IDS
 V3_EXPLICIT_REFUSAL_CASE_IDS = V2_EXPLICIT_REFUSAL_CASE_IDS
+V4_CANARY_CASE_IDS = V2_CANARY_CASE_IDS
+V4_EXPLICIT_REFUSAL_CASE_IDS = V2_EXPLICIT_REFUSAL_CASE_IDS
 BACKEND_ROOT = Path(__file__).resolve().parents[3]
 APPROVED_CAMPAIGN_ROOT = (
     BACKEND_ROOT / "reports" / "ai-evaluation" / APPROVED_CAMPAIGN_ID
@@ -95,6 +103,10 @@ V3_APPROVED_CAMPAIGN_ROOT = (
     BACKEND_ROOT / "reports" / "ai-evaluation" / V3_APPROVED_CAMPAIGN_ID
 )
 V3_APPROVED_BUDGET_PATH = V3_APPROVED_CAMPAIGN_ROOT / "campaign.json"
+V4_APPROVED_CAMPAIGN_ROOT = (
+    BACKEND_ROOT / "reports" / "ai-evaluation" / V4_APPROVED_CAMPAIGN_ID
+)
+V4_APPROVED_BUDGET_PATH = V4_APPROVED_CAMPAIGN_ROOT / "campaign.json"
 _IDENTIFIER_PATTERN = r"^[a-z0-9][a-z0-9._-]{2,79}$"
 _MODEL_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$"
 _SAFE_PROVIDER_ERROR_CODES = frozenset(
@@ -193,6 +205,18 @@ V3_PROMPT_TEMPLATE_SHA256 = hashlib.sha256(
         + json.dumps(_USER_TEMPLATE, ensure_ascii=False, sort_keys=True)
     ).encode("utf-8")
 ).hexdigest()
+_V4_SYSTEM_PROMPT = _V3_SYSTEM_PROMPT.replace(
+    "Return exactly one JSON object with no markdown or surrounding text:",
+    "Return exactly one JSON object as the first and only response content, with no markdown or surrounding text:",
+)
+V4_PROMPT_TEMPLATE_SHA256 = hashlib.sha256(
+    (
+        _V4_SYSTEM_PROMPT
+        + "\n"
+        + json.dumps(_USER_TEMPLATE, ensure_ascii=False, sort_keys=True)
+    ).encode("utf-8")
+).hexdigest()
+V4_RESPONSE_PARSE_MODE: Literal["extract_json_payload"] = "extract_json_payload"
 
 
 class BaselineValidationError(ValueError):
@@ -229,14 +253,17 @@ class CandidateEnvelope(StrictModel):
 
 
 class BaselineRunDescriptor(StrictModel):
-    schema_version: Literal["1.0", "2.0", "3.0"]
+    schema_version: Literal["1.0", "2.0", "3.0", "4.0"]
     campaign_id: str = Field(pattern=_IDENTIFIER_PATTERN)
     run_id: str = Field(pattern=_IDENTIFIER_PATTERN)
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     provider: str = Field(pattern=_MODEL_PATTERN)
     model: str = Field(pattern=_MODEL_PATTERN)
     prompt_version: Literal[
-        "golden-evaluation-v1", "golden-evaluation-v2", "golden-evaluation-v3"
+        "golden-evaluation-v1",
+        "golden-evaluation-v2",
+        "golden-evaluation-v3",
+        "golden-evaluation-v4",
     ]
     prompt_template_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     temperature: float = Field(strict=True, ge=0, le=2)
@@ -246,6 +273,7 @@ class BaselineRunDescriptor(StrictModel):
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     case_order_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    response_parse_mode: Literal["extract_json_payload"] | None = None
 
     @model_validator(mode="after")
     def validate_versioned_metadata(self) -> "BaselineRunDescriptor":
@@ -254,18 +282,26 @@ class BaselineRunDescriptor(StrictModel):
             self.routing_policy_sha256,
             self.case_order_sha256,
         )
-        if self.schema_version in {"2.0", "3.0"}:
+        if self.schema_version in {"2.0", "3.0", "4.0"}:
             expected_prompt = (
                 V2_BASELINE_PROMPT_VERSION
                 if self.schema_version == "2.0"
-                else V3_BASELINE_PROMPT_VERSION
+                else (
+                    V3_BASELINE_PROMPT_VERSION
+                    if self.schema_version == "3.0"
+                    else V4_BASELINE_PROMPT_VERSION
+                )
             )
             if self.prompt_version != expected_prompt or any(
                 value is None for value in v2_values
             ):
                 raise ValueError("governed run requires complete versioned metadata")
+            if self.schema_version == "4.0" and self.response_parse_mode != V4_RESPONSE_PARSE_MODE:
+                raise ValueError("v4 run requires the approved response parse mode")
+            if self.schema_version != "4.0" and self.response_parse_mode is not None:
+                raise ValueError("only v4 may define a response parse mode")
         elif self.prompt_version != BASELINE_PROMPT_VERSION or any(
-            value is not None for value in v2_values
+            value is not None for value in (*v2_values, self.response_parse_mode)
         ):
             raise ValueError("v1 run cannot contain v2 metadata")
         return self
@@ -348,7 +384,7 @@ class BaselineAttempt(StrictModel):
 
 
 class BaselineRunFile(StrictModel):
-    schema_version: Literal["1.0", "2.0", "3.0"]
+    schema_version: Literal["1.0", "2.0", "3.0", "4.0"]
     run: BaselineRunDescriptor
     attempts: list[BaselineAttempt] = Field(max_length=40)
 
@@ -368,13 +404,16 @@ class CampaignReservation(StrictModel):
 
 
 class BaselineCampaignFile(StrictModel):
-    schema_version: Literal["1.0", "2.0", "3.0"]
+    schema_version: Literal["1.0", "2.0", "3.0", "4.0"]
     campaign_id: str = Field(pattern=_IDENTIFIER_PATTERN)
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     provider: str = Field(pattern=_MODEL_PATTERN)
     model: str = Field(pattern=_MODEL_PATTERN)
     prompt_version: Literal[
-        "golden-evaluation-v1", "golden-evaluation-v2", "golden-evaluation-v3"
+        "golden-evaluation-v1",
+        "golden-evaluation-v2",
+        "golden-evaluation-v3",
+        "golden-evaluation-v4",
     ]
     prompt_template_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     temperature: float = Field(strict=True, ge=0, le=2)
@@ -384,6 +423,7 @@ class BaselineCampaignFile(StrictModel):
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     case_order_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    response_parse_mode: Literal["extract_json_payload"] | None = None
     approved_run_ids: list[str] = Field(min_length=3, max_length=3)
     max_total_calls: Literal[120]
     reservations: list[CampaignReservation] = Field(max_length=120)
@@ -400,18 +440,26 @@ class BaselineCampaignFile(StrictModel):
             self.routing_policy_sha256,
             self.case_order_sha256,
         )
-        if self.schema_version in {"2.0", "3.0"}:
+        if self.schema_version in {"2.0", "3.0", "4.0"}:
             expected_prompt = (
                 V2_BASELINE_PROMPT_VERSION
                 if self.schema_version == "2.0"
-                else V3_BASELINE_PROMPT_VERSION
+                else (
+                    V3_BASELINE_PROMPT_VERSION
+                    if self.schema_version == "3.0"
+                    else V4_BASELINE_PROMPT_VERSION
+                )
             )
             if self.prompt_version != expected_prompt or any(
                 value is None for value in v2_values
             ):
                 raise ValueError("governed campaign requires complete metadata")
+            if self.schema_version == "4.0" and self.response_parse_mode != V4_RESPONSE_PARSE_MODE:
+                raise ValueError("v4 campaign requires the approved response parse mode")
+            if self.schema_version != "4.0" and self.response_parse_mode is not None:
+                raise ValueError("only v4 may define a response parse mode")
         elif self.prompt_version != BASELINE_PROMPT_VERSION or any(
-            value is not None for value in v2_values
+            value is not None for value in (*v2_values, self.response_parse_mode)
         ):
             raise ValueError("v1 campaign cannot contain v2 metadata")
         return self
@@ -429,6 +477,8 @@ def build_candidate_messages(
         system_prompt = _V2_SYSTEM_PROMPT
     elif prompt_version == V3_BASELINE_PROMPT_VERSION:
         system_prompt = _V3_SYSTEM_PROMPT
+    elif prompt_version == V4_BASELINE_PROMPT_VERSION:
+        system_prompt = _V4_SYSTEM_PROMPT
     else:
         raise BaselineValidationError("unsupported baseline prompt version")
     user_payload = {
@@ -450,7 +500,11 @@ def approved_case_order(dataset: GoldenDataset, campaign_id: str) -> list[str]:
     case_ids = {case.case_id for case in dataset.cases}
     if campaign_id == APPROVED_CAMPAIGN_ID:
         return sorted(case_ids)
-    if campaign_id not in {V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID}:
+    if campaign_id not in {
+        V2_APPROVED_CAMPAIGN_ID,
+        V3_APPROVED_CAMPAIGN_ID,
+        V4_APPROVED_CAMPAIGN_ID,
+    }:
         raise BaselineValidationError("unsupported baseline campaign")
     if not set(V2_CANARY_CASE_IDS).issubset(case_ids):
         raise BaselineValidationError("v2 canary cases are missing from the dataset")
@@ -465,14 +519,47 @@ def approved_case_order_sha256(dataset: GoldenDataset, campaign_id: str) -> str:
     ).hexdigest()
 
 
-def parse_candidate_response(raw_response: str) -> tuple[str, list[str], bool]:
-    """Parse the strict envelope while retaining malformed output for review."""
+def parse_candidate_response(
+    raw_response: str, *, allow_extraction: bool = False
+) -> tuple[str, list[str], bool]:
+    """Parse a strict envelope, optionally extracting one JSON payload first."""
     try:
-        raw_envelope = json.loads(raw_response)
+        if allow_extraction:
+            fenced_matches = list(
+                re.finditer(
+                    r"```(?:json)?(.*?)```",
+                    raw_response,
+                    flags=re.DOTALL | re.IGNORECASE,
+                )
+            )
+            if len(fenced_matches) > 1:
+                return raw_response, [], False
+            if fenced_matches:
+                outside_fences = re.sub(
+                    r"```(?:json)?(.*?)```", "", raw_response, flags=re.DOTALL | re.IGNORECASE
+                )
+                decoder = json.JSONDecoder()
+                if any(
+                    _is_json_value_at(outside_fences, index, decoder)
+                    for index, character in enumerate(outside_fences)
+                    if character in "[{"
+                ):
+                    return raw_response, [], False
+            raw_envelope = extract_json_payload(raw_response)
+        else:
+            raw_envelope = json.loads(raw_response)
         envelope = CandidateEnvelope.model_validate(raw_envelope)
     except (json.JSONDecodeError, ValueError):
         return raw_response, [], False
     return envelope.answer, envelope.cited_source_ids, True
+
+
+def _is_json_value_at(text: str, index: int, decoder: json.JSONDecoder) -> bool:
+    try:
+        decoder.raw_decode(text[index:])
+    except json.JSONDecodeError:
+        return False
+    return True
 
 
 def collect_approved_live_baseline(
@@ -495,6 +582,7 @@ def collect_approved_live_baseline(
         canary_report_path=campaign_root / "baseline-001.canary.report.json",
         canary_review_path=campaign_root / "baseline-001.canary.review.jsonl",
         canary_baseline_path=campaign_root / "baseline-001.candidates.json",
+        raw_output_path=campaign_root / f"{run.run_id}.raw.jsonl",
     )
 
 
@@ -506,6 +594,8 @@ def approved_campaign_root(campaign_id: str) -> Path:
         return V2_APPROVED_CAMPAIGN_ROOT
     if campaign_id == V3_APPROVED_CAMPAIGN_ID:
         return V3_APPROVED_CAMPAIGN_ROOT
+    if campaign_id == V4_APPROVED_CAMPAIGN_ID:
+        return V4_APPROVED_CAMPAIGN_ROOT
     raise BaselineValidationError("unsupported baseline campaign")
 
 
@@ -520,6 +610,7 @@ def _collect_live_baseline(
     canary_report_path: Path | None = None,
     canary_review_path: Path | None = None,
     canary_baseline_path: Path | None = None,
+    raw_output_path: Path | None = None,
 ) -> BaselineRunFile:
     """Collect at most ``max_new_calls`` new cases without retrying attempts."""
     if not 1 <= max_new_calls <= 40:
@@ -559,11 +650,11 @@ def _collect_live_baseline(
             raise BaselineValidationError(
                 "baseline contains a provider failure; automatic retry is disabled"
             )
-        if run.campaign_id == V3_APPROVED_CAMPAIGN_ID and any(
+        if run.campaign_id in {V3_APPROVED_CAMPAIGN_ID, V4_APPROVED_CAMPAIGN_ID} and any(
             attempt.status == "invalid_response" for attempt in state.attempts
         ):
             raise BaselineValidationError(
-                "v3 baseline contains a terminal invalid response; resume is disabled"
+                "governed baseline contains a terminal invalid response; resume is disabled"
             )
 
         cases_by_id = {case.case_id: case for case in dataset.cases}
@@ -654,7 +745,8 @@ def _collect_live_baseline(
                 raise BaselineProviderFailure("provider call failed") from None
 
             upstream_mismatch = (
-                run.campaign_id in {V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID}
+                run.campaign_id
+                in {V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID, V4_APPROVED_CAMPAIGN_ID}
                 and (
                     result.provider_variant is None
                     or result.provider_variant.casefold()
@@ -679,10 +771,12 @@ def _collect_live_baseline(
 
             raw_response = result.text or ""
             answer, cited_source_ids, format_valid = parse_candidate_response(
-                raw_response
+                raw_response,
+                allow_extraction=run.campaign_id == V4_APPROVED_CAMPAIGN_ID,
             )
             incomplete = (
-                run.campaign_id in {V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID}
+                run.campaign_id
+                in {V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID, V4_APPROVED_CAMPAIGN_ID}
                 and result.finish_reason != "stop"
             )
             format_valid = format_valid and not incomplete
@@ -720,6 +814,12 @@ def _collect_live_baseline(
                     upstream_provider=result.provider_variant,
                 ),
             )
+            if run.campaign_id == V4_APPROVED_CAMPAIGN_ID:
+                _append_raw_response(
+                    raw_output_path or output_path.with_suffix(".raw.jsonl"),
+                    case_id,
+                    raw_response,
+                )
             _write_run_file(output_path, state)
             if not format_valid:
                 raise BaselineResponseFailure(
@@ -741,7 +841,11 @@ def _require_canary_authorization(
     canary_baseline_path: Path,
 ) -> None:
     """Stop governed campaigns until immutable canary evidence passes."""
-    if run.campaign_id not in {V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID}:
+    if run.campaign_id not in {
+        V2_APPROVED_CAMPAIGN_ID,
+        V3_APPROVED_CAMPAIGN_ID,
+        V4_APPROVED_CAMPAIGN_ID,
+    }:
         return
 
     if not canary_report_path.exists():
@@ -806,7 +910,7 @@ def _require_v3_prior_run_authorization(
     evidence_root: Path,
 ) -> None:
     """Require a complete passing prior run before V3 spends the next 40 calls."""
-    if run.campaign_id != V3_APPROVED_CAMPAIGN_ID or run.run_id == "baseline-001":
+    if run.campaign_id not in {V3_APPROVED_CAMPAIGN_ID, V4_APPROVED_CAMPAIGN_ID} or run.run_id == "baseline-001":
         return
     prior_run_id = {
         "baseline-002": "baseline-001",
@@ -836,7 +940,7 @@ def _require_v3_prior_run_authorization(
             evidence_root / f"{prior_run_id}.candidates.json"
         )
         if (
-            candidate.run.campaign_id != V3_APPROVED_CAMPAIGN_ID
+            candidate.run.campaign_id != run.campaign_id
             or candidate.run.run_id != prior_run_id
             or len(candidate.attempts) != 40
             or any(
@@ -849,7 +953,7 @@ def _require_v3_prior_run_authorization(
         validate_approved_campaign_binding(dataset, candidate.run)
 
         run_index = APPROVED_RUN_IDS.index(run.run_id)
-        case_order = approved_case_order(dataset, V3_APPROVED_CAMPAIGN_ID)
+        case_order = approved_case_order(dataset, run.campaign_id)
         completed_prefix = [
             (completed_run_id, case_id)
             for completed_run_id in APPROVED_RUN_IDS[:run_index]
@@ -905,7 +1009,7 @@ def _require_v3_prior_run_authorization(
         ValueError,
     ):
         raise BaselineValidationError(
-            "v3 prior-run evidence is missing, invalid, or failed"
+            "governed prior-run evidence is missing, invalid, or failed"
         ) from None
 
 
@@ -914,7 +1018,11 @@ def _validate_governed_provider_execution(
     provider: AIProvider,
 ) -> None:
     """Bind declared routing metadata to the effective adapter policy."""
-    if run.campaign_id not in {V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID}:
+    if run.campaign_id not in {
+        V2_APPROVED_CAMPAIGN_ID,
+        V3_APPROVED_CAMPAIGN_ID,
+        V4_APPROVED_CAMPAIGN_ID,
+    }:
         return
     binding = getattr(provider, "execution_binding", None)
     expected = ProviderExecutionBinding(
@@ -979,6 +1087,7 @@ def validate_approved_campaign_binding(
             None,
             None,
             None,
+            None,
         )
     elif run.campaign_id == V2_APPROVED_CAMPAIGN_ID:
         approved_binding = (
@@ -993,6 +1102,7 @@ def validate_approved_campaign_binding(
             V2_RESPONSE_FORMAT,
             V2_ROUTING_POLICY_SHA256,
             approved_case_order_sha256(dataset, V2_APPROVED_CAMPAIGN_ID),
+            None,
         )
     elif run.campaign_id == V3_APPROVED_CAMPAIGN_ID:
         approved_binding = (
@@ -1007,6 +1117,22 @@ def validate_approved_campaign_binding(
             V2_RESPONSE_FORMAT,
             V2_ROUTING_POLICY_SHA256,
             approved_case_order_sha256(dataset, V3_APPROVED_CAMPAIGN_ID),
+            None,
+        )
+    elif run.campaign_id == V4_APPROVED_CAMPAIGN_ID:
+        approved_binding = (
+            V4_BASELINE_SCHEMA_VERSION,
+            V4_APPROVED_CAMPAIGN_ID,
+            APPROVED_PROVIDER,
+            V4_APPROVED_MODEL,
+            V4_BASELINE_PROMPT_VERSION,
+            V4_PROMPT_TEMPLATE_SHA256,
+            APPROVED_TEMPERATURE,
+            APPROVED_MAX_OUTPUT_TOKENS,
+            V2_RESPONSE_FORMAT,
+            V2_ROUTING_POLICY_SHA256,
+            approved_case_order_sha256(dataset, V4_APPROVED_CAMPAIGN_ID),
+            V4_RESPONSE_PARSE_MODE,
         )
     else:
         raise BaselineValidationError("run does not match an approved campaign")
@@ -1022,6 +1148,7 @@ def validate_approved_campaign_binding(
         run.response_format,
         run.routing_policy_sha256,
         run.case_order_sha256,
+        run.response_parse_mode,
     )
     if actual_binding != approved_binding or run.run_id not in APPROVED_RUN_IDS:
         raise BaselineValidationError("run does not match the approved campaign")
@@ -1073,6 +1200,7 @@ def _load_or_create_campaign(
             response_format=run.response_format,
             routing_policy_sha256=run.routing_policy_sha256,
             case_order_sha256=run.case_order_sha256,
+            response_parse_mode=run.response_parse_mode,
             approved_run_ids=list(APPROVED_RUN_IDS),
             max_total_calls=120,
             reservations=[],
@@ -1092,6 +1220,7 @@ def _load_or_create_campaign(
         run.response_format,
         run.routing_policy_sha256,
         run.case_order_sha256,
+        run.response_parse_mode,
         list(APPROVED_RUN_IDS),
     )
     actual = (
@@ -1106,6 +1235,7 @@ def _load_or_create_campaign(
         campaign.response_format,
         campaign.routing_policy_sha256,
         campaign.case_order_sha256,
+        campaign.response_parse_mode,
         campaign.approved_run_ids,
     )
     if actual != expected:
@@ -1146,11 +1276,50 @@ def _replace_attempt(
 
 
 def _write_run_file(path: Path, state: BaselineRunFile) -> None:
-    _write_json_file(path, state.model_dump(mode="json"), "baseline")
+    payload = state.model_dump(mode="json")
+    if state.schema_version != V4_BASELINE_SCHEMA_VERSION:
+        payload["run"].pop("response_parse_mode", None)
+    _write_json_file(path, payload, "baseline")
 
 
 def _write_campaign_file(path: Path, campaign: BaselineCampaignFile) -> None:
-    _write_json_file(path, campaign.model_dump(mode="json"), "campaign budget")
+    payload = campaign.model_dump(mode="json")
+    if campaign.schema_version != V4_BASELINE_SCHEMA_VERSION:
+        payload.pop("response_parse_mode", None)
+    _write_json_file(path, payload, "campaign budget")
+
+
+def _append_raw_response(path: Path, case_id: str, raw_response: str) -> None:
+    """Persist V4 raw provider text in ignored evidence for hash auditing."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        existing_case_ids: set[str] = set()
+        if path.exists():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    existing_case_ids.add(str(json.loads(line)["case_id"]))
+        if case_id in existing_case_ids:
+            raise BaselineValidationError("raw response evidence already exists")
+        with path.open("a", encoding="utf-8", newline="\n") as output_file:
+            json.dump(
+                {
+                    "case_id": case_id,
+                    "response_sha256": hashlib.sha256(
+                        raw_response.encode("utf-8")
+                    ).hexdigest(),
+                    "raw_response": raw_response,
+                },
+                output_file,
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+            output_file.write("\n")
+            output_file.flush()
+            os.fsync(output_file.fileno())
+    except BaselineValidationError:
+        raise
+    except (json.JSONDecodeError, IsADirectoryError, PermissionError, OSError, UnicodeError):
+        raise BaselineValidationError("raw response evidence could not be written") from None
 
 
 def _write_json_file(path: Path, payload: object, label: str) -> None:

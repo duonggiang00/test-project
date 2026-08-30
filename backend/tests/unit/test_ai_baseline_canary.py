@@ -28,6 +28,12 @@ from app.ai.evaluation.live_baseline import (
     V3_BASELINE_PROMPT_VERSION,
     V3_BASELINE_SCHEMA_VERSION,
     V3_PROMPT_TEMPLATE_SHA256,
+    V4_APPROVED_CAMPAIGN_ID,
+    V4_APPROVED_MODEL,
+    V4_BASELINE_PROMPT_VERSION,
+    V4_BASELINE_SCHEMA_VERSION,
+    V4_PROMPT_TEMPLATE_SHA256,
+    V4_RESPONSE_PARSE_MODE,
     BaselineAttempt,
     BaselineRunDescriptor,
     BaselineRunFile,
@@ -142,6 +148,33 @@ def _v3_baseline() -> BaselineRunFile:
     )
 
 
+def _v4_baseline() -> BaselineRunFile:
+    dataset = _dataset()
+    run = BaselineRunDescriptor(
+        schema_version=V4_BASELINE_SCHEMA_VERSION,
+        campaign_id=V4_APPROVED_CAMPAIGN_ID,
+        run_id="baseline-001",
+        dataset_sha256=dataset.fingerprint_sha256,
+        provider="openrouter",
+        model=V4_APPROVED_MODEL,
+        prompt_version=V4_BASELINE_PROMPT_VERSION,
+        prompt_template_sha256=V4_PROMPT_TEMPLATE_SHA256,
+        temperature=0.0,
+        max_output_tokens=1000,
+        response_format=V2_RESPONSE_FORMAT,
+        routing_policy_sha256=V2_ROUTING_POLICY_SHA256,
+        case_order_sha256=approved_case_order_sha256(
+            dataset, V4_APPROVED_CAMPAIGN_ID
+        ),
+        response_parse_mode=V4_RESPONSE_PARSE_MODE,
+    )
+    return BaselineRunFile(
+        schema_version=V4_BASELINE_SCHEMA_VERSION,
+        run=run,
+        attempts=[_attempt(case_id) for case_id in V2_CANARY_CASE_IDS],
+    )
+
+
 def _reviews() -> list[CanaryReviewScore]:
     cases_by_id = {case.case_id: case for case in _dataset().cases}
     return [
@@ -175,6 +208,14 @@ def test_canary_accepts_the_versioned_v3_campaign() -> None:
 
     assert report.campaign_id == V3_APPROVED_CAMPAIGN_ID
     assert report.prompt_version == V3_BASELINE_PROMPT_VERSION
+    assert report.passed is True
+
+
+def test_canary_accepts_the_versioned_v4_campaign() -> None:
+    report = evaluate_canary(_dataset(), _v4_baseline(), _reviews())
+
+    assert report.campaign_id == V4_APPROVED_CAMPAIGN_ID
+    assert report.prompt_version == V4_BASELINE_PROMPT_VERSION
     assert report.passed is True
 
 

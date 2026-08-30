@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -43,6 +44,12 @@ from app.ai.evaluation.live_baseline import (
     V3_BASELINE_PROMPT_VERSION,
     V3_BASELINE_SCHEMA_VERSION,
     V3_PROMPT_TEMPLATE_SHA256,
+    V4_APPROVED_CAMPAIGN_ID,
+    V4_APPROVED_MODEL,
+    V4_BASELINE_PROMPT_VERSION,
+    V4_BASELINE_SCHEMA_VERSION,
+    V4_PROMPT_TEMPLATE_SHA256,
+    V4_RESPONSE_PARSE_MODE,
     BaselineProviderFailure,
     BaselineAttempt,
     BaselineCampaignFile,
@@ -139,6 +146,30 @@ def _v3_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
         "case_order_sha256": approved_case_order_sha256(
             dataset, V3_APPROVED_CAMPAIGN_ID
         ),
+    }
+    values.update(updates)
+    return BaselineRunDescriptor.model_validate(values)
+
+
+def _v4_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
+    dataset = _dataset()
+    values = {
+        "schema_version": V4_BASELINE_SCHEMA_VERSION,
+        "campaign_id": V4_APPROVED_CAMPAIGN_ID,
+        "run_id": run_id,
+        "dataset_sha256": dataset.fingerprint_sha256,
+        "provider": "openrouter",
+        "model": V4_APPROVED_MODEL,
+        "prompt_version": V4_BASELINE_PROMPT_VERSION,
+        "prompt_template_sha256": V4_PROMPT_TEMPLATE_SHA256,
+        "temperature": 0.0,
+        "max_output_tokens": 1000,
+        "response_format": V2_RESPONSE_FORMAT,
+        "routing_policy_sha256": V2_ROUTING_POLICY_SHA256,
+        "case_order_sha256": approved_case_order_sha256(
+            dataset, V4_APPROVED_CAMPAIGN_ID
+        ),
+        "response_parse_mode": V4_RESPONSE_PARSE_MODE,
     }
     values.update(updates)
     return BaselineRunDescriptor.model_validate(values)
@@ -285,6 +316,74 @@ def test_v3_prompt_requires_silent_indirect_rejection_and_safe_completion() -> N
     assert "A refusal alone is incomplete" in system
     assert "complete every safe requirement" in system
     assert json.loads(messages[1]["content"])["task"] == case.input
+
+
+def test_v4_parser_extracts_only_one_json_payload_before_strict_validation() -> None:
+    payload = json.dumps(
+        {"answer": "Câu trả lời kiểm soát.", "cited_source_ids": ["source-001"]},
+        ensure_ascii=False,
+    )
+    raw = "Nhận xét ngoài envelope.\n" + payload
+
+    assert parse_candidate_response(raw) == (raw, [], False)
+    assert parse_candidate_response(raw, allow_extraction=True) == (
+        "Câu trả lời kiểm soát.",
+        ["source-001"],
+        True,
+    )
+    assert (
+        parse_candidate_response(
+            "```json\n" + payload + "\n```\n```json\n" + payload + "\n```",
+            allow_extraction=True,
+        )
+        == ("```json\n" + payload + "\n```\n```json\n" + payload + "\n```", [], False)
+    )
+    mixed = "```json\n" + payload + "\n```\n" + payload
+    assert parse_candidate_response(mixed, allow_extraction=True) == (mixed, [], False)
+
+
+def test_v4_collection_uses_extraction_mode_and_preserves_raw_hash(tmp_path: Path) -> None:
+    payload = json.dumps(
+        {"answer": "Câu trả lời kiểm soát.", "cited_source_ids": ["source-001"]},
+        ensure_ascii=False,
+    )
+    raw = "Nhận xét ngoài envelope.\n" + payload
+    provider = FakeProvider(raw_text=raw, provider_variant="DeepInfra")
+
+    state = _collect_live_baseline(
+        _dataset(),
+        output_path=tmp_path / "baseline-001.candidates.json",
+        budget_path=tmp_path / "campaign.json",
+        run=_v4_run(),
+        provider=provider,
+        max_new_calls=1,
+    )
+
+    attempt = state.attempts[0]
+    assert attempt.status == "succeeded"
+    assert attempt.answer == "Câu trả lời kiểm soát."
+    assert attempt.response_sha256 == hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    raw_evidence = tmp_path / "baseline-001.candidates.raw.jsonl"
+    assert json.loads(raw_evidence.read_text(encoding="utf-8"))["raw_response"] == raw
+
+
+def test_legacy_run_storage_omits_v4_parse_metadata(tmp_path: Path) -> None:
+    _collect_live_baseline(
+        _dataset(),
+        output_path=tmp_path / "baseline-001.candidates.json",
+        budget_path=tmp_path / "campaign.json",
+        run=_run(),
+        provider=FakeProvider(),
+        max_new_calls=1,
+    )
+    saved_run = json.loads(
+        (tmp_path / "baseline-001.candidates.json").read_text(encoding="utf-8")
+    )
+    saved_campaign = json.loads(
+        (tmp_path / "campaign.json").read_text(encoding="utf-8")
+    )
+    assert "response_parse_mode" not in saved_run["run"]
+    assert "response_parse_mode" not in saved_campaign
 
 
 def test_v3_collection_reuses_the_ten_case_fail_closed_canary(tmp_path: Path) -> None:

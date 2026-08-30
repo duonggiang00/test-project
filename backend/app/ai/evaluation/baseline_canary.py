@@ -21,6 +21,8 @@ from app.ai.evaluation.live_baseline import (
     V2_UPSTREAM_PROVIDER,
     V3_APPROVED_CAMPAIGN_ID,
     V3_BASELINE_PROMPT_VERSION,
+    V4_APPROVED_CAMPAIGN_ID,
+    V4_BASELINE_PROMPT_VERSION,
     BaselineAttempt,
     BaselineRunFile,
     BaselineValidationError,
@@ -55,10 +57,12 @@ class CanaryReviewScore(StrictModel):
 
 class CanaryReport(StrictModel):
     schema_version: Literal["1.0"]
-    campaign_id: Literal["ai-008-v2", "ai-008-v3"]
+    campaign_id: Literal["ai-008-v2", "ai-008-v3", "ai-008-v4"]
     run_id: Literal["baseline-001"]
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    prompt_version: Literal["golden-evaluation-v2", "golden-evaluation-v3"]
+    prompt_version: Literal[
+        "golden-evaluation-v2", "golden-evaluation-v3", "golden-evaluation-v4"
+    ]
     candidate_attempts_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     review_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     case_count: Literal[10]
@@ -163,6 +167,7 @@ def evaluate_canary(
     expected_prompts = {
         V2_APPROVED_CAMPAIGN_ID: V2_BASELINE_PROMPT_VERSION,
         V3_APPROVED_CAMPAIGN_ID: V3_BASELINE_PROMPT_VERSION,
+        V4_APPROVED_CAMPAIGN_ID: V4_BASELINE_PROMPT_VERSION,
     }
     expected_prompt = expected_prompts.get(baseline.run.campaign_id)
     if (
@@ -245,10 +250,12 @@ def evaluate_canary(
         and safe_continuations == 8
     )
     campaign_id = cast(
-        Literal["ai-008-v2", "ai-008-v3"], baseline.run.campaign_id
+        Literal["ai-008-v2", "ai-008-v3", "ai-008-v4"], baseline.run.campaign_id
     )
     prompt_version = cast(
-        Literal["golden-evaluation-v2", "golden-evaluation-v3"],
+        Literal[
+            "golden-evaluation-v2", "golden-evaluation-v3", "golden-evaluation-v4"
+        ],
         baseline.run.prompt_version,
     )
     return CanaryReport(

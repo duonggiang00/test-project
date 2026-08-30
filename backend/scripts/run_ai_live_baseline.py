@@ -32,6 +32,12 @@ from app.ai.evaluation.live_baseline import (
     V3_BASELINE_PROMPT_VERSION,
     V3_BASELINE_SCHEMA_VERSION,
     V3_PROMPT_TEMPLATE_SHA256,
+    V4_APPROVED_CAMPAIGN_ID,
+    V4_APPROVED_MODEL,
+    V4_BASELINE_PROMPT_VERSION,
+    V4_BASELINE_SCHEMA_VERSION,
+    V4_PROMPT_TEMPLATE_SHA256,
+    V4_RESPONSE_PARSE_MODE,
     approved_case_order_sha256,
     BaselineProviderFailure,
     BaselineResponseFailure,
@@ -57,6 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
             APPROVED_CAMPAIGN_ID,
             V2_APPROVED_CAMPAIGN_ID,
             V3_APPROVED_CAMPAIGN_ID,
+            V4_APPROVED_CAMPAIGN_ID,
         ),
         default=APPROVED_CAMPAIGN_ID,
     )
@@ -71,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
                 "configured provider does not match the approved campaign"
             )
         if (
-            arguments.campaign != V3_APPROVED_CAMPAIGN_ID
+            arguments.campaign not in {V3_APPROVED_CAMPAIGN_ID, V4_APPROVED_CAMPAIGN_ID}
             and settings.AI_DEFAULT_MODEL != APPROVED_MODEL
         ):
             raise BaselineValidationError(
@@ -88,11 +95,14 @@ def main(argv: list[str] | None = None) -> int:
         )
         is_v2 = arguments.campaign == V2_APPROVED_CAMPAIGN_ID
         is_v3 = arguments.campaign == V3_APPROVED_CAMPAIGN_ID
-        is_governed = is_v2 or is_v3
+        is_v4 = arguments.campaign == V4_APPROVED_CAMPAIGN_ID
+        is_governed = is_v2 or is_v3 or is_v4
         run = BaselineRunDescriptor.model_validate(
             {
                 "schema_version": (
-                    V3_BASELINE_SCHEMA_VERSION
+                    V4_BASELINE_SCHEMA_VERSION
+                    if is_v4
+                    else V3_BASELINE_SCHEMA_VERSION
                     if is_v3
                     else V2_BASELINE_SCHEMA_VERSION
                     if is_v2
@@ -102,16 +112,26 @@ def main(argv: list[str] | None = None) -> int:
                 "run_id": arguments.run_id,
                 "dataset_sha256": dataset.fingerprint_sha256,
                 "provider": APPROVED_PROVIDER,
-                "model": V3_APPROVED_MODEL if is_v3 else APPROVED_MODEL,
+                "model": (
+                    V4_APPROVED_MODEL
+                    if is_v4
+                    else V3_APPROVED_MODEL
+                    if is_v3
+                    else APPROVED_MODEL
+                ),
                 "prompt_version": (
-                    V3_BASELINE_PROMPT_VERSION
+                    V4_BASELINE_PROMPT_VERSION
+                    if is_v4
+                    else V3_BASELINE_PROMPT_VERSION
                     if is_v3
                     else V2_BASELINE_PROMPT_VERSION
                     if is_v2
                     else BASELINE_PROMPT_VERSION
                 ),
                 "prompt_template_sha256": (
-                    V3_PROMPT_TEMPLATE_SHA256
+                    V4_PROMPT_TEMPLATE_SHA256
+                    if is_v4
+                    else V3_PROMPT_TEMPLATE_SHA256
                     if is_v3
                     else V2_PROMPT_TEMPLATE_SHA256
                     if is_v2
@@ -128,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
                     if is_governed
                     else None
                 ),
+                "response_parse_mode": V4_RESPONSE_PARSE_MODE if is_v4 else None,
             }
         )
         routing_policy = (
