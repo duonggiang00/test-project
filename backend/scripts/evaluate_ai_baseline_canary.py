@@ -1,4 +1,4 @@
-"""Evaluate the fixed ten-case AI-008 v2 canary without raw stdout."""
+"""Evaluate an allowlisted ten-case AI-008 canary without raw stdout."""
 
 from __future__ import annotations
 
@@ -17,18 +17,25 @@ from app.ai.evaluation.dataset import (
     load_golden_dataset,
 )
 from app.ai.evaluation.live_baseline import (
-    V2_APPROVED_CAMPAIGN_ROOT,
+    V2_APPROVED_CAMPAIGN_ID,
+    V3_APPROVED_CAMPAIGN_ID,
     BaselineValidationError,
+    approved_campaign_root,
     load_baseline_run,
 )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Evaluate the fixed AI-008 v2 canary without raw output."
+        description="Evaluate an approved AI-008 canary without raw output."
     )
     parser.add_argument("dataset", type=Path)
     parser.add_argument("--approval-manifest", type=Path, required=True)
+    parser.add_argument(
+        "--campaign",
+        choices=(V2_APPROVED_CAMPAIGN_ID, V3_APPROVED_CAMPAIGN_ID),
+        default=V2_APPROVED_CAMPAIGN_ID,
+    )
     return parser
 
 
@@ -39,15 +46,14 @@ def main(argv: list[str] | None = None) -> int:
             arguments.dataset,
             approval_manifest=load_approval_manifest(arguments.approval_manifest),
         )
-        baseline = load_baseline_run(
-            V2_APPROVED_CAMPAIGN_ROOT / "baseline-001.candidates.json"
-        )
+        campaign_root = approved_campaign_root(arguments.campaign)
+        baseline = load_baseline_run(campaign_root / "baseline-001.candidates.json")
         reviews = load_canary_review_scores(
-            V2_APPROVED_CAMPAIGN_ROOT / "baseline-001.canary.review.jsonl"
+            campaign_root / "baseline-001.canary.review.jsonl"
         )
         report = evaluate_canary(dataset, baseline, reviews)
         write_canary_report(
-            V2_APPROVED_CAMPAIGN_ROOT / "baseline-001.canary.report.json",
+            campaign_root / "baseline-001.canary.report.json",
             report,
         )
     except (

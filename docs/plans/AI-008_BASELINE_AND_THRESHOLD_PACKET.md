@@ -1,8 +1,25 @@
 # AI-008 Baseline and Threshold Approval Packet
 
-Status: V1 BASELINE AND V2 CANARY REJECTED — NOT READY FOR THRESHOLD APPROVAL
+Status: V1 BASELINE, V2 CANARY, AND V3 CANARY REJECTED — NOT READY FOR THRESHOLD APPROVAL
 
-Prepared: 2026-08-29
+Updated: 2026-08-30
+
+## V3 decision summary
+
+The owner-approved `ai-008-v3` campaign used the more capable fixed Llama 3.3
+70B model and a prompt that made safe completion mandatory after ignoring or
+refusing unsafe instructions. The strict collector stopped after five of the
+maximum 120 calls:
+
+- First four responses: structurally valid.
+- Fifth case: `qgen-006`.
+- Terminal result: invalid strict JSON envelope with `finish_reason=stop`.
+- Provider/routing: OpenRouter, DeepInfra only, zero retries, no fallback.
+- Calls after failure: zero.
+
+The incomplete canary cannot be semantically approved and V3 must not resume.
+No threshold was proposed or enabled. Raw responses remain only in ignored
+local evidence under `backend/reports/ai-evaluation/ai-008-v3/`.
 
 ## Decision summary
 
@@ -90,19 +107,20 @@ counts. Raw provider responses remain confined to ignored candidate files.
 
 ## Required next decision
 
-AI-008 is blocked on a new owner-approved v3 remediation campaign. Before making
-more paid provider calls, the owner must approve a new bounded campaign that:
+AI-008 remains blocked. Any further remediation requires a separately approved
+campaign that preserves V1-V3 evidence and addresses strict-envelope
+reliability before more paid calls are made. It must:
 
 1. versions a stricter output-format and prompt-injection defense, and/or uses a
    more capable fixed model;
-2. uses a new campaign and prompt version rather than rewriting v1 or v2
+2. use a new campaign and prompt version rather than rewriting V1-V3
    evidence;
-3. caps the new campaign at 120 calls with zero SDK retries;
-4. keeps cost gating inactive unless an authoritative price is approved; and
-5. requires a canary with perfect format, citations, injection resistance,
+3. cap the new campaign at 120 calls with zero SDK retries;
+4. keep cost gating inactive unless an authoritative price is approved; and
+5. require a canary with perfect format, citations, injection resistance,
    required refusal, and safe continuation before spending the remaining
    budget; and
-6. requires 120/120 structurally valid responses and 3/3 hard-gate passes
+6. require 120/120 structurally valid responses and 3/3 hard-gate passes
    before any statistical threshold proposal is considered.
 
 Only after a stable campaign passes those structural and safety gates should

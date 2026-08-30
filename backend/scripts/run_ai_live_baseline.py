@@ -27,6 +27,11 @@ from app.ai.evaluation.live_baseline import (
     V2_RESPONSE_FORMAT,
     V2_ROUTING_POLICY_SHA256,
     V2_UPSTREAM_PROVIDER,
+    V3_APPROVED_CAMPAIGN_ID,
+    V3_APPROVED_MODEL,
+    V3_BASELINE_PROMPT_VERSION,
+    V3_BASELINE_SCHEMA_VERSION,
+    V3_PROMPT_TEMPLATE_SHA256,
     approved_case_order_sha256,
     BaselineProviderFailure,
     BaselineResponseFailure,
@@ -48,7 +53,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-new-calls", type=int, required=True)
     parser.add_argument(
         "--campaign",
-        choices=(APPROVED_CAMPAIGN_ID, V2_APPROVED_CAMPAIGN_ID),
+        choices=(
+            APPROVED_CAMPAIGN_ID,
+            V2_APPROVED_CAMPAIGN_ID,
+            V3_APPROVED_CAMPAIGN_ID,
+        ),
         default=APPROVED_CAMPAIGN_ID,
     )
     return parser
@@ -57,12 +66,16 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
     try:
+        if settings.AI_PROVIDER != APPROVED_PROVIDER:
+            raise BaselineValidationError(
+                "configured provider does not match the approved campaign"
+            )
         if (
-            settings.AI_PROVIDER != APPROVED_PROVIDER
-            or settings.AI_DEFAULT_MODEL != APPROVED_MODEL
+            arguments.campaign != V3_APPROVED_CAMPAIGN_ID
+            and settings.AI_DEFAULT_MODEL != APPROVED_MODEL
         ):
             raise BaselineValidationError(
-                "configured provider/model does not match the approved campaign"
+                "configured model does not match the approved campaign"
             )
         if not settings.OPENROUTER_API_KEY.strip():
             raise BaselineValidationError(
@@ -74,31 +87,45 @@ def main(argv: list[str] | None = None) -> int:
             approval_manifest=approval,
         )
         is_v2 = arguments.campaign == V2_APPROVED_CAMPAIGN_ID
+        is_v3 = arguments.campaign == V3_APPROVED_CAMPAIGN_ID
+        is_governed = is_v2 or is_v3
         run = BaselineRunDescriptor.model_validate(
             {
                 "schema_version": (
-                    V2_BASELINE_SCHEMA_VERSION if is_v2 else BASELINE_SCHEMA_VERSION
+                    V3_BASELINE_SCHEMA_VERSION
+                    if is_v3
+                    else V2_BASELINE_SCHEMA_VERSION
+                    if is_v2
+                    else BASELINE_SCHEMA_VERSION
                 ),
                 "campaign_id": arguments.campaign,
                 "run_id": arguments.run_id,
                 "dataset_sha256": dataset.fingerprint_sha256,
                 "provider": APPROVED_PROVIDER,
-                "model": APPROVED_MODEL,
+                "model": V3_APPROVED_MODEL if is_v3 else APPROVED_MODEL,
                 "prompt_version": (
-                    V2_BASELINE_PROMPT_VERSION if is_v2 else BASELINE_PROMPT_VERSION
+                    V3_BASELINE_PROMPT_VERSION
+                    if is_v3
+                    else V2_BASELINE_PROMPT_VERSION
+                    if is_v2
+                    else BASELINE_PROMPT_VERSION
                 ),
                 "prompt_template_sha256": (
-                    V2_PROMPT_TEMPLATE_SHA256 if is_v2 else PROMPT_TEMPLATE_SHA256
+                    V3_PROMPT_TEMPLATE_SHA256
+                    if is_v3
+                    else V2_PROMPT_TEMPLATE_SHA256
+                    if is_v2
+                    else PROMPT_TEMPLATE_SHA256
                 ),
                 "temperature": APPROVED_TEMPERATURE,
                 "max_output_tokens": APPROVED_MAX_OUTPUT_TOKENS,
-                "response_format": V2_RESPONSE_FORMAT if is_v2 else None,
+                "response_format": V2_RESPONSE_FORMAT if is_governed else None,
                 "routing_policy_sha256": (
-                    V2_ROUTING_POLICY_SHA256 if is_v2 else None
+                    V2_ROUTING_POLICY_SHA256 if is_governed else None
                 ),
                 "case_order_sha256": (
                     approved_case_order_sha256(dataset, arguments.campaign)
-                    if is_v2
+                    if is_governed
                     else None
                 ),
             }
@@ -110,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
                 require_parameters=True,
                 data_collection="deny",
             )
-            if is_v2
+            if is_governed
             else None
         )
         state = collect_approved_live_baseline(

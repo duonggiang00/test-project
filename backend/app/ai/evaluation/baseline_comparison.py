@@ -23,6 +23,7 @@ from app.ai.evaluation.live_baseline import (
     APPROVED_CAMPAIGN_ID,
     APPROVED_RUN_IDS,
     V2_APPROVED_CAMPAIGN_ID,
+    V3_APPROVED_CAMPAIGN_ID,
     BaselineRunFile,
     validate_approved_campaign_binding,
 )
@@ -141,6 +142,7 @@ def compare_baselines(
     if expected_campaign_id not in {
         APPROVED_CAMPAIGN_ID,
         V2_APPROVED_CAMPAIGN_ID,
+        V3_APPROVED_CAMPAIGN_ID,
     } or any(
         candidate.run.campaign_id != expected_campaign_id
         for candidate in candidates
