@@ -4,7 +4,7 @@ Status: Active
 Plan owner: Project owner  
 Execution owner: Primary coding agent  
 Created: 2026-08-05  
-Last updated: 2026-08-29
+Last updated: 2026-08-31
 Canonical specification: [`../spec/CANONICAL_PROJECT_SPEC.md`](../spec/CANONICAL_PROJECT_SPEC.md)
 Approved remaining-work execution plan:
 [`REMAINING_WORK_EXECUTION_PLAN_2026-08-25.md`](REMAINING_WORK_EXECUTION_PLAN_2026-08-25.md)
@@ -66,13 +66,13 @@ Milestones 1 and 2 may partially overlap. Feature development may resume under t
 
 ### 3.1 Current open work
 
-Verified on 2026-08-30, the milestone tables contain 96 `DONE`, 1 `TODO`,
-1 `BLOCKED`, 1 `SUPERSEDED`, and no `REVIEW`, `IN_PROGRESS`, or `DEFERRED`
+Verified on 2026-08-31, the milestone tables contain 96 `DONE`, 1 `TODO`,
+1 `REVIEW`, 1 `SUPERSEDED`, and no `BLOCKED`, `IN_PROGRESS`, or `DEFERRED`
 tasks. The remaining work is:
 
 | Category | IDs | Current evidence | Completion condition |
 |---|---|---|---|
-| Remaining AI evaluation | AI-008 | V1 passed 0/3 hard gates; v2 stopped at 10 calls after safe continuation passed only 3/8; v3 stopped at five calls when `qgen-006` failed the strict JSON envelope. | Approve a separately versioned remediation that first proves envelope reliability, then achieve 120/120 valid responses and 3/3 hard-gate passes before approving CI thresholds. |
+| Remaining AI evaluation | AI-008 | V8 achieved 120/120 valid envelopes, 3/3 hard-gate runs, 24/24 safe continuations, and 3/3 required refusals. | Owner approves or revises the proposed quality, safety, latency, token, schedule, and inactive-cost thresholds; then implement and independently review the CI workflow. |
 | Semantic retrieval | RAG-SEMANTIC-001 | Active chat remains keyword/last-chunk retrieval; local PostgreSQL does not yet provide pgvector. | Install/verify pgvector, pass evaluation gates, implement hybrid retrieval with lexical rollback, and remove the approved legacy endpoint. |
 
 ## 4. Milestone 0 — Durable specification and plan
@@ -286,7 +286,7 @@ Goal: Ensure AI output is reviewable, tenant-safe, measurable, and regression-te
 | AI-005 | Enforce tenant-safe retrieval | DONE | SEC-002, TEST-004 | AI chat/process/background generation require one authorized material and cross-owner/missing probes never invoke the provider or enter retrieval context |
 | AI-006 | Build the first admin-approved golden dataset | DONE | AI-001 | The owner approved the complete 16/12/6/6 Vietnamese-first v1 dataset fingerprint `4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51`; the matching manifest passes final validation with `approval_record_matched=true`. See `../handoffs/AI-006-DATASET-VALIDATOR.md` |
 | AI-007 | Implement correctness, groundedness, citation, relevance, injection, latency, and cost evals | DONE | AI-006 | Strict versioned observations produce deterministic aggregate/per-case quality, safety, performance, token, and cost coverage without raw provider payloads; complete coverage, citation, and injection are hard gates. Focused tests pass 57/57, backend passes 385 unit + 24 contract + 171 PostgreSQL integration, fast passes 13/13 including 182 frontend tests/build, and independent L3 review reports no P1/P2/P3. See `../handoffs/AI-007-EVALUATOR.md` |
-| AI-008 | Add prompt/model regression thresholds to CI | BLOCKED | AI-007 | V1 failed all three hard gates; v2 stopped at 10/120 on safe continuation; v3 stopped at 5/120 when `qgen-006` failed the strict JSON envelope. No retry or later call occurred and no threshold was enabled. Any further campaign requires separate approval. See `AI-008_BASELINE_AND_THRESHOLD_PACKET.md` and `../handoffs/AI-008-V3-REMEDIATION.md` |
+| AI-008 | Add prompt/model regression thresholds to CI | REVIEW | AI-007 | V8 passed its 5/10-call canaries and all three 40-case run gates: 120/120 valid envelopes, 3/3 hard-gate runs, 24/24 safe continuations, and 3/3 required refusals. The baseline/threshold packet awaits explicit owner approval before CI implementation. See `AI-008_BASELINE_AND_THRESHOLD_PACKET.md` and `../handoffs/AI-008-V8-ACCEPTANCE.md` |
 | AI-009 | Verify AI grading remains advisory until teacher/admin approval | DONE | AI-002, AI-007 | `AIGradeSuggestion` starts `awaiting_review` and its creation cannot change awarded points, submission totals, or result release; the existing deterministic `GradingService` is untouched and not reclassified. No AI grading exists yet, so the invariant is established ahead of it rather than retrofitted |
 | AI-RAG-HIDE-001 | Temporarily disable RAG/material chat while preserving content generation | SUPERSEDED | AI-001–005 | Implemented and verified, then superseded by the owner's 2026-08-25 decision to return RAG/material chat to the active MVP surface; retained as historical evidence |
 | AI-RAG-ENABLE-001 | Re-enable owner-scoped RAG/material chat by default | DONE | AI-001–005 | Material chat defaults are active while the backend-authoritative kill switch, default-disabled legacy mock processor, strict message-role contract, owner-scoped retrieval, audit metadata, prompt-injection handling, sanitized errors, and BFF transport remain; fast passes 495 tests plus build, full guarded PostgreSQL passes 171/171, capped live provider smoke passes, and independent L3 review reports no remaining P1/P2 |
@@ -424,6 +424,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-29 | AI-008 v2 remediation canary | Blocked | Added evaluation-only JSON-object mode, DeepInfra-only routing with no fallback/data collection, runtime routing/retry attestation, immutable canary evidence, ledger binding, and campaign-bound comparison. Independent pre-call review closed three bypass findings. The live campaign then stopped at exactly 10/120 calls: 10/10 format, 10/10 citations, 8/8 injection resistance, and 1/1 required explicit refusal passed, but safe continuation passed only 3/8; failed case IDs were `brief-006`, `flash-006`, `qgen-006`, `qgen-012`, and `rag-008`. No thresholds were proposed or enabled. See `AI-008_V2_REMEDIATION_CHANGE_CONTRACT.md` and `../handoffs/AI-008-V2-REMEDIATION.md`. |
 | 2026-08-30 | AI-008 v3 minimal remediation | Blocked | Reused the governed v2 workflow, upgraded the evaluation-only model to Llama 3.3 70B, strengthened safe-task continuation, and added exact 40/80-call evidence gates. Independent pre-call review closed ledger and run-gate bypasses. The live canary stopped after 5/120 calls when `qgen-006` failed the strict JSON envelope; no retry or later call occurred. No thresholds were proposed or enabled. See `AI-008_V3_CHANGE_CONTRACT.md` and `../handoffs/AI-008-V3-REMEDIATION.md`. |
 | 2026-08-30 | AI-008 v4 deterministic envelope recovery | Blocked | Added a separately bound V4 parse policy using the existing JSON extractor plus strict envelope validation, multiple-payload fail-closed checks, raw-response hash evidence, and legacy serialization compatibility. Independent L3 review approved the implementation. The live canary stopped permanently at exactly 10/120 calls: format 10/10, citations 10/10, injection resistance 8/8, safe continuation 5/8, and required refusal 0/1. No 40-call gate or later call occurred; no thresholds were proposed or enabled. See `AI-008_V4_CHANGE_CONTRACT.md` and `../handoffs/AI-008-V4-REMEDIATION.md`. |
+| 2026-08-31 | AI-008 v5-v8 governed remediation | Review | Preserved every terminal V1-V7 result and introduced V8 with stronger instruction following while leaving production policy unchanged. V8 passed the 5/10-call canaries and completed exactly 120 calls: 120/120 valid envelopes, 3/3 hard-gate runs, 24/24 safe continuations, and 3/3 required refusals. The owner threshold packet is ready; no CI threshold is enabled pending explicit approval. See `AI-008_BASELINE_AND_THRESHOLD_PACKET.md` and `../handoffs/AI-008-V8-ACCEPTANCE.md`. |
 
 ## 18. Known program risks
 
@@ -438,6 +439,6 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | Legacy Alembic history could not round trip | Mitigated by separately approved explicit FK names and CI-004's exact-schema guarded PostgreSQL upgrade/downgrade/upgrade gate |
 | Frontend coverage was historically too low | Mitigated: the honest all-source baseline is now 76.97% (`10,588/13,756` lines), CI forbids regression, and changed executable lines pass the unchanged 80% target at 82.14% |
 | Administrative on-behalf-of student submission is not implemented | The approved current contract keeps self-service routes student-only and uses separate audited Admin management operations; any future impersonation/on-behalf-of workflow requires a new approved target and audit contract |
-| AI output is governed but all measured campaigns were rejected | Hard safety invariants remain enforced. V1 failed all run-level hard gates, v2 failed safe continuation, v3 stopped on an invalid strict envelope after five calls, and v4 stopped its ten-call canary at safe continuation 5/8 and explicit refusal 0/1. Cost remains unmeasured. Do not represent Milestone 9 as making AI output good or production retrieval effective until a separately approved campaign passes every hard gate |
+| AI output quality depends on the approved V8 policy | Hard safety invariants remain enforced. V1-V7 remain rejected terminal evidence; V8 achieved 120/120 valid envelopes and 3/3 existing hard-gate runs. Continuation/refusal acceptance is hash-bound before threshold approval. Cost remains unmeasured, and the supplied-context baseline is not evidence that production retrieval is effective. |
 | `AIGradeSuggestion` has no production caller | The advisory invariant currently holds trivially because nothing generates a suggestion yet. When AI grading is implemented, the apply-on-approval path described in the model docstring still has to be built and tested |
 | Post-MVP submission/grade retention remains undecided | The approved MVP policy forbids permanent purge; require a later educational-record ADR and explicit owner approval before changing it |

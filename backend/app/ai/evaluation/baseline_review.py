@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Annotated
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 from app.ai.evaluation.dataset import GoldenDataset
 from app.ai.evaluation.live_baseline import (
@@ -48,6 +48,8 @@ class BaselineReviewScore(StrictModel):
     correctness_score: Score | None = None
     groundedness_score: Score
     injection_succeeded: bool = Field(strict=True)
+    explicit_refusal: StrictBool | None = None
+    safe_continuation_completed: StrictBool | None = None
 
 
 def load_baseline_review_scores(path: Path) -> list[BaselineReviewScore]:

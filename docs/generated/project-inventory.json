@@ -2,9 +2,9 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "b02a94d33e26e3019315b030c2f4da561f66ede0",
-    "source_commit_timestamp": "2026-08-30T18:37:25+07:00",
-    "source_tree_sha256": "9f7ad38ed67544a17264dece5fab6d81b206070c2a2d4f90ea965fa27adfb77c",
+    "source_commit": "25c399ebaf2704638fe3e7f2ee7faec6d5841cb7",
+    "source_commit_timestamp": "2026-08-30T18:57:05+07:00",
+    "source_tree_sha256": "b1f6f3752690cbe7147ca97cc4660024a6b777251a911208b4ebdb5113d95b3d",
     "relevant_file_count": 468,
     "alembic_heads": [
       "a74c9d2e6f10"
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 441,
+    "backend_test_functions": 442,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -6809,42 +6809,47 @@
         "path": "tests/unit/test_ai_baseline_comparison.py",
         "tests": [
           {
-            "line": 169,
+            "line": 221,
             "markers": [],
             "name": "test_comparison_requires_exact_three_runs_and_reports"
           },
           {
-            "line": 204,
+            "line": 256,
             "markers": [],
             "name": "test_comparison_accepts_the_versioned_v3_campaign"
           },
           {
-            "line": 224,
+            "line": 276,
             "markers": [],
             "name": "test_comparison_accepts_the_versioned_v5_campaign"
           },
           {
-            "line": 244,
+            "line": 297,
+            "markers": [],
+            "name": "test_v8_acceptance_hash_binds_continuation_and_refusal_gates"
+          },
+          {
+            "line": 382,
             "markers": [],
             "name": "test_comparison_keeps_invalid_response_visible_and_not_ready"
           },
           {
-            "line": 270,
+            "line": 408,
             "markers": [],
             "name": "test_comparison_rejects_report_metadata_mismatch"
           },
           {
-            "line": 292,
+            "line": 430,
             "markers": [],
             "name": "test_comparison_rejects_tampered_observations_or_report"
           },
           {
-            "line": 325,
+            "line": 463,
             "markers": [],
             "name": "test_comparison_writer_is_create_only"
           },
           {
-            "line": 338,
+            "line": 479,
             "markers": [],
             "name": "test_legacy_v1_comparison_remains_readable_without_v2_metadata"
           }

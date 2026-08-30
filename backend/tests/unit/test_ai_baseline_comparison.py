@@ -30,6 +30,13 @@ from app.ai.evaluation.live_baseline import (
     V5_BASELINE_SCHEMA_VERSION,
     V5_PROMPT_TEMPLATE_SHA256,
     V5_RESPONSE_PARSE_MODE,
+    V8_APPROVED_CAMPAIGN_ID,
+    V8_APPROVED_MODEL,
+    V8_BASELINE_PROMPT_VERSION,
+    V8_BASELINE_SCHEMA_VERSION,
+    V8_PROMPT_TEMPLATE_SHA256,
+    V8_RESPONSE_PARSE_MODE,
+    V8_ROUTING_POLICY_SHA256,
     BaselineRunFile,
     approved_case_order_sha256,
 )
@@ -108,6 +115,51 @@ def _v5_candidates(tmp_path: Path) -> list[BaselineRunFile]:
             ).model_dump(mode="python")
         )
         for candidate in _candidates(tmp_path)
+    ]
+
+
+def _v8_candidates(tmp_path: Path) -> list[BaselineRunFile]:
+    dataset = _dataset()
+    return [
+        BaselineRunFile.model_validate(
+            candidate.model_copy(
+                update={
+                    "schema_version": V8_BASELINE_SCHEMA_VERSION,
+                    "run": candidate.run.model_copy(
+                        update={
+                            "schema_version": V8_BASELINE_SCHEMA_VERSION,
+                            "campaign_id": V8_APPROVED_CAMPAIGN_ID,
+                            "model": V8_APPROVED_MODEL,
+                            "prompt_version": V8_BASELINE_PROMPT_VERSION,
+                            "prompt_template_sha256": V8_PROMPT_TEMPLATE_SHA256,
+                            "response_format": V2_RESPONSE_FORMAT,
+                            "routing_policy_sha256": V8_ROUTING_POLICY_SHA256,
+                            "case_order_sha256": approved_case_order_sha256(
+                                dataset, V8_APPROVED_CAMPAIGN_ID
+                            ),
+                            "response_parse_mode": V8_RESPONSE_PARSE_MODE,
+                        }
+                    ),
+                }
+            ).model_dump(mode="python")
+        )
+        for candidate in _candidates(tmp_path)
+    ]
+
+
+def _v8_reviews():
+    return [
+        review.model_copy(
+            update={
+                "safe_continuation_completed": (
+                    True
+                    if case.injection_label != "none"
+                    else None
+                ),
+                "explicit_refusal": True if case.case_id == "rag-016" else None,
+            }
+        )
+        for case, review in zip(_dataset().cases, _reviews(), strict=True)
     ]
 
 
@@ -241,6 +293,92 @@ def test_comparison_accepts_the_versioned_v5_campaign(tmp_path: Path) -> None:
     assert comparison.response_parse_mode == V5_RESPONSE_PARSE_MODE
     assert comparison.baseline_acceptance_ready is True
 
+
+def test_v8_acceptance_hash_binds_continuation_and_refusal_gates(
+    tmp_path: Path,
+) -> None:
+    candidates = _v8_candidates(tmp_path)
+    reviews = _v8_reviews()
+    evidence = {}
+    for candidate in candidates:
+        observations = prepare_reviewed_observations(
+            _dataset(), candidate, reviews
+        )
+        report = evaluate_dataset(
+            _dataset(),
+            observations,
+            run=EvaluationRunDescriptor.model_validate(
+                {
+                    "run_id": candidate.run.run_id,
+                    "execution_mode": "live",
+                    "provider": candidate.run.provider,
+                    "model": candidate.run.model,
+                    "prompt_version": candidate.run.prompt_version,
+                    "judge_version": APPROVED_JUDGE_VERSION,
+                }
+            ),
+        )
+        evidence[candidate.run.run_id] = (report, observations)
+
+    comparison = compare_baselines(
+        _dataset(),
+        candidates,
+        [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+        {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+        {run_id: reviews for run_id in APPROVED_RUN_IDS},
+        expected_campaign_id=V8_APPROVED_CAMPAIGN_ID,
+    )
+
+    assert comparison.semantic_gate_passed_runs == 3
+    assert comparison.safe_continuation_total == 24
+    assert comparison.safe_continuation_cases == 24
+    assert comparison.explicit_refusal_total == 3
+    assert comparison.explicit_refusal_cases == 3
+    assert comparison.baseline_acceptance_ready is True
+    assert all(run.review_sha256 for run in comparison.runs)
+
+    failed_reviews = list(reviews)
+    injection_index = next(
+        index
+        for index, review in enumerate(failed_reviews)
+        if review.safe_continuation_completed is True
+    )
+    failed_reviews[injection_index] = failed_reviews[injection_index].model_copy(
+        update={"safe_continuation_completed": False}
+    )
+    failed = compare_baselines(
+        _dataset(),
+        candidates,
+        [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+        {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+        {
+            "baseline-001": failed_reviews,
+            "baseline-002": reviews,
+            "baseline-003": reviews,
+        },
+        expected_campaign_id=V8_APPROVED_CAMPAIGN_ID,
+    )
+    assert failed.semantic_gate_passed_runs == 2
+    assert failed.baseline_acceptance_ready is False
+
+    missing_judgment = list(reviews)
+    missing_judgment[injection_index] = missing_judgment[
+        injection_index
+    ].model_copy(update={"safe_continuation_completed": None})
+    with pytest.raises(BaselineComparisonError, match="lacks a continuation"):
+        compare_baselines(
+            _dataset(),
+            candidates,
+            [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+            {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+            {
+                "baseline-001": missing_judgment,
+                "baseline-002": reviews,
+                "baseline-003": reviews,
+            },
+            expected_campaign_id=V8_APPROVED_CAMPAIGN_ID,
+        )
+
 def test_comparison_keeps_invalid_response_visible_and_not_ready(
     tmp_path: Path,
 ) -> None:
@@ -328,6 +466,9 @@ def test_comparison_writer_is_create_only(tmp_path: Path) -> None:
     output = tmp_path / "comparison.json"
     write_baseline_comparison(output, comparison)
     original = output.read_bytes()
+    legacy_payload = json.loads(original)
+    assert "semantic_gate_passed_runs" not in legacy_payload
+    assert "review_sha256" not in legacy_payload["runs"][0]
 
     with pytest.raises(BaselineComparisonError, match="already exists"):
         write_baseline_comparison(output, comparison)

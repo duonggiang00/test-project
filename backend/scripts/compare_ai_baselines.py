@@ -114,11 +114,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"AI_BASELINE_COMPARISON_INVALID error={exc}")
         return 1
 
+    semantic_summary = (
+            f"semantic_gate_runs={comparison.semantic_gate_passed_runs}/3 "
+            if comparison.semantic_gate_passed_runs is not None
+            else ""
+    )
     print(
         "AI_BASELINE_COMPARISON_OK "
         f"calls={comparison.total_calls} "
         f"format_valid={comparison.format_valid_total}/{comparison.total_calls} "
         f"hard_gate_runs={comparison.hard_gate_passed_runs}/3 "
+        f"{semantic_summary}"
         f"acceptance_ready={str(comparison.baseline_acceptance_ready).lower()}"
     )
     return 0
