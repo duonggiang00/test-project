@@ -32,6 +32,10 @@ from app.ai.evaluation.live_baseline import (
     V7_APPROVED_CAMPAIGN_ID,
     V7_BASELINE_PROMPT_VERSION,
     V7_CANARY_CASE_IDS,
+    V8_APPROVED_CAMPAIGN_ID,
+    V8_BASELINE_PROMPT_VERSION,
+    V8_CANARY_CASE_IDS,
+    V8_UPSTREAM_PROVIDER,
     BaselineAttempt,
     BaselineRunFile,
     BaselineValidationError,
@@ -73,6 +77,7 @@ class CanaryReport(StrictModel):
         "ai-008-v5",
         "ai-008-v6",
         "ai-008-v7",
+        "ai-008-v8",
     ]
     run_id: Literal["baseline-001"]
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -83,6 +88,7 @@ class CanaryReport(StrictModel):
         "golden-evaluation-v5",
         "golden-evaluation-v6",
         "golden-evaluation-v7",
+        "golden-evaluation-v8",
     ]
     candidate_attempts_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     review_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -99,11 +105,14 @@ class CanaryReport(StrictModel):
 
 class FailureReplayReport(StrictModel):
     schema_version: Literal["1.0"]
-    campaign_id: Literal["ai-008-v5", "ai-008-v6", "ai-008-v7"]
+    campaign_id: Literal["ai-008-v5", "ai-008-v6", "ai-008-v7", "ai-008-v8"]
     run_id: Literal["baseline-001"]
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     prompt_version: Literal[
-        "golden-evaluation-v5", "golden-evaluation-v6", "golden-evaluation-v7"
+        "golden-evaluation-v5",
+        "golden-evaluation-v6",
+        "golden-evaluation-v7",
+        "golden-evaluation-v8",
     ]
     candidate_attempts_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     review_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -187,7 +196,9 @@ def validate_failure_replay_resume(
     ):
         raise BaselineCanaryError("failure replay did not authorize canary resume")
     replay_ids = (
-        V7_CANARY_CASE_IDS[:5]
+        V8_CANARY_CASE_IDS[:5]
+        if report.campaign_id == V8_APPROVED_CAMPAIGN_ID
+        else V7_CANARY_CASE_IDS[:5]
         if report.campaign_id == V7_APPROVED_CAMPAIGN_ID
         else V6_CANARY_CASE_IDS[:5]
         if report.campaign_id == V6_APPROVED_CAMPAIGN_ID
@@ -226,6 +237,7 @@ def evaluate_failure_replay(
             V5_APPROVED_CAMPAIGN_ID,
             V6_APPROVED_CAMPAIGN_ID,
             V7_APPROVED_CAMPAIGN_ID,
+            V8_APPROVED_CAMPAIGN_ID,
         }
         or baseline.run.run_id != "baseline-001"
         or baseline.run.prompt_version
@@ -233,12 +245,15 @@ def evaluate_failure_replay(
             V5_BASELINE_PROMPT_VERSION,
             V6_BASELINE_PROMPT_VERSION,
             V7_BASELINE_PROMPT_VERSION,
+            V8_BASELINE_PROMPT_VERSION,
         }
     ):
         raise BaselineCanaryError("failure replay requires the approved V5 first run")
 
     replay_ids = (
-        V7_CANARY_CASE_IDS[:5]
+        V8_CANARY_CASE_IDS[:5]
+        if baseline.run.campaign_id == V8_APPROVED_CAMPAIGN_ID
+        else V7_CANARY_CASE_IDS[:5]
         if baseline.run.campaign_id == V7_APPROVED_CAMPAIGN_ID
         else V6_CANARY_CASE_IDS[:5]
         if baseline.run.campaign_id == V6_APPROVED_CAMPAIGN_ID
@@ -255,10 +270,16 @@ def evaluate_failure_replay(
         raise BaselineCanaryError("failure replay coverage is incomplete")
     if require_replay_only and len(baseline.attempts) != len(replay_ids):
         raise BaselineCanaryError("failure replay must pass before later canary calls")
+    expected_upstream_provider = (
+        V8_UPSTREAM_PROVIDER
+        if baseline.run.campaign_id == V8_APPROVED_CAMPAIGN_ID
+        else V2_UPSTREAM_PROVIDER
+    )
     if any(
         attempt.finish_reason != "stop"
         or attempt.upstream_provider is None
-        or attempt.upstream_provider.casefold() != V2_UPSTREAM_PROVIDER.casefold()
+        or attempt.upstream_provider.casefold()
+        != expected_upstream_provider.casefold()
         for attempt in attempts_by_id.values()
     ):
         raise BaselineCanaryError("failure replay provider metadata is invalid")
@@ -302,11 +323,15 @@ def evaluate_failure_replay(
         and safe_continuations == 5
     )
     campaign_id = cast(
-        Literal["ai-008-v5", "ai-008-v6", "ai-008-v7"], baseline.run.campaign_id
+        Literal["ai-008-v5", "ai-008-v6", "ai-008-v7", "ai-008-v8"],
+        baseline.run.campaign_id,
     )
     prompt_version = cast(
         Literal[
-            "golden-evaluation-v5", "golden-evaluation-v6", "golden-evaluation-v7"
+            "golden-evaluation-v5",
+            "golden-evaluation-v6",
+            "golden-evaluation-v7",
+            "golden-evaluation-v8",
         ],
         baseline.run.prompt_version,
     )
@@ -387,6 +412,7 @@ def evaluate_canary(
         V5_APPROVED_CAMPAIGN_ID: V5_BASELINE_PROMPT_VERSION,
         V6_APPROVED_CAMPAIGN_ID: V6_BASELINE_PROMPT_VERSION,
         V7_APPROVED_CAMPAIGN_ID: V7_BASELINE_PROMPT_VERSION,
+        V8_APPROVED_CAMPAIGN_ID: V8_BASELINE_PROMPT_VERSION,
     }
     expected_prompt = expected_prompts.get(baseline.run.campaign_id)
     if (
@@ -407,10 +433,16 @@ def evaluate_canary(
         raise BaselineCanaryError("canary coverage is incomplete")
     if require_canary_only and len(baseline.attempts) != len(V2_CANARY_CASE_IDS):
         raise BaselineCanaryError("canary must be evaluated before campaign resume")
+    expected_upstream_provider = (
+        V8_UPSTREAM_PROVIDER
+        if baseline.run.campaign_id == V8_APPROVED_CAMPAIGN_ID
+        else V2_UPSTREAM_PROVIDER
+    )
     if any(
         attempt.finish_reason != "stop"
         or attempt.upstream_provider is None
-        or attempt.upstream_provider.casefold() != V2_UPSTREAM_PROVIDER.casefold()
+        or attempt.upstream_provider.casefold()
+        != expected_upstream_provider.casefold()
         for attempt in attempts_by_id.values()
     ):
         raise BaselineCanaryError("canary provider metadata is invalid")
@@ -476,6 +508,7 @@ def evaluate_canary(
             "ai-008-v5",
             "ai-008-v6",
             "ai-008-v7",
+            "ai-008-v8",
         ],
         baseline.run.campaign_id,
     )
@@ -487,6 +520,7 @@ def evaluate_canary(
             "golden-evaluation-v5",
             "golden-evaluation-v6",
             "golden-evaluation-v7",
+            "golden-evaluation-v8",
         ],
         baseline.run.prompt_version,
     )

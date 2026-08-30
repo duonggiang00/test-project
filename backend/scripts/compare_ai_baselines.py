@@ -29,6 +29,7 @@ from app.ai.evaluation.live_baseline import (
     V5_APPROVED_CAMPAIGN_ID,
     V6_APPROVED_CAMPAIGN_ID,
     V7_APPROVED_CAMPAIGN_ID,
+    V8_APPROVED_CAMPAIGN_ID,
     BaselineValidationError,
     approved_campaign_root,
     load_baseline_run,
@@ -55,6 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
             V5_APPROVED_CAMPAIGN_ID,
             V6_APPROVED_CAMPAIGN_ID,
             V7_APPROVED_CAMPAIGN_ID,
+            V8_APPROVED_CAMPAIGN_ID,
         ),
         default=APPROVED_CAMPAIGN_ID,
     )

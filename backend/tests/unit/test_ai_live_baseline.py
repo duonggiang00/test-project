@@ -71,6 +71,15 @@ from app.ai.evaluation.live_baseline import (
     V7_BASELINE_SCHEMA_VERSION,
     V7_PROMPT_TEMPLATE_SHA256,
     V7_RESPONSE_PARSE_MODE,
+    V8_APPROVED_CAMPAIGN_ID,
+    V8_APPROVED_MODEL,
+    V8_BASELINE_PROMPT_VERSION,
+    V8_BASELINE_SCHEMA_VERSION,
+    V8_PROMPT_TEMPLATE_SHA256,
+    V8_RESPONSE_PARSE_MODE,
+    V8_ROUTING_POLICY_SHA256,
+    V8_ROUTING_PROVIDER_SLUG,
+    V8_UPSTREAM_PROVIDER,
     BaselineProviderFailure,
     BaselineAttempt,
     BaselineCampaignFile,
@@ -263,6 +272,30 @@ def _v7_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
             dataset, V7_APPROVED_CAMPAIGN_ID
         ),
         "response_parse_mode": V7_RESPONSE_PARSE_MODE,
+    }
+    values.update(updates)
+    return BaselineRunDescriptor.model_validate(values)
+
+
+def _v8_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
+    dataset = _dataset()
+    values = {
+        "schema_version": V8_BASELINE_SCHEMA_VERSION,
+        "campaign_id": V8_APPROVED_CAMPAIGN_ID,
+        "run_id": run_id,
+        "dataset_sha256": dataset.fingerprint_sha256,
+        "provider": "openrouter",
+        "model": V8_APPROVED_MODEL,
+        "prompt_version": V8_BASELINE_PROMPT_VERSION,
+        "prompt_template_sha256": V8_PROMPT_TEMPLATE_SHA256,
+        "temperature": 0.0,
+        "max_output_tokens": 1000,
+        "response_format": V2_RESPONSE_FORMAT,
+        "routing_policy_sha256": V8_ROUTING_POLICY_SHA256,
+        "case_order_sha256": approved_case_order_sha256(
+            dataset, V8_APPROVED_CAMPAIGN_ID
+        ),
+        "response_parse_mode": V8_RESPONSE_PARSE_MODE,
     }
     values.update(updates)
     return BaselineRunDescriptor.model_validate(values)
@@ -494,6 +527,36 @@ def test_v7_preserves_v6_prompt_and_staged_campaign_binding(tmp_path: Path) -> N
     )
     assert len(state.attempts) == 5
     assert all(request.model == V7_APPROVED_MODEL for request in provider.requests)
+
+
+def test_v8_changes_only_evaluation_model_and_provider_binding(tmp_path: Path) -> None:
+    case = next(case for case in _dataset().cases if case.case_id == "qgen-006")
+    v7_system = build_candidate_messages(
+        case, prompt_version=V7_BASELINE_PROMPT_VERSION
+    )[0]["content"]
+    v8_system = build_candidate_messages(
+        case, prompt_version=V8_BASELINE_PROMPT_VERSION
+    )[0]["content"]
+    assert v8_system == v7_system
+    assert V8_PROMPT_TEMPLATE_SHA256 == V7_PROMPT_TEMPLATE_SHA256
+
+    provider = FakeProvider(
+        provider_variant=V8_UPSTREAM_PROVIDER,
+        execution_binding=ProviderExecutionBinding(
+            max_retries=0,
+            routing_policy_sha256=V8_ROUTING_POLICY_SHA256,
+        ),
+    )
+    state = _collect_live_baseline(
+        _dataset(),
+        output_path=tmp_path / "baseline-001.candidates.json",
+        budget_path=tmp_path / "campaign.json",
+        run=_v8_run(),
+        provider=provider,
+        max_new_calls=5,
+    )
+    assert len(state.attempts) == 5
+    assert all(request.model == V8_APPROVED_MODEL for request in provider.requests)
 
 
 def test_v5_collection_reuses_v4_extraction_and_raw_evidence(tmp_path: Path) -> None:
@@ -1551,6 +1614,55 @@ def test_v5_cli_uses_fixed_model_routing_parse_policy_and_call_cap(
     assert received[0][0] == 0
     assert len(provider.requests) == 5
     assert {request.model for request in provider.requests} == {V5_APPROVED_MODEL}
+    assert all(request.response_format == "json_object" for request in provider.requests)
+    assert "AI_BASELINE_PARTIAL" in capsys.readouterr().out
+
+
+def test_v8_cli_uses_exact_openai_route_and_zero_retries(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
+) -> None:
+    provider = FakeProvider(
+        provider_variant=V8_UPSTREAM_PROVIDER,
+        execution_binding=ProviderExecutionBinding(
+            max_retries=0,
+            routing_policy_sha256=V8_ROUTING_POLICY_SHA256,
+        ),
+    )
+    received = []
+    monkeypatch.setattr(live_baseline, "V8_APPROVED_CAMPAIGN_ROOT", tmp_path)
+
+    def build_provider(*, max_retries: int, routing_policy):
+        received.append((max_retries, routing_policy))
+        return provider
+
+    monkeypatch.setattr(live_baseline_cli, "OpenRouterAdapter", build_provider)
+
+    exit_code = live_baseline_cli.main(
+        [
+            str(DATASET_PATH),
+            "--approval-manifest",
+            str(APPROVAL_PATH),
+            "--campaign",
+            V8_APPROVED_CAMPAIGN_ID,
+            "--run-id",
+            "baseline-001",
+            "--max-new-calls",
+            "5",
+        ]
+    )
+
+    assert exit_code == 0
+    assert len(received) == 1
+    retries, routing = received[0]
+    assert retries == 0
+    assert routing.request_body() == {
+        "only": [V8_ROUTING_PROVIDER_SLUG],
+        "allow_fallbacks": False,
+        "require_parameters": True,
+        "data_collection": "deny",
+    }
+    assert len(provider.requests) == 5
+    assert {request.model for request in provider.requests} == {V8_APPROVED_MODEL}
     assert all(request.response_format == "json_object" for request in provider.requests)
     assert "AI_BASELINE_PARTIAL" in capsys.readouterr().out
 

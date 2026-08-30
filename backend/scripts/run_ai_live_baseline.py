@@ -56,6 +56,15 @@ from app.ai.evaluation.live_baseline import (
     V7_BASELINE_SCHEMA_VERSION,
     V7_PROMPT_TEMPLATE_SHA256,
     V7_RESPONSE_PARSE_MODE,
+    V8_APPROVED_CAMPAIGN_ID,
+    V8_APPROVED_MODEL,
+    V8_BASELINE_PROMPT_VERSION,
+    V8_BASELINE_SCHEMA_VERSION,
+    V8_PROMPT_TEMPLATE_SHA256,
+    V8_RESPONSE_PARSE_MODE,
+    V8_ROUTING_POLICY_SHA256,
+    V8_ROUTING_PROVIDER_SLUG,
+    V8_UPSTREAM_PROVIDER,
     approved_case_order_sha256,
     BaselineProviderFailure,
     BaselineResponseFailure,
@@ -85,6 +94,7 @@ def build_parser() -> argparse.ArgumentParser:
             V5_APPROVED_CAMPAIGN_ID,
             V6_APPROVED_CAMPAIGN_ID,
             V7_APPROVED_CAMPAIGN_ID,
+            V8_APPROVED_CAMPAIGN_ID,
         ),
         default=APPROVED_CAMPAIGN_ID,
     )
@@ -106,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
                 V5_APPROVED_CAMPAIGN_ID,
                 V6_APPROVED_CAMPAIGN_ID,
                 V7_APPROVED_CAMPAIGN_ID,
+                V8_APPROVED_CAMPAIGN_ID,
             }
             and settings.AI_DEFAULT_MODEL != APPROVED_MODEL
         ):
@@ -127,11 +138,16 @@ def main(argv: list[str] | None = None) -> int:
         is_v5 = arguments.campaign == V5_APPROVED_CAMPAIGN_ID
         is_v6 = arguments.campaign == V6_APPROVED_CAMPAIGN_ID
         is_v7 = arguments.campaign == V7_APPROVED_CAMPAIGN_ID
-        is_governed = is_v2 or is_v3 or is_v4 or is_v5 or is_v6 or is_v7
+        is_v8 = arguments.campaign == V8_APPROVED_CAMPAIGN_ID
+        is_governed = (
+            is_v2 or is_v3 or is_v4 or is_v5 or is_v6 or is_v7 or is_v8
+        )
         run = BaselineRunDescriptor.model_validate(
             {
                 "schema_version": (
-                    V7_BASELINE_SCHEMA_VERSION
+                    V8_BASELINE_SCHEMA_VERSION
+                    if is_v8
+                    else V7_BASELINE_SCHEMA_VERSION
                     if is_v7
                     else V6_BASELINE_SCHEMA_VERSION
                     if is_v6
@@ -150,7 +166,9 @@ def main(argv: list[str] | None = None) -> int:
                 "dataset_sha256": dataset.fingerprint_sha256,
                 "provider": APPROVED_PROVIDER,
                 "model": (
-                    V7_APPROVED_MODEL
+                    V8_APPROVED_MODEL
+                    if is_v8
+                    else V7_APPROVED_MODEL
                     if is_v7
                     else V6_APPROVED_MODEL
                     if is_v6
@@ -163,7 +181,9 @@ def main(argv: list[str] | None = None) -> int:
                     else APPROVED_MODEL
                 ),
                 "prompt_version": (
-                    V7_BASELINE_PROMPT_VERSION
+                    V8_BASELINE_PROMPT_VERSION
+                    if is_v8
+                    else V7_BASELINE_PROMPT_VERSION
                     if is_v7
                     else V6_BASELINE_PROMPT_VERSION
                     if is_v6
@@ -178,7 +198,9 @@ def main(argv: list[str] | None = None) -> int:
                     else BASELINE_PROMPT_VERSION
                 ),
                 "prompt_template_sha256": (
-                    V7_PROMPT_TEMPLATE_SHA256
+                    V8_PROMPT_TEMPLATE_SHA256
+                    if is_v8
+                    else V7_PROMPT_TEMPLATE_SHA256
                     if is_v7
                     else V6_PROMPT_TEMPLATE_SHA256
                     if is_v6
@@ -196,7 +218,11 @@ def main(argv: list[str] | None = None) -> int:
                 "max_output_tokens": APPROVED_MAX_OUTPUT_TOKENS,
                 "response_format": V2_RESPONSE_FORMAT if is_governed else None,
                 "routing_policy_sha256": (
-                    V2_ROUTING_POLICY_SHA256 if is_governed else None
+                    V8_ROUTING_POLICY_SHA256
+                    if is_v8
+                    else V2_ROUTING_POLICY_SHA256
+                    if is_governed
+                    else None
                 ),
                 "case_order_sha256": (
                     approved_case_order_sha256(dataset, arguments.campaign)
@@ -204,7 +230,9 @@ def main(argv: list[str] | None = None) -> int:
                     else None
                 ),
                 "response_parse_mode": (
-                    V7_RESPONSE_PARSE_MODE
+                    V8_RESPONSE_PARSE_MODE
+                    if is_v8
+                    else V7_RESPONSE_PARSE_MODE
                     if is_v7
                     else V6_RESPONSE_PARSE_MODE
                     if is_v6
@@ -218,7 +246,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         routing_policy = (
             OpenRouterRoutingPolicy(
-                only=(V2_UPSTREAM_PROVIDER,),
+                only=(
+                    V8_ROUTING_PROVIDER_SLUG if is_v8 else V2_UPSTREAM_PROVIDER,
+                ),
                 allow_fallbacks=False,
                 require_parameters=True,
                 data_collection="deny",
