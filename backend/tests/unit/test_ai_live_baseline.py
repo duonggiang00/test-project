@@ -65,6 +65,12 @@ from app.ai.evaluation.live_baseline import (
     V6_BASELINE_SCHEMA_VERSION,
     V6_PROMPT_TEMPLATE_SHA256,
     V6_RESPONSE_PARSE_MODE,
+    V7_APPROVED_CAMPAIGN_ID,
+    V7_APPROVED_MODEL,
+    V7_BASELINE_PROMPT_VERSION,
+    V7_BASELINE_SCHEMA_VERSION,
+    V7_PROMPT_TEMPLATE_SHA256,
+    V7_RESPONSE_PARSE_MODE,
     BaselineProviderFailure,
     BaselineAttempt,
     BaselineCampaignFile,
@@ -233,6 +239,30 @@ def _v6_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
             dataset, V6_APPROVED_CAMPAIGN_ID
         ),
         "response_parse_mode": V6_RESPONSE_PARSE_MODE,
+    }
+    values.update(updates)
+    return BaselineRunDescriptor.model_validate(values)
+
+
+def _v7_run(run_id: str = "baseline-001", **updates) -> BaselineRunDescriptor:
+    dataset = _dataset()
+    values = {
+        "schema_version": V7_BASELINE_SCHEMA_VERSION,
+        "campaign_id": V7_APPROVED_CAMPAIGN_ID,
+        "run_id": run_id,
+        "dataset_sha256": dataset.fingerprint_sha256,
+        "provider": "openrouter",
+        "model": V7_APPROVED_MODEL,
+        "prompt_version": V7_BASELINE_PROMPT_VERSION,
+        "prompt_template_sha256": V7_PROMPT_TEMPLATE_SHA256,
+        "temperature": 0.0,
+        "max_output_tokens": 1000,
+        "response_format": V2_RESPONSE_FORMAT,
+        "routing_policy_sha256": V2_ROUTING_POLICY_SHA256,
+        "case_order_sha256": approved_case_order_sha256(
+            dataset, V7_APPROVED_CAMPAIGN_ID
+        ),
+        "response_parse_mode": V7_RESPONSE_PARSE_MODE,
     }
     values.update(updates)
     return BaselineRunDescriptor.model_validate(values)
@@ -440,6 +470,30 @@ def test_v6_collection_uses_new_campaign_binding_and_five_call_cap(
     )
     assert len(state.attempts) == 5
     assert all(request.model == V6_APPROVED_MODEL for request in provider.requests)
+
+
+def test_v7_preserves_v6_prompt_and_staged_campaign_binding(tmp_path: Path) -> None:
+    case = next(case for case in _dataset().cases if case.case_id == "qgen-006")
+    v6_system = build_candidate_messages(
+        case, prompt_version=V6_BASELINE_PROMPT_VERSION
+    )[0]["content"]
+    v7_system = build_candidate_messages(
+        case, prompt_version=V7_BASELINE_PROMPT_VERSION
+    )[0]["content"]
+    assert v7_system == v6_system
+    assert V7_PROMPT_TEMPLATE_SHA256 == V6_PROMPT_TEMPLATE_SHA256
+
+    provider = FakeProvider(provider_variant="DeepInfra")
+    state = _collect_live_baseline(
+        _dataset(),
+        output_path=tmp_path / "baseline-001.candidates.json",
+        budget_path=tmp_path / "campaign.json",
+        run=_v7_run(),
+        provider=provider,
+        max_new_calls=5,
+    )
+    assert len(state.attempts) == 5
+    assert all(request.model == V7_APPROVED_MODEL for request in provider.requests)
 
 
 def test_v5_collection_reuses_v4_extraction_and_raw_evidence(tmp_path: Path) -> None:

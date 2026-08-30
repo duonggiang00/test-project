@@ -53,6 +53,9 @@ V5_APPROVED_CAMPAIGN_ID: Literal["ai-008-v5"] = "ai-008-v5"
 V6_BASELINE_SCHEMA_VERSION: Literal["6.0"] = "6.0"
 V6_BASELINE_PROMPT_VERSION: Literal["golden-evaluation-v6"] = "golden-evaluation-v6"
 V6_APPROVED_CAMPAIGN_ID: Literal["ai-008-v6"] = "ai-008-v6"
+V7_BASELINE_SCHEMA_VERSION: Literal["7.0"] = "7.0"
+V7_BASELINE_PROMPT_VERSION: Literal["golden-evaluation-v7"] = "golden-evaluation-v7"
+V7_APPROVED_CAMPAIGN_ID: Literal["ai-008-v7"] = "ai-008-v7"
 APPROVED_DATASET_SHA256 = (
     "4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51"
 )
@@ -62,6 +65,7 @@ V3_APPROVED_MODEL = "meta-llama/llama-3.3-70b-instruct"
 V4_APPROVED_MODEL = V3_APPROVED_MODEL
 V5_APPROVED_MODEL = V4_APPROVED_MODEL
 V6_APPROVED_MODEL = V5_APPROVED_MODEL
+V7_APPROVED_MODEL = V6_APPROVED_MODEL
 APPROVED_RUN_IDS = ("baseline-001", "baseline-002", "baseline-003")
 APPROVED_TEMPERATURE = 0.0
 APPROVED_MAX_OUTPUT_TOKENS = 1000
@@ -113,6 +117,8 @@ V5_CANARY_CASE_IDS = (
 V5_EXPLICIT_REFUSAL_CASE_IDS = V2_EXPLICIT_REFUSAL_CASE_IDS
 V6_CANARY_CASE_IDS = V5_CANARY_CASE_IDS
 V6_EXPLICIT_REFUSAL_CASE_IDS = V5_EXPLICIT_REFUSAL_CASE_IDS
+V7_CANARY_CASE_IDS = V6_CANARY_CASE_IDS
+V7_EXPLICIT_REFUSAL_CASE_IDS = V6_EXPLICIT_REFUSAL_CASE_IDS
 BACKEND_ROOT = Path(__file__).resolve().parents[3]
 APPROVED_CAMPAIGN_ROOT = (
     BACKEND_ROOT / "reports" / "ai-evaluation" / APPROVED_CAMPAIGN_ID
@@ -138,6 +144,10 @@ V6_APPROVED_CAMPAIGN_ROOT = (
     BACKEND_ROOT / "reports" / "ai-evaluation" / V6_APPROVED_CAMPAIGN_ID
 )
 V6_APPROVED_BUDGET_PATH = V6_APPROVED_CAMPAIGN_ROOT / "campaign.json"
+V7_APPROVED_CAMPAIGN_ROOT = (
+    BACKEND_ROOT / "reports" / "ai-evaluation" / V7_APPROVED_CAMPAIGN_ID
+)
+V7_APPROVED_BUDGET_PATH = V7_APPROVED_CAMPAIGN_ROOT / "campaign.json"
 _IDENTIFIER_PATTERN = r"^[a-z0-9][a-z0-9._-]{2,79}$"
 _MODEL_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$"
 _SAFE_PROVIDER_ERROR_CODES = frozenset(
@@ -326,6 +336,9 @@ V6_PROMPT_TEMPLATE_SHA256 = hashlib.sha256(
     ).encode("utf-8")
 ).hexdigest()
 V6_RESPONSE_PARSE_MODE: Literal["extract_json_payload"] = "extract_json_payload"
+_V7_SYSTEM_PROMPT = _V6_SYSTEM_PROMPT
+V7_PROMPT_TEMPLATE_SHA256 = V6_PROMPT_TEMPLATE_SHA256
+V7_RESPONSE_PARSE_MODE: Literal["extract_json_payload"] = "extract_json_payload"
 
 
 class BaselineValidationError(ValueError):
@@ -362,7 +375,7 @@ class CandidateEnvelope(StrictModel):
 
 
 class BaselineRunDescriptor(StrictModel):
-    schema_version: Literal["1.0", "2.0", "3.0", "4.0", "5.0", "6.0"]
+    schema_version: Literal["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0"]
     campaign_id: str = Field(pattern=_IDENTIFIER_PATTERN)
     run_id: str = Field(pattern=_IDENTIFIER_PATTERN)
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -375,6 +388,7 @@ class BaselineRunDescriptor(StrictModel):
         "golden-evaluation-v4",
         "golden-evaluation-v5",
         "golden-evaluation-v6",
+        "golden-evaluation-v7",
     ]
     prompt_template_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     temperature: float = Field(strict=True, ge=0, le=2)
@@ -393,7 +407,7 @@ class BaselineRunDescriptor(StrictModel):
             self.routing_policy_sha256,
             self.case_order_sha256,
         )
-        if self.schema_version in {"2.0", "3.0", "4.0", "5.0", "6.0"}:
+        if self.schema_version in {"2.0", "3.0", "4.0", "5.0", "6.0", "7.0"}:
             expected_prompt = (
                 V2_BASELINE_PROMPT_VERSION
                 if self.schema_version == "2.0"
@@ -406,7 +420,11 @@ class BaselineRunDescriptor(StrictModel):
                         else (
                             V5_BASELINE_PROMPT_VERSION
                             if self.schema_version == "5.0"
-                            else V6_BASELINE_PROMPT_VERSION
+                            else (
+                                V6_BASELINE_PROMPT_VERSION
+                                if self.schema_version == "6.0"
+                                else V7_BASELINE_PROMPT_VERSION
+                            )
                         )
                     )
                 )
@@ -415,9 +433,9 @@ class BaselineRunDescriptor(StrictModel):
                 value is None for value in v2_values
             ):
                 raise ValueError("governed run requires complete versioned metadata")
-            if self.schema_version in {"4.0", "5.0", "6.0"} and self.response_parse_mode != V4_RESPONSE_PARSE_MODE:
+            if self.schema_version in {"4.0", "5.0", "6.0", "7.0"} and self.response_parse_mode != V4_RESPONSE_PARSE_MODE:
                 raise ValueError("governed extraction run requires the approved response parse mode")
-            if self.schema_version not in {"4.0", "5.0", "6.0"} and self.response_parse_mode is not None:
+            if self.schema_version not in {"4.0", "5.0", "6.0", "7.0"} and self.response_parse_mode is not None:
                 raise ValueError("only governed extraction runs may define a response parse mode")
         elif self.prompt_version != BASELINE_PROMPT_VERSION or any(
             value is not None for value in (*v2_values, self.response_parse_mode)
@@ -503,7 +521,7 @@ class BaselineAttempt(StrictModel):
 
 
 class BaselineRunFile(StrictModel):
-    schema_version: Literal["1.0", "2.0", "3.0", "4.0", "5.0", "6.0"]
+    schema_version: Literal["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0"]
     run: BaselineRunDescriptor
     attempts: list[BaselineAttempt] = Field(max_length=40)
 
@@ -523,7 +541,7 @@ class CampaignReservation(StrictModel):
 
 
 class BaselineCampaignFile(StrictModel):
-    schema_version: Literal["1.0", "2.0", "3.0", "4.0", "5.0", "6.0"]
+    schema_version: Literal["1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0"]
     campaign_id: str = Field(pattern=_IDENTIFIER_PATTERN)
     dataset_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     provider: str = Field(pattern=_MODEL_PATTERN)
@@ -535,6 +553,7 @@ class BaselineCampaignFile(StrictModel):
         "golden-evaluation-v4",
         "golden-evaluation-v5",
         "golden-evaluation-v6",
+        "golden-evaluation-v7",
     ]
     prompt_template_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     temperature: float = Field(strict=True, ge=0, le=2)
@@ -561,7 +580,7 @@ class BaselineCampaignFile(StrictModel):
             self.routing_policy_sha256,
             self.case_order_sha256,
         )
-        if self.schema_version in {"2.0", "3.0", "4.0", "5.0", "6.0"}:
+        if self.schema_version in {"2.0", "3.0", "4.0", "5.0", "6.0", "7.0"}:
             expected_prompt = (
                 V2_BASELINE_PROMPT_VERSION
                 if self.schema_version == "2.0"
@@ -574,7 +593,11 @@ class BaselineCampaignFile(StrictModel):
                         else (
                             V5_BASELINE_PROMPT_VERSION
                             if self.schema_version == "5.0"
-                            else V6_BASELINE_PROMPT_VERSION
+                            else (
+                                V6_BASELINE_PROMPT_VERSION
+                                if self.schema_version == "6.0"
+                                else V7_BASELINE_PROMPT_VERSION
+                            )
                         )
                     )
                 )
@@ -583,9 +606,9 @@ class BaselineCampaignFile(StrictModel):
                 value is None for value in v2_values
             ):
                 raise ValueError("governed campaign requires complete metadata")
-            if self.schema_version in {"4.0", "5.0", "6.0"} and self.response_parse_mode != V4_RESPONSE_PARSE_MODE:
+            if self.schema_version in {"4.0", "5.0", "6.0", "7.0"} and self.response_parse_mode != V4_RESPONSE_PARSE_MODE:
                 raise ValueError("governed extraction campaign requires the approved response parse mode")
-            if self.schema_version not in {"4.0", "5.0", "6.0"} and self.response_parse_mode is not None:
+            if self.schema_version not in {"4.0", "5.0", "6.0", "7.0"} and self.response_parse_mode is not None:
                 raise ValueError("only governed extraction campaigns may define a response parse mode")
         elif self.prompt_version != BASELINE_PROMPT_VERSION or any(
             value is not None for value in (*v2_values, self.response_parse_mode)
@@ -612,6 +635,8 @@ def build_candidate_messages(
         system_prompt = _V5_SYSTEM_PROMPT
     elif prompt_version == V6_BASELINE_PROMPT_VERSION:
         system_prompt = _V6_SYSTEM_PROMPT
+    elif prompt_version == V7_BASELINE_PROMPT_VERSION:
+        system_prompt = _V7_SYSTEM_PROMPT
     else:
         raise BaselineValidationError("unsupported baseline prompt version")
     user_payload = {
@@ -639,10 +664,13 @@ def approved_case_order(dataset: GoldenDataset, campaign_id: str) -> list[str]:
         V4_APPROVED_CAMPAIGN_ID,
         V5_APPROVED_CAMPAIGN_ID,
         V6_APPROVED_CAMPAIGN_ID,
+        V7_APPROVED_CAMPAIGN_ID,
     }:
         raise BaselineValidationError("unsupported baseline campaign")
     canary_case_ids = (
-        V6_CANARY_CASE_IDS
+        V7_CANARY_CASE_IDS
+        if campaign_id == V7_APPROVED_CAMPAIGN_ID
+        else V6_CANARY_CASE_IDS
         if campaign_id == V6_APPROVED_CAMPAIGN_ID
         else V5_CANARY_CASE_IDS
         if campaign_id == V5_APPROVED_CAMPAIGN_ID
@@ -742,6 +770,8 @@ def approved_campaign_root(campaign_id: str) -> Path:
         return V5_APPROVED_CAMPAIGN_ROOT
     if campaign_id == V6_APPROVED_CAMPAIGN_ID:
         return V6_APPROVED_CAMPAIGN_ROOT
+    if campaign_id == V7_APPROVED_CAMPAIGN_ID:
+        return V7_APPROVED_CAMPAIGN_ROOT
     raise BaselineValidationError("unsupported baseline campaign")
 
 
@@ -801,6 +831,7 @@ def _collect_live_baseline(
             V4_APPROVED_CAMPAIGN_ID,
             V5_APPROVED_CAMPAIGN_ID,
             V6_APPROVED_CAMPAIGN_ID,
+            V7_APPROVED_CAMPAIGN_ID,
         } and any(
             attempt.status == "invalid_response" for attempt in state.attempts
         ):
@@ -909,6 +940,7 @@ def _collect_live_baseline(
                     V4_APPROVED_CAMPAIGN_ID,
                     V5_APPROVED_CAMPAIGN_ID,
                     V6_APPROVED_CAMPAIGN_ID,
+                    V7_APPROVED_CAMPAIGN_ID,
                 }
                 and (
                     result.provider_variant is None
@@ -940,6 +972,7 @@ def _collect_live_baseline(
                     V4_APPROVED_CAMPAIGN_ID,
                     V5_APPROVED_CAMPAIGN_ID,
                     V6_APPROVED_CAMPAIGN_ID,
+                    V7_APPROVED_CAMPAIGN_ID,
                 },
             )
             incomplete = (
@@ -950,6 +983,7 @@ def _collect_live_baseline(
                     V4_APPROVED_CAMPAIGN_ID,
                     V5_APPROVED_CAMPAIGN_ID,
                     V6_APPROVED_CAMPAIGN_ID,
+                    V7_APPROVED_CAMPAIGN_ID,
                 }
                 and result.finish_reason != "stop"
             )
@@ -992,6 +1026,7 @@ def _collect_live_baseline(
                 V4_APPROVED_CAMPAIGN_ID,
                 V5_APPROVED_CAMPAIGN_ID,
                 V6_APPROVED_CAMPAIGN_ID,
+                V7_APPROVED_CAMPAIGN_ID,
             }:
                 _append_raw_response(
                     raw_output_path or output_path.with_suffix(".raw.jsonl"),
@@ -1025,10 +1060,15 @@ def _require_canary_authorization(
         V4_APPROVED_CAMPAIGN_ID,
         V5_APPROVED_CAMPAIGN_ID,
         V6_APPROVED_CAMPAIGN_ID,
+        V7_APPROVED_CAMPAIGN_ID,
     }:
         return
 
-    if run.campaign_id in {V5_APPROVED_CAMPAIGN_ID, V6_APPROVED_CAMPAIGN_ID}:
+    if run.campaign_id in {
+        V5_APPROVED_CAMPAIGN_ID,
+        V6_APPROVED_CAMPAIGN_ID,
+        V7_APPROVED_CAMPAIGN_ID,
+    }:
         _require_v5_failure_replay_authorization(
             dataset=dataset,
             run=run,
@@ -1101,7 +1141,11 @@ def _validate_v5_campaign_ledger(
     campaign: BaselineCampaignFile,
 ) -> None:
     """Bind every V5 reservation to the completed/current run sequence."""
-    if run.campaign_id not in {V5_APPROVED_CAMPAIGN_ID, V6_APPROVED_CAMPAIGN_ID}:
+    if run.campaign_id not in {
+        V5_APPROVED_CAMPAIGN_ID,
+        V6_APPROVED_CAMPAIGN_ID,
+        V7_APPROVED_CAMPAIGN_ID,
+    }:
         return
     run_index = APPROVED_RUN_IDS.index(run.run_id)
     case_order = approved_case_order(dataset, run.campaign_id)
@@ -1131,7 +1175,9 @@ def _require_v5_failure_replay_authorization(
 ) -> None:
     """Stop governed v5/v6 campaigns after five calls until replay passes."""
     replay_ids = (
-        V6_CANARY_CASE_IDS[:5]
+        V7_CANARY_CASE_IDS[:5]
+        if run.campaign_id == V7_APPROVED_CAMPAIGN_ID
+        else V6_CANARY_CASE_IDS[:5]
         if run.campaign_id == V6_APPROVED_CAMPAIGN_ID
         else V5_CANARY_CASE_IDS[:5]
     )
@@ -1207,6 +1253,7 @@ def _require_v3_prior_run_authorization(
         V4_APPROVED_CAMPAIGN_ID,
         V5_APPROVED_CAMPAIGN_ID,
         V6_APPROVED_CAMPAIGN_ID,
+        V7_APPROVED_CAMPAIGN_ID,
     } or run.run_id == "baseline-001":
         return
     prior_run_id = {
@@ -1321,6 +1368,7 @@ def _validate_governed_provider_execution(
         V4_APPROVED_CAMPAIGN_ID,
         V5_APPROVED_CAMPAIGN_ID,
         V6_APPROVED_CAMPAIGN_ID,
+        V7_APPROVED_CAMPAIGN_ID,
     }:
         return
     binding = getattr(provider, "execution_binding", None)
@@ -1462,6 +1510,21 @@ def validate_approved_campaign_binding(
             V2_ROUTING_POLICY_SHA256,
             approved_case_order_sha256(dataset, V6_APPROVED_CAMPAIGN_ID),
             V6_RESPONSE_PARSE_MODE,
+        )
+    elif run.campaign_id == V7_APPROVED_CAMPAIGN_ID:
+        approved_binding = (
+            V7_BASELINE_SCHEMA_VERSION,
+            V7_APPROVED_CAMPAIGN_ID,
+            APPROVED_PROVIDER,
+            V7_APPROVED_MODEL,
+            V7_BASELINE_PROMPT_VERSION,
+            V7_PROMPT_TEMPLATE_SHA256,
+            APPROVED_TEMPERATURE,
+            APPROVED_MAX_OUTPUT_TOKENS,
+            V2_RESPONSE_FORMAT,
+            V2_ROUTING_POLICY_SHA256,
+            approved_case_order_sha256(dataset, V7_APPROVED_CAMPAIGN_ID),
+            V7_RESPONSE_PARSE_MODE,
         )
     else:
         raise BaselineValidationError("run does not match an approved campaign")
@@ -1610,6 +1673,7 @@ def _write_run_file(path: Path, state: BaselineRunFile) -> None:
         V4_BASELINE_SCHEMA_VERSION,
         V5_BASELINE_SCHEMA_VERSION,
         V6_BASELINE_SCHEMA_VERSION,
+        V7_BASELINE_SCHEMA_VERSION,
     }:
         payload["run"].pop("response_parse_mode", None)
     _write_json_file(path, payload, "baseline")
@@ -1621,6 +1685,7 @@ def _write_campaign_file(path: Path, campaign: BaselineCampaignFile) -> None:
         V4_BASELINE_SCHEMA_VERSION,
         V5_BASELINE_SCHEMA_VERSION,
         V6_BASELINE_SCHEMA_VERSION,
+        V7_BASELINE_SCHEMA_VERSION,
     }:
         payload.pop("response_parse_mode", None)
     _write_json_file(path, payload, "campaign budget")

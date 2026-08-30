@@ -50,6 +50,12 @@ from app.ai.evaluation.live_baseline import (
     V6_BASELINE_SCHEMA_VERSION,
     V6_PROMPT_TEMPLATE_SHA256,
     V6_RESPONSE_PARSE_MODE,
+    V7_APPROVED_CAMPAIGN_ID,
+    V7_APPROVED_MODEL,
+    V7_BASELINE_PROMPT_VERSION,
+    V7_BASELINE_SCHEMA_VERSION,
+    V7_PROMPT_TEMPLATE_SHA256,
+    V7_RESPONSE_PARSE_MODE,
     approved_case_order_sha256,
     BaselineProviderFailure,
     BaselineResponseFailure,
@@ -78,6 +84,7 @@ def build_parser() -> argparse.ArgumentParser:
             V4_APPROVED_CAMPAIGN_ID,
             V5_APPROVED_CAMPAIGN_ID,
             V6_APPROVED_CAMPAIGN_ID,
+            V7_APPROVED_CAMPAIGN_ID,
         ),
         default=APPROVED_CAMPAIGN_ID,
     )
@@ -98,6 +105,7 @@ def main(argv: list[str] | None = None) -> int:
                 V4_APPROVED_CAMPAIGN_ID,
                 V5_APPROVED_CAMPAIGN_ID,
                 V6_APPROVED_CAMPAIGN_ID,
+                V7_APPROVED_CAMPAIGN_ID,
             }
             and settings.AI_DEFAULT_MODEL != APPROVED_MODEL
         ):
@@ -118,11 +126,14 @@ def main(argv: list[str] | None = None) -> int:
         is_v4 = arguments.campaign == V4_APPROVED_CAMPAIGN_ID
         is_v5 = arguments.campaign == V5_APPROVED_CAMPAIGN_ID
         is_v6 = arguments.campaign == V6_APPROVED_CAMPAIGN_ID
-        is_governed = is_v2 or is_v3 or is_v4 or is_v5 or is_v6
+        is_v7 = arguments.campaign == V7_APPROVED_CAMPAIGN_ID
+        is_governed = is_v2 or is_v3 or is_v4 or is_v5 or is_v6 or is_v7
         run = BaselineRunDescriptor.model_validate(
             {
                 "schema_version": (
-                    V6_BASELINE_SCHEMA_VERSION
+                    V7_BASELINE_SCHEMA_VERSION
+                    if is_v7
+                    else V6_BASELINE_SCHEMA_VERSION
                     if is_v6
                     else V5_BASELINE_SCHEMA_VERSION
                     if is_v5
@@ -139,7 +150,9 @@ def main(argv: list[str] | None = None) -> int:
                 "dataset_sha256": dataset.fingerprint_sha256,
                 "provider": APPROVED_PROVIDER,
                 "model": (
-                    V6_APPROVED_MODEL
+                    V7_APPROVED_MODEL
+                    if is_v7
+                    else V6_APPROVED_MODEL
                     if is_v6
                     else V5_APPROVED_MODEL
                     if is_v5
@@ -150,7 +163,9 @@ def main(argv: list[str] | None = None) -> int:
                     else APPROVED_MODEL
                 ),
                 "prompt_version": (
-                    V6_BASELINE_PROMPT_VERSION
+                    V7_BASELINE_PROMPT_VERSION
+                    if is_v7
+                    else V6_BASELINE_PROMPT_VERSION
                     if is_v6
                     else V5_BASELINE_PROMPT_VERSION
                     if is_v5
@@ -163,7 +178,9 @@ def main(argv: list[str] | None = None) -> int:
                     else BASELINE_PROMPT_VERSION
                 ),
                 "prompt_template_sha256": (
-                    V6_PROMPT_TEMPLATE_SHA256
+                    V7_PROMPT_TEMPLATE_SHA256
+                    if is_v7
+                    else V6_PROMPT_TEMPLATE_SHA256
                     if is_v6
                     else V5_PROMPT_TEMPLATE_SHA256
                     if is_v5
@@ -187,7 +204,9 @@ def main(argv: list[str] | None = None) -> int:
                     else None
                 ),
                 "response_parse_mode": (
-                    V6_RESPONSE_PARSE_MODE
+                    V7_RESPONSE_PARSE_MODE
+                    if is_v7
+                    else V6_RESPONSE_PARSE_MODE
                     if is_v6
                     else V5_RESPONSE_PARSE_MODE
                     if is_v5

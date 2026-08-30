@@ -2,9 +2,9 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "75b552139341265d0c07967255bac7fc72bf8023",
-    "source_commit_timestamp": "2026-08-30T16:16:47+07:00",
-    "source_tree_sha256": "93b7b9cc1fd0f84b42457d5cbeca00c8167719399af8d53994b9d4849e610b2d",
+    "source_commit": "7b09e5668722777f706be5b04aecf90ea1854ebe",
+    "source_commit_timestamp": "2026-08-30T18:13:25+07:00",
+    "source_tree_sha256": "b5d47ee00ae8c94b628658a5cee41fcc00ea40347464737e6e64f28cf2382518",
     "relevant_file_count": 468,
     "alembic_heads": [
       "a74c9d2e6f10"
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 438,
+    "backend_test_functions": 439,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -7223,196 +7223,201 @@
         "path": "tests/unit/test_ai_live_baseline.py",
         "tests": [
           {
-            "line": 291,
+            "line": 321,
             "markers": [],
             "name": "test_successful_attempt_requires_format_valid_flag"
           },
           {
-            "line": 356,
+            "line": 386,
             "markers": [],
             "name": "test_candidate_prompt_is_deterministic_and_separates_untrusted_sources"
           },
           {
-            "line": 370,
+            "line": 400,
             "markers": [],
             "name": "test_v2_prompt_is_deterministic_and_requires_refusal_plus_safe_continuation"
           },
           {
-            "line": 386,
+            "line": 416,
             "markers": [],
             "name": "test_v3_prompt_requires_silent_indirect_rejection_and_safe_completion"
           },
           {
-            "line": 401,
+            "line": 431,
             "markers": [],
             "name": "test_v5_prompt_requires_atomic_use_case_deliverables_and_bounded_refusal"
           },
           {
-            "line": 418,
+            "line": 448,
             "markers": [],
             "name": "test_v6_prompt_makes_question_and_refusal_contract_explicit"
           },
           {
-            "line": 429,
+            "line": 459,
             "markers": [],
             "name": "test_v6_collection_uses_new_campaign_binding_and_five_call_cap"
           },
           {
-            "line": 445,
+            "line": 475,
+            "markers": [],
+            "name": "test_v7_preserves_v6_prompt_and_staged_campaign_binding"
+          },
+          {
+            "line": 499,
             "markers": [],
             "name": "test_v5_collection_reuses_v4_extraction_and_raw_evidence"
           },
           {
-            "line": 469,
+            "line": 523,
             "markers": [],
             "name": "test_v5_failure_replay_order_precedes_remaining_canary_cases"
           },
           {
-            "line": 477,
+            "line": 531,
             "markers": [],
             "name": "test_v5_rejects_ten_call_plan_before_provider_spend"
           },
           {
-            "line": 498,
+            "line": 552,
             "markers": [],
             "name": "test_v5_requires_hash_bound_failure_replay_before_call_six"
           },
           {
-            "line": 540,
+            "line": 594,
             "markers": [],
             "name": "test_v5_rejects_failed_failure_replay_report_before_call_six"
           },
           {
-            "line": 572,
+            "line": 626,
             "markers": [],
             "name": "test_v5_rejects_future_run_reservation_after_valid_failure_replay"
           },
           {
-            "line": 605,
+            "line": 659,
             "markers": [],
             "name": "test_v4_parser_extracts_only_one_json_payload_before_strict_validation"
           },
           {
-            "line": 629,
+            "line": 683,
             "markers": [],
             "name": "test_v4_collection_uses_extraction_mode_and_preserves_raw_hash"
           },
           {
-            "line": 654,
+            "line": 708,
             "markers": [],
             "name": "test_legacy_run_storage_omits_v4_parse_metadata"
           },
           {
-            "line": 673,
+            "line": 727,
             "markers": [],
             "name": "test_v3_collection_reuses_the_ten_case_fail_closed_canary"
           },
           {
-            "line": 703,
+            "line": 757,
             "markers": [],
             "name": "test_v3_rejects_wrong_model_before_reserving_or_calling"
           },
           {
-            "line": 720,
+            "line": 774,
             "markers": [],
             "name": "test_v3_invalid_response_permanently_blocks_resume"
           },
           {
-            "line": 752,
+            "line": 806,
             "markers": [],
             "name": "test_v3_requires_passing_prior_run_evidence_before_run_two"
           },
           {
-            "line": 869,
+            "line": 923,
             "markers": [],
             "name": "test_v2_collection_is_hard_stopped_at_ten_calls_without_canary_report"
           },
           {
-            "line": 920,
+            "line": 974,
             "markers": [],
             "name": "test_v2_rejects_unattested_provider_policy_before_writing_or_calling"
           },
           {
-            "line": 939,
+            "line": 993,
             "markers": [],
             "name": "test_passing_canary_authorizes_first_run_resume_and_later_runs"
           },
           {
-            "line": 1052,
+            "line": 1106,
             "markers": [
               "parametrize"
             ],
             "name": "test_v2_rejects_wrong_upstream_or_incomplete_response"
           },
           {
-            "line": 1076,
+            "line": 1130,
             "markers": [],
             "name": "test_candidate_response_requires_the_exact_strict_envelope"
           },
           {
-            "line": 1089,
+            "line": 1143,
             "markers": [],
             "name": "test_collection_caps_calls_and_resume_never_repeats_a_case"
           },
           {
-            "line": 1131,
+            "line": 1185,
             "markers": [],
             "name": "test_collection_refuses_metadata_changes_before_calling_provider"
           },
           {
-            "line": 1159,
+            "line": 1213,
             "markers": [],
             "name": "test_provider_failure_is_sanitized_persisted_and_not_retried"
           },
           {
-            "line": 1196,
+            "line": 1250,
             "markers": [
               "parametrize"
             ],
             "name": "test_invalid_provider_response_is_terminal_and_not_counted_complete"
           },
           {
-            "line": 1232,
+            "line": 1286,
             "markers": [],
             "name": "test_campaign_rejects_a_different_self_consistent_approved_dataset"
           },
           {
-            "line": 1263,
+            "line": 1317,
             "markers": [],
             "name": "test_interrupted_attempt_and_concurrent_lock_fail_without_a_call"
           },
           {
-            "line": 1283,
+            "line": 1337,
             "markers": [],
             "name": "test_completed_baseline_is_an_idempotent_no_call"
           },
           {
-            "line": 1309,
+            "line": 1363,
             "markers": [],
             "name": "test_campaign_allows_only_the_three_approved_runs"
           },
           {
-            "line": 1352,
+            "line": 1406,
             "markers": [],
             "name": "test_cli_uses_canonical_paths_and_disables_sdk_retries"
           },
           {
-            "line": 1391,
+            "line": 1445,
             "markers": [],
             "name": "test_v2_cli_pins_routing_json_mode_and_ten_call_canary"
           },
           {
-            "line": 1434,
+            "line": 1488,
             "markers": [],
             "name": "test_v3_cli_uses_fixed_campaign_model_without_changing_default"
           },
           {
-            "line": 1469,
+            "line": 1523,
             "markers": [],
             "name": "test_v5_cli_uses_fixed_model_routing_parse_policy_and_call_cap"
           },
           {
-            "line": 1505,
+            "line": 1559,
             "markers": [
               "parametrize"
             ],
