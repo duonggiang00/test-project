@@ -44,7 +44,7 @@ Branch: `codex/rag-semantic-001-ci`
 | Backend manifest | 486 unit, 23 contract, 170 PostgreSQL integration passed; `reports/agent-workflow/rag-semantic-001-final-3/backend.json` |
 | Migration manifest | PostgreSQL 18/pgvector 0.8.6 upgrade/downgrade/upgrade passed; `reports/agent-workflow/rag-semantic-001-migration-final/migration.json` |
 | Coverage manifest | 170 backend integration and 182 frontend tests plus coverage policy passed; `reports/agent-workflow/rag-semantic-001-coverage-final/coverage.json` |
-| Mocked E2E manifest | 28/28 passed across Chromium, Firefox, WebKit, and mobile Chrome; `reports/agent-workflow/rag-semantic-001-e2e-mocked-final-3/e2e-mocked.json` |
+| Mocked E2E manifest | 28/28 passed across Chromium, Firefox, WebKit, and mobile Chrome; reviewed Linux baselines were refreshed from GitHub diagnostics; `reports/agent-workflow/rag-semantic-001-e2e-mocked-final-6/e2e-mocked.json` |
 | Real E2E manifest | 3/3 passed against the isolated PostgreSQL backend; `reports/agent-workflow/rag-semantic-001-e2e-real-final-2/e2e-real.json` |
 | Retrieval campaign | Hybrid hit rate 1.0, MRR 0.90625, source coverage 1.0, p95 782 ms, max query count 2; lexical baseline hit rate/source coverage 0.6875; exactly 17 requests/80 inputs with zero retries and no fallback; summary SHA-256 `5008250c185cc985223b3ed32e3c76aa91114301a0ad0095412bf3b68a68d1fd` |
 | Final fast manifest | 13/13 steps passed with `OPENROUTER_API_KEY` explicitly empty: 488 backend unit, 23 contract, 182 frontend unit, and production build; `reports/agent-workflow/rag-semantic-001-final-3/fast.json` |

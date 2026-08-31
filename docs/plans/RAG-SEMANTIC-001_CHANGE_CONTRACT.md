@@ -129,3 +129,7 @@ immediate lexical rollback mode.
 - The credential-free CI path is covered explicitly: campaign CLI success tests
   inject a test-only placeholder, missing-credential tests remain fail-closed,
   and the complete fast gate passes with `OPENROUTER_API_KEY` empty.
+- GitHub Linux visual diagnostics were manually reviewed across desktop/mobile
+  Chromium, Firefox, and WebKit before refreshing the affected rasterization and
+  intentional AI-review focus/toast baselines; the local four-browser matrix
+  then passed 28/28.
