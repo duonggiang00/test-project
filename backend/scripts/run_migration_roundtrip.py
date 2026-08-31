@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 OWNERSHIP_PREVIOUS_REVISION = "b57c9a14d2e8"
 SINGLE_CHOICE_PREVIOUS_REVISION = "ca82f9a51d44"
+RAG_PREVIOUS_REVISION = "a74c9d2e6f10"
 SOFT_DELETE_PREVIOUS_REVISION = "a83c1d7e9f02"
 GRADE_OVERRIDE_PREVIOUS_REVISION = "e7b21c9d4a83"
 GRADE_OVERRIDE_COLUMNS = ("override_reason", "overridden_at", "overridden_by_id")
@@ -40,7 +41,9 @@ MIGRATION_STAGES = (
         "upgrade",
         SINGLE_CHOICE_PREVIOUS_REVISION,
     ),
+    ("upgrade-rag-previous-head", "upgrade", RAG_PREVIOUS_REVISION),
     ("upgrade-head-1", "upgrade", "head"),
+    ("downgrade-rag-previous-head", "downgrade", RAG_PREVIOUS_REVISION),
     ("downgrade-base", "downgrade", "base"),
     ("upgrade-head-2", "upgrade", "head"),
 )
@@ -87,6 +90,21 @@ EXPECTED_QUESTION_TYPE_COLUMN = (
     False,
     "'MULTIPLE_CHOICE'::questiontype",
 )
+EXPECTED_RAG_INDEX_FRAGMENTS: dict[str, tuple[str, ...]] = {
+    "ix_document_chunks_material_id": ("document_chunks", "(material_id)"),
+    "ix_document_chunks_embedding_hnsw": (
+        "document_chunks",
+        "USING hnsw",
+        "embedding",
+        "vector_cosine_ops",
+    ),
+    "ix_document_chunks_content_fts": (
+        "document_chunks",
+        "USING gin",
+        "to_tsvector",
+        "content",
+    ),
+}
 AUDIT_MUTATION_FUNCTION = "prevent_audit_event_mutation"
 AUDIT_MUTATION_TRIGGER = "trg_audit_events_append_only"
 AUDIT_TRUNCATE_TRIGGER = "trg_audit_events_no_truncate"
@@ -1241,6 +1259,88 @@ def normalize_sql(definition: str) -> str:
     return " ".join(definition.split())
 
 
+def rag_embedding_type(cursor: PsycopgCursor) -> str | None:
+    cursor.execute(
+        """
+        SELECT format_type(attribute.atttypid, attribute.atttypmod)
+        FROM pg_attribute AS attribute
+        JOIN pg_class AS table_class ON table_class.oid = attribute.attrelid
+        JOIN pg_namespace ON pg_namespace.oid = table_class.relnamespace
+        WHERE pg_namespace.nspname = 'public'
+          AND table_class.relname = 'document_chunks'
+          AND attribute.attname = 'embedding'
+          AND NOT attribute.attisdropped
+        """
+    )
+    row = cursor.fetchone()
+    return row[0] if row else None
+
+
+def rag_index_definitions(cursor: PsycopgCursor) -> dict[str, str]:
+    cursor.execute(
+        """
+        SELECT index_class.relname, pg_get_indexdef(index_class.oid)
+        FROM pg_index
+        JOIN pg_class AS index_class ON index_class.oid = pg_index.indexrelid
+        JOIN pg_namespace ON pg_namespace.oid = index_class.relnamespace
+        WHERE pg_namespace.nspname = 'public'
+          AND index_class.relname = ANY(%s)
+        """,
+        (list(EXPECTED_RAG_INDEX_FRAGMENTS),),
+    )
+    return {row[0]: row[1] for row in cursor.fetchall()}
+
+
+def validate_rag_schema_state(
+    revision: str,
+    *,
+    embedding_type: str | None,
+    index_definitions: dict[str, str],
+) -> None:
+    if revision == "head":
+        if embedding_type != "vector(1536)":
+            raise RuntimeError(
+                "Unexpected document_chunks.embedding type at head: "
+                f"expected='vector(1536)' actual={embedding_type!r}"
+            )
+        if set(index_definitions) != set(EXPECTED_RAG_INDEX_FRAGMENTS):
+            raise RuntimeError(
+                "Unexpected RAG indexes at head: "
+                f"expected={sorted(EXPECTED_RAG_INDEX_FRAGMENTS)} "
+                f"actual={sorted(index_definitions)}"
+            )
+        for name, fragments in EXPECTED_RAG_INDEX_FRAGMENTS.items():
+            validate_definition_fragments(
+                object_kind="RAG index",
+                name=name,
+                definition=index_definitions[name],
+                expected_fragments=fragments,
+            )
+    elif revision == "base":
+        if embedding_type is not None or index_definitions:
+            raise RuntimeError(
+                "RAG schema remains at base: "
+                f"embedding_type={embedding_type!r} indexes={sorted(index_definitions)}"
+            )
+    else:
+        raise RuntimeError(f"Unsupported RAG schema assertion revision: {revision}")
+
+
+def assert_rag_previous_schema(manager: TestDatabaseManager) -> None:
+    connection = manager.connect_target()
+    try:
+        with connection.cursor() as cursor:
+            embedding_type = rag_embedding_type(cursor)
+            indexes = rag_index_definitions(cursor)
+    finally:
+        connection.close()
+    if embedding_type != "vector(1536)" or indexes:
+        raise RuntimeError(
+            "Unexpected RAG schema before semantic migration: "
+            f"embedding_type={embedding_type!r} indexes={sorted(indexes)}"
+        )
+
+
 def validate_definition_fragments(
     *,
     object_kind: str,
@@ -1562,6 +1662,8 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
                 cursor
             )
             grade_override_indexes = grade_override_index_definitions(cursor)
+            rag_embedding = rag_embedding_type(cursor)
+            rag_indexes = rag_index_definitions(cursor)
     finally:
         connection.close()
 
@@ -1603,6 +1705,11 @@ def assert_schema_state(manager: TestDatabaseManager, revision: str) -> None:
         column_definitions=grade_override_columns,
         foreign_key_definitions=grade_override_foreign_keys,
         index_definitions=grade_override_indexes,
+    )
+    validate_rag_schema_state(
+        revision,
+        embedding_type=rag_embedding,
+        index_definitions=rag_indexes,
     )
 
     print(
@@ -2220,6 +2327,10 @@ def main() -> int:
                 pre_migration_question_ids = seed_pre_migration_question_types(
                     manager
                 )
+                print(f"MIGRATION_STAGE_PASSED stage={stage_name}", flush=True)
+                continue
+            if revision == RAG_PREVIOUS_REVISION:
+                assert_rag_previous_schema(manager)
                 print(f"MIGRATION_STAGE_PASSED stage={stage_name}", flush=True)
                 continue
             assert_schema_state(manager, revision)

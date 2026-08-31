@@ -480,7 +480,6 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
     from app.core.config import settings
 
     monkeypatch.setattr(settings, "RAG_ENABLED", True)
-    monkeypatch.setattr(settings, "RAG_LEGACY_PROCESS_ENABLED", True)
     other_teacher = create_teacher(client, db)
     owned_material = StudyMaterial(
         uploader_id=test_teacher["id"],
@@ -564,6 +563,7 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
         "prompt_version": "chat_system-v1",
         "provider": "openrouter",
         "model": "meta-llama/llama-3.1-8b-instruct",
+        "retrieval_mode": "lexical",
         "context_source_ids": [str(owned_chunk.id)],
     }
     serialized_event = json.dumps(owner_chat_event.event_metadata)
@@ -604,35 +604,6 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
     assert missing_material_id.status_code == 422
     assert missing_material_id.json()["error_code"] == "VALIDATION_ERROR"
     assert len(provider_calls) == 1
-
-    foreign_chunk_count = db.scalar(
-        select(func.count(DocumentChunk.id)).where(
-            DocumentChunk.material_id == foreign_material.id
-        )
-    )
-    process_request_id = str(uuid.uuid4())
-    process_headers = {
-        **test_teacher["headers"],
-        "X-Request-ID": process_request_id,
-    }
-    cross_owner_process = client.post(
-        "/ai/process-document",
-        json={"material_id": str(foreign_material.id)},
-        headers=process_headers,
-    )
-    missing_process = client.post(
-        "/ai/process-document",
-        json={"material_id": str(uuid.uuid4())},
-        headers=process_headers,
-    )
-    assert cross_owner_process.status_code == missing_process.status_code == 404
-    assert cross_owner_process.json() == missing_process.json()
-    assert cross_owner_process.json()["error_code"] == "MATERIAL_NOT_FOUND"
-    assert db.scalar(
-        select(func.count(DocumentChunk.id)).where(
-            DocumentChunk.material_id == foreign_material.id
-        )
-    ) == foreign_chunk_count
 
     assert_cross_owner_matches_missing(
         client,

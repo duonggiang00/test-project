@@ -57,6 +57,16 @@ from app.ai.evaluation.baseline_canary import (
     validate_canary_resume,
     write_canary_report,
 )
+from app.ai.evaluation.rag_retrieval import (
+    RetrievalEvaluationError,
+    RetrievalMetrics,
+    RetrievalObservation,
+    RetrievalServiceCase,
+    RetrievalResult,
+    evaluate_retrieval,
+    evaluate_retrieval_service,
+    write_retrieval_report,
+)
 
 __all__ = [
     "GOLDEN_DATASET_SCHEMA_VERSION",
@@ -104,4 +114,12 @@ __all__ = [
     "load_canary_review_scores",
     "validate_canary_resume",
     "write_canary_report",
+    "RetrievalEvaluationError",
+    "RetrievalMetrics",
+    "RetrievalObservation",
+    "RetrievalServiceCase",
+    "RetrievalResult",
+    "evaluate_retrieval",
+    "evaluate_retrieval_service",
+    "write_retrieval_report",
 ]

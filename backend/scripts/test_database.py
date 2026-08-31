@@ -117,15 +117,13 @@ class TestDatabaseManager:
                         "SELECT 1 FROM pg_available_extensions WHERE name = %s",
                         ("vector",),
                     )
-                    if cursor.fetchone() is not None:
-                        cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
-                        print("TEST_DATABASE_EXTENSION_ENABLED name=vector", flush=True)
-                    else:
-                        print(
-                            "TEST_DATABASE_EXTENSION_SKIPPED "
-                            "name=vector reason=not-installed-on-server",
-                            flush=True,
+                    if cursor.fetchone() is None:
+                        raise RuntimeError(
+                            "Required PostgreSQL extension 'vector' is not installed "
+                            "on the local server"
                         )
+                    cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
+                    print("TEST_DATABASE_EXTENSION_ENABLED name=vector", flush=True)
             finally:
                 target_connection.close()
         except Exception:

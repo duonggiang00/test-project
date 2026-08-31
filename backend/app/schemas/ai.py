@@ -20,15 +20,3 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1, max_length=MAX_MESSAGES * 2)
 
     model_config = ConfigDict(extra="forbid")
-
-
-class ProcessDocumentRequest(BaseModel):
-    material_id: uuid.UUID
-
-    model_config = ConfigDict(extra="forbid")
-
-class ProcessDocumentResponse(BaseModel):
-    message: str
-    chunks_created: int
-
-    model_config = ConfigDict(from_attributes=True)

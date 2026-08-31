@@ -3,6 +3,6 @@
   "sqlalchemy_model_sha256": "303cca329cad54031f3c6931380f8e2d70e2641364ab84917ed92d75f287ea0c",
   "sqlalchemy_model_count": 19,
   "alembic_heads": [
-    "a74c9d2e6f10"
+    "b8c7d6e5f4a3"
   ]
 }

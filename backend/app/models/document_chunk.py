@@ -1,13 +1,11 @@
-from sqlalchemy import Column, Text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-from pgvector.sqlalchemy import Vector
-from app.db.base import Base
 import uuid
-from sqlalchemy.ext.compiler import compiles
 
-@compiles(Vector, 'postgresql')
-def compile_vector(element, compiler, **kw):
-    return "VARCHAR"
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import Column, ForeignKey, Text
+from sqlalchemy.dialects.postgresql import UUID
+
+from app.db.base import Base
+
 
 class DocumentChunk(Base):
     __tablename__ = "document_chunks"

@@ -90,6 +90,27 @@ class GenerateRequest:
 
 
 @dataclass(frozen=True)
+class EmbeddingRequest:
+    """Typed batch input for document or query embeddings."""
+
+    inputs: tuple[str, ...]
+    model: str
+    dimensions: int
+    input_type: Literal["search_document", "search_query"]
+
+
+@dataclass(frozen=True)
+class EmbeddingResult:
+    """Validated embedding vectors and safe provider telemetry."""
+
+    embeddings: list[list[float]]
+    provider: str
+    model: str
+    input_tokens: int | None
+    latency_ms: float
+
+
+@dataclass(frozen=True)
 class ProviderExecutionBinding:
     """Runtime-attested retry and routing policy for governed evaluations."""
 
@@ -124,4 +145,12 @@ class AIProvider(Protocol):
 
     def stream(self, request: GenerateRequest) -> AsyncIterator[StreamChunk]:
         """Run one streaming completion. Raises `AIProviderError`."""
+        ...
+
+
+class EmbeddingProvider(Protocol):
+    """Replaceable boundary for batched document and query embeddings."""
+
+    def embed(self, request: EmbeddingRequest) -> EmbeddingResult:
+        """Return one finite, fixed-size vector per input."""
         ...

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -45,9 +45,13 @@ class Settings(BaseSettings):
     # Material chat/retrieval is part of the active MVP surface. Operators can
     # still set this server-side flag to false as an emergency kill switch.
     RAG_ENABLED: bool = True
-    # Compatibility-only mock processing endpoint. Real uploads already use
-    # the governed extraction/chunking pipeline, so this remains opt-in.
-    RAG_LEGACY_PROCESS_ENABLED: bool = False
+    # Hybrid retrieval remains opt-in until AI-008 threshold approval and the
+    # RAG-SEMANTIC-001 retrieval evaluation both pass.
+    RAG_RETRIEVAL_MODE: Literal["lexical", "hybrid"] = "lexical"
+    AI_EMBEDDING_MODEL: str = "openai/text-embedding-3-small"
+    # The persisted pgvector column is fixed at 1536 dimensions. A different
+    # dimension requires an explicit migration rather than a runtime override.
+    AI_EMBEDDING_DIMENSIONS: Literal[1536] = 1536
 
     # Per-model token pricing for the §2.4 `estimated_cost` audit field
     # (AI-003), as a JSON object:

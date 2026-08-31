@@ -84,7 +84,7 @@ jobs:
 
     services:
       postgres:
-        image: pgvector/pgvector:0.8.2-pg16
+        image: pgvector/pgvector:0.8.6-pg18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -156,7 +156,7 @@ jobs:
 
     services:
       postgres:
-        image: pgvector/pgvector:0.8.2-pg16
+        image: pgvector/pgvector:0.8.6-pg18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -267,7 +267,7 @@ jobs:
 
     services:
       postgres:
-        image: pgvector/pgvector:0.8.2-pg16
+        image: pgvector/pgvector:0.8.6-pg18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

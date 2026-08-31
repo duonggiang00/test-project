@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.schemas.ai import ChatRequest, ProcessDocumentRequest, ProcessDocumentResponse
+from app.schemas.ai import ChatRequest
 from app.schemas.ai_generation import (
     AIGenerationJobResponse,
     PublishJobRequest,
@@ -32,31 +32,6 @@ def require_rag_enabled() -> None:
             error_code="FEATURE_NOT_AVAILABLE",
         )
 
-
-def require_legacy_rag_process_enabled() -> None:
-    """Keep the compatibility-only mock processor outside the active surface."""
-    if not settings.RAG_ENABLED or not settings.RAG_LEGACY_PROCESS_ENABLED:
-        raise AppException(
-            status_code=404,
-            error_code="FEATURE_NOT_AVAILABLE",
-        )
-
-@router.post(
-    "/process-document",
-    response_model=ProcessDocumentResponse,
-    dependencies=[Depends(require_legacy_rag_process_enabled)],
-)
-def process_document(
-    request: ProcessDocumentRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_teacher)
-):
-    chunks_created = AiStudioService.process_document(
-        db,
-        request.material_id,
-        current_user,
-    )
-    return ProcessDocumentResponse(message="Processed successfully", chunks_created=chunks_created)
 
 @router.post("/chat", dependencies=[Depends(require_rag_enabled)])
 async def chat(

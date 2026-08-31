@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
@@ -26,6 +27,8 @@ from openai import AsyncOpenAI, OpenAI
 
 from app.ai.provider import (
     AIProviderError,
+    EmbeddingRequest,
+    EmbeddingResult,
     GenerateRequest,
     GenerateResult,
     ProviderExecutionBinding,
@@ -160,6 +163,55 @@ class OpenRouterAdapter:
             )
         except Exception as exc:
             raise AIProviderError(sanitize_error(exc)) from exc
+
+    def embed(self, request: EmbeddingRequest) -> EmbeddingResult:
+        """Create one validated embedding per input through OpenRouter."""
+        if not request.inputs or any(not value.strip() for value in request.inputs):
+            raise AIProviderError("AI_OUTPUT_INVALID")
+
+        started = time.monotonic()
+        try:
+            extra_body: dict[str, object] = {"input_type": request.input_type}
+            if self._routing_policy is not None:
+                extra_body["provider"] = self._routing_policy.request_body()
+            response = self._sync_client.embeddings.create(
+                model=request.model,
+                input=list(request.inputs),
+                dimensions=request.dimensions,
+                encoding_format="float",
+                extra_body=extra_body,
+            )
+        except Exception as exc:
+            raise AIProviderError(sanitize_error(exc)) from exc
+
+        indices = [item.index for item in response.data]
+        expected_indices = list(range(len(request.inputs)))
+        if sorted(indices) != expected_indices or len(set(indices)) != len(indices):
+            raise AIProviderError("AI_OUTPUT_INVALID")
+        ordered = sorted(response.data, key=lambda item: item.index)
+        vectors = [list(item.embedding) for item in ordered]
+        if (
+            len(vectors) != len(request.inputs)
+            or response.model != request.model
+            or any(len(vector) != request.dimensions for vector in vectors)
+            or any(
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(float(value))
+                for vector in vectors
+                for value in vector
+            )
+        ):
+            raise AIProviderError("AI_OUTPUT_INVALID")
+
+        usage = getattr(response, "usage", None)
+        return EmbeddingResult(
+            embeddings=[[float(value) for value in vector] for vector in vectors],
+            provider=PROVIDER_NAME,
+            model=response.model,
+            input_tokens=getattr(usage, "prompt_tokens", None),
+            latency_ms=(time.monotonic() - started) * 1000,
+        )
 
     async def stream(self, request: GenerateRequest) -> AsyncIterator[StreamChunk]:
         """Run one streaming completion (used by the AI Studio chat endpoint)."""

@@ -12,7 +12,7 @@ import pytest
 
 from app.ai.openrouter_adapter import OpenRouterAdapter, OpenRouterRoutingPolicy
 from app.ai.evaluation.live_baseline import V2_ROUTING_POLICY_SHA256
-from app.ai.provider import AIProviderError, GenerateRequest
+from app.ai.provider import AIProviderError, EmbeddingRequest, GenerateRequest
 
 
 def _adapter(
@@ -352,6 +352,129 @@ def test_generate_raises_provider_error_on_rate_limit():
         )
 
     assert excinfo.value.error_code == "AI_RATE_LIMIT_EXCEEDED"
+
+
+@pytest.mark.unit
+def test_embed_sends_exact_batch_policy_and_returns_typed_vectors():
+    sent_body = {}
+
+    def handler(request):
+        sent_body.update(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "model": "openai/text-embedding-3-small",
+                "data": [
+                    {"object": "embedding", "index": 1, "embedding": [0.3, 0.4]},
+                    {"object": "embedding", "index": 0, "embedding": [0.1, 0.2]},
+                ],
+                "usage": {"prompt_tokens": 7, "total_tokens": 7},
+            },
+        )
+
+    adapter = _adapter(
+        sync_handler=handler,
+        max_retries=0,
+        routing_policy=OpenRouterRoutingPolicy(
+            only=("openai",),
+            allow_fallbacks=False,
+            require_parameters=True,
+            data_collection="deny",
+        ),
+    )
+    result = adapter.embed(
+        EmbeddingRequest(
+            inputs=("first", "second"),
+            model="openai/text-embedding-3-small",
+            dimensions=2,
+            input_type="search_document",
+        )
+    )
+
+    assert sent_body == {
+        "input": ["first", "second"],
+        "model": "openai/text-embedding-3-small",
+        "encoding_format": "float",
+        "dimensions": 2,
+        "input_type": "search_document",
+        "provider": {
+            "only": ["openai"],
+            "allow_fallbacks": False,
+            "require_parameters": True,
+            "data_collection": "deny",
+        },
+    }
+    assert result.embeddings == [[0.1, 0.2], [0.3, 0.4]]
+    assert result.provider == "openrouter"
+    assert result.model == "openai/text-embedding-3-small"
+    assert result.input_tokens == 7
+    assert result.latency_ms >= 0
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "vectors",
+    (
+        [[0.1]],
+        [[0.1, float("nan")]],
+        [[0.1, 0.2], [0.3, 0.4]],
+    ),
+)
+def test_embed_rejects_invalid_provider_vectors(vectors):
+    def handler(request):
+        return httpx.Response(
+            200,
+            content=json.dumps(
+                {
+                    "object": "list",
+                    "model": "embedding-model",
+                    "data": [
+                        {"object": "embedding", "index": index, "embedding": vector}
+                        for index, vector in enumerate(vectors)
+                    ],
+                    "usage": {"prompt_tokens": 1, "total_tokens": 1},
+                },
+                allow_nan=True,
+            ).encode(),
+            headers={"content-type": "application/json"},
+        )
+
+
+@pytest.mark.unit
+def test_embed_rejects_non_contiguous_provider_indexes():
+    def handler(request):
+        return httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "model": "embedding-model",
+                "data": [
+                    {"object": "embedding", "index": 0, "embedding": [0.1, 0.2]},
+                    {"object": "embedding", "index": 0, "embedding": [0.3, 0.4]},
+                ],
+            },
+        )
+
+    with pytest.raises(AIProviderError, match="AI_OUTPUT_INVALID"):
+        _adapter(sync_handler=handler, max_retries=0).embed(
+            EmbeddingRequest(
+                inputs=("first", "second"),
+                model="embedding-model",
+                dimensions=2,
+                input_type="search_document",
+            )
+        )
+
+    with pytest.raises(AIProviderError, match="AI_OUTPUT_INVALID"):
+        _adapter(sync_handler=handler, max_retries=0).embed(
+            EmbeddingRequest(
+                inputs=("query",),
+                model="embedding-model",
+                dimensions=2,
+                input_type="search_query",
+            )
+        )
 
 
 @pytest.mark.unit

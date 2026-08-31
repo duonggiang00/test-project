@@ -230,6 +230,26 @@ async def test_chat_generator_sends_the_resolved_model_and_the_three_tools():
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+async def test_chat_generator_emits_only_retrieved_source_ids_before_text():
+    owner, material, chunks = _owner_and_material()
+    chunks[0].id = uuid4()
+    db = FakeSession(chunks)
+    provider = FakeStreamProvider(chunks=[StreamChunk(text="ok")])
+
+    events = await _collect(
+        AiStudioService.chat_generator(
+            db, material, [{"role": "user", "content": "xin chào"}], owner, provider=provider
+        )
+    )
+
+    assert json.loads(events[0][len("data: ") : -2]) == {
+        "sources": [{"id": str(chunks[0].id)}]
+    }
+    assert json.loads(events[1][len("data: ") : -2]) == {"text": "ok"}
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
 async def test_chat_generator_still_blocks_prompt_injection_before_calling_the_provider():
     owner, material, chunks = _owner_and_material()
     db = FakeSession(chunks)

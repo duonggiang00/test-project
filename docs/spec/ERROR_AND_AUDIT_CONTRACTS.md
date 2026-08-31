@@ -160,10 +160,14 @@ AI audit events may include:
   "estimated_cost": "0.0123",
   "latency_ms": 1840,
   "context_source_ids": ["material-id"],
+  "retrieval_mode": "lexical",
   "reviewer_id": "user-id",
   "review_outcome": "approved"
 }
 ```
+
+Material-chat events may include `retrieval_mode` with the value `lexical` or
+`hybrid`; it is a safe execution-mode label and never contains retrieved text.
 
 Raw prompts and retrieved content are sensitive payloads. If stored, they must use restricted storage, redaction, access control, and a separately approved retention policy. The core audit record should prefer prompt version and safe references over duplicating raw sensitive content.
 
@@ -206,4 +210,3 @@ IP address and user-agent collection, if introduced, must have a documented purp
 - Admin overrides record both actor and original owner.
 - Secrets and tokens do not appear in serialized audit data.
 - AI audit records contain the approved metadata without leaking sensitive raw provider errors.
-

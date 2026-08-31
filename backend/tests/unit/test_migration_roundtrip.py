@@ -649,6 +649,7 @@ def test_cleanup_runs_when_schema_assertion_fails(monkeypatch):
         "seed_pre_migration_question_types",
         lambda _manager: {},
     )
+    monkeypatch.setattr(migration_runner, "assert_rag_previous_schema", lambda _manager: None)
 
     def fail_assertion(*args, **kwargs):
         raise RuntimeError("schema mismatch")

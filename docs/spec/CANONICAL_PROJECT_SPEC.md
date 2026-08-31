@@ -297,13 +297,17 @@ versions or semantic changes require a new owner/admin approval.
 - Both flags remain available as emergency kill switches. The backend flag is
   authoritative and must fail closed before authentication, retrieval, or
   provider work when disabled.
-- The compatibility-only mock `/ai/process-document` route remains disabled by
-  default through `RAG_LEGACY_PROCESS_ENABLED=false`; real material uploads use
-  the governed extraction and chunk-persistence path.
+- The compatibility-only mock `/ai/process-document` route is removed; real
+  material uploads use the governed extraction, embedding, and chunk-persistence
+  path.
+- Lexical retrieval remains the default through `RAG_RETRIEVAL_MODE=lexical`;
+  hybrid vector retrieval is an explicit, evaluated opt-in.
 - Upload, content extraction, document chunk persistence, question generation,
   flashcard generation, topic-brief generation, and human review remain active.
 - Retrieval remains owner-scoped, audited, redacted according to the restricted
   payload policy, and protected by the existing prompt-injection guardrails.
+- Chat streams a sanitized `sources` event containing retrieved chunk IDs only;
+  document text and provider payloads are never emitted as source metadata.
 
 ## 10. Testing and CI
 

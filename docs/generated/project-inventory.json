@@ -2,22 +2,22 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "25c399ebaf2704638fe3e7f2ee7faec6d5841cb7",
-    "source_commit_timestamp": "2026-08-30T18:57:05+07:00",
-    "source_tree_sha256": "b1f6f3752690cbe7147ca97cc4660024a6b777251a911208b4ebdb5113d95b3d",
-    "relevant_file_count": 468,
+    "source_commit": "fbf0c7662f67e3a82aa438d301452a0d339866d6",
+    "source_commit_timestamp": "2026-08-31T00:12:25+07:00",
+    "source_tree_sha256": "0a31924e8a6a44f645e3e3cf42e676be09554d2ff2338b39315b563e0280cbd6",
+    "relevant_file_count": 475,
     "alembic_heads": [
-      "a74c9d2e6f10"
+      "b8c7d6e5f4a3"
     ]
   },
   "summary": {
     "sqlalchemy_models": 19,
-    "pydantic_schemas": 81,
-    "fastapi_routes": 75,
+    "pydantic_schemas": 79,
+    "fastapi_routes": 74,
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 442,
+    "backend_test_functions": 458,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -1835,33 +1835,6 @@
             "name": "messages",
             "required": true,
             "type": "list"
-          }
-        ],
-        "module": "app.schemas.ai"
-      },
-      {
-        "class": "ProcessDocumentRequest",
-        "fields": [
-          {
-            "name": "material_id",
-            "required": true,
-            "type": "UUID"
-          }
-        ],
-        "module": "app.schemas.ai"
-      },
-      {
-        "class": "ProcessDocumentResponse",
-        "fields": [
-          {
-            "name": "message",
-            "required": true,
-            "type": "str"
-          },
-          {
-            "name": "chunks_created",
-            "required": true,
-            "type": "int"
           }
         ],
         "module": "app.schemas.ai"
@@ -4319,22 +4292,6 @@
         "dependencies": [
           "app.api.deps.get_current_active_teacher",
           "app.api.deps.get_current_user",
-          "app.api.endpoints.ai_studio.require_legacy_rag_process_enabled",
-          "app.db.session.get_db",
-          "fastapi.security.oauth2.OAuth2PasswordBearer"
-        ],
-        "endpoint": "app.api.endpoints.ai_studio.process_document",
-        "methods": [
-          "POST"
-        ],
-        "name": "process_document",
-        "path": "/ai/process-document",
-        "response_model": "ProcessDocumentResponse"
-      },
-      {
-        "dependencies": [
-          "app.api.deps.get_current_active_teacher",
-          "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
@@ -5703,31 +5660,36 @@
         "path": "tests/contract/test_rag_feature_flag.py",
         "tests": [
           {
-            "line": 13,
+            "line": 15,
             "markers": [],
             "name": "test_rag_is_enabled_by_default"
           },
           {
-            "line": 34,
+            "line": 31,
             "markers": [
               "parametrize"
             ],
             "name": "test_disabled_rag_routes_fail_before_authentication"
           },
           {
-            "line": 64,
+            "line": 57,
             "markers": [
               "parametrize"
             ],
             "name": "test_enabled_rag_routes_require_authentication"
           },
           {
-            "line": 79,
+            "line": 71,
             "markers": [],
-            "name": "test_legacy_process_route_remains_disabled_by_default"
+            "name": "test_hybrid_unauthorized_material_stops_before_retrieval"
           },
           {
-            "line": 113,
+            "line": 108,
+            "markers": [],
+            "name": "test_legacy_process_route_is_removed_from_the_api_surface"
+          },
+          {
+            "line": 139,
             "markers": [
               "parametrize"
             ],
@@ -5928,12 +5890,7 @@
         "path": "tests/test_ai_studio.py",
         "tests": [
           {
-            "line": 17,
-            "markers": [],
-            "name": "test_process_document"
-          },
-          {
-            "line": 43,
+            "line": 11,
             "markers": [],
             "name": "test_chat_prompt_injection"
           }
@@ -6130,12 +6087,12 @@
             "name": "test_ai_chat_context_is_limited_to_the_authorized_material"
           },
           {
-            "line": 646,
+            "line": 617,
             "markers": [],
             "name": "test_ai_chat_rejects_student_and_inactive_actor_before_provider"
           },
           {
-            "line": 690,
+            "line": 661,
             "markers": [],
             "name": "test_ai_chat_admin_cross_owner_access_persists_both_audit_events"
           }
@@ -6888,6 +6845,26 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_ai_document_ingestion.py",
+        "tests": [
+          {
+            "line": 52,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_uploaded_document_chunks_are_embedded_in_one_batch"
+          },
+          {
+            "line": 94,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_oversized_document_batch_fails_before_provider_call"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_evaluation_runner.py",
         "tests": [
           {
@@ -7555,7 +7532,29 @@
             "name": "test_generate_raises_provider_error_on_rate_limit"
           },
           {
-            "line": 359,
+            "line": 358,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embed_sends_exact_batch_policy_and_returns_typed_vectors"
+          },
+          {
+            "line": 424,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_embed_rejects_invalid_provider_vectors"
+          },
+          {
+            "line": 445,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embed_rejects_non_contiguous_provider_indexes"
+          },
+          {
+            "line": 482,
             "markers": [
               "asyncio",
               "unit"
@@ -7563,7 +7562,7 @@
             "name": "test_stream_raises_provider_error_on_timeout"
           },
           {
-            "line": 381,
+            "line": 504,
             "markers": [
               "asyncio",
               "unit"
@@ -7622,10 +7621,18 @@
               "asyncio",
               "unit"
             ],
+            "name": "test_chat_generator_emits_only_retrieved_source_ids_before_text"
+          },
+          {
+            "line": 253,
+            "markers": [
+              "asyncio",
+              "unit"
+            ],
             "name": "test_chat_generator_still_blocks_prompt_injection_before_calling_the_provider"
           },
           {
-            "line": 259,
+            "line": 279,
             "markers": [
               "asyncio",
               "unit"
@@ -7870,6 +7877,11 @@
             "line": 73,
             "markers": [],
             "name": "test_explicit_test_database_url_overrides_the_derived_target"
+          },
+          {
+            "line": 85,
+            "markers": [],
+            "name": "test_rag_retrieval_and_embedding_policy_is_strict"
           }
         ],
         "tier": "unit"
@@ -8455,6 +8467,81 @@
             "line": 4,
             "markers": [],
             "name": "test_fill_in_blank_prompt_uses_the_canonical_placeholder_contract"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_rag_retrieval_evaluation.py",
+        "tests": [
+          {
+            "line": 26,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_retrieval_evaluation_is_deterministic_and_content_free"
+          },
+          {
+            "line": 51,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_retrieval_evaluation_rejects_duplicate_sources"
+          },
+          {
+            "line": 61,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_retrieval_service_evaluation_uses_production_service_and_counts_queries"
+          },
+          {
+            "line": 103,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_retrieval_service_evaluation_rejects_tampered_chunk_mapping"
+          },
+          {
+            "line": 136,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_cli_requires_exact_approved_rag_case_set_and_fingerprint"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_rag_retrieval_service.py",
+        "tests": [
+          {
+            "line": 41,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_lexical_retrieval_is_material_scoped_and_does_not_call_embeddings"
+          },
+          {
+            "line": 58,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_lexical_retrieval_rolls_back_to_latest_chunks_for_no_query"
+          },
+          {
+            "line": 71,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_hybrid_retrieval_fuses_ranks_and_calls_embedding_once"
+          },
+          {
+            "line": 92,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_invalid_retrieval_mode_fails_closed_before_database_access"
           }
         ],
         "tier": "unit"

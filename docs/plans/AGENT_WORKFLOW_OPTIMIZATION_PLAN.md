@@ -66,14 +66,14 @@ Milestones 1 and 2 may partially overlap. Feature development may resume under t
 
 ### 3.1 Current open work
 
-Verified on 2026-08-31, the milestone tables contain 96 `DONE`, 1 `TODO`,
-1 `REVIEW`, 1 `SUPERSEDED`, and no `BLOCKED`, `IN_PROGRESS`, or `DEFERRED`
+Verified on 2026-08-31, the milestone tables contain 96 `DONE`, 1 `REVIEW`,
+1 `IN_PROGRESS`, 1 `SUPERSEDED`, and no `TODO`, `BLOCKED`, or `DEFERRED`
 tasks. The remaining work is:
 
 | Category | IDs | Current evidence | Completion condition |
 |---|---|---|---|
 | Remaining AI evaluation | AI-008 | V8 achieved 120/120 valid envelopes, 3/3 hard-gate runs, 24/24 safe continuations, and 3/3 required refusals. | Owner approves or revises the proposed quality, safety, latency, token, schedule, and inactive-cost thresholds; then implement and independently review the CI workflow. |
-| Semantic retrieval | RAG-SEMANTIC-001 | Active chat remains keyword/last-chunk retrieval; local PostgreSQL does not yet provide pgvector. | Install/verify pgvector, pass evaluation gates, implement hybrid retrieval with lexical rollback, and remove the approved legacy endpoint. |
+| Semantic retrieval | RAG-SEMANTIC-001 | Typed embedding ingestion, real `vector(1536)` model mapping, fail-closed migration, lexical/hybrid RRF service, source events, evaluator, legacy endpoint removal, OpenAPI/inventory reconciliation, and compact fast gate are implemented. PostgreSQL migration execution is still unverified because local pgvector is not installed. | Verify migration/indexes on PostgreSQL 18 + pgvector 0.8.6, run retrieval evaluation and full affected gates, complete independent L3 review, then activate semantic mode only after threshold approval. |
 
 ## 4. Milestone 0 — Durable specification and plan
 
@@ -290,7 +290,7 @@ Goal: Ensure AI output is reviewable, tenant-safe, measurable, and regression-te
 | AI-009 | Verify AI grading remains advisory until teacher/admin approval | DONE | AI-002, AI-007 | `AIGradeSuggestion` starts `awaiting_review` and its creation cannot change awarded points, submission totals, or result release; the existing deterministic `GradingService` is untouched and not reclassified. No AI grading exists yet, so the invariant is established ahead of it rather than retrofitted |
 | AI-RAG-HIDE-001 | Temporarily disable RAG/material chat while preserving content generation | SUPERSEDED | AI-001–005 | Implemented and verified, then superseded by the owner's 2026-08-25 decision to return RAG/material chat to the active MVP surface; retained as historical evidence |
 | AI-RAG-ENABLE-001 | Re-enable owner-scoped RAG/material chat by default | DONE | AI-001–005 | Material chat defaults are active while the backend-authoritative kill switch, default-disabled legacy mock processor, strict message-role contract, owner-scoped retrieval, audit metadata, prompt-injection handling, sanitized errors, and BFF transport remain; fast passes 495 tests plus build, full guarded PostgreSQL passes 171/171, capped live provider smoke passes, and independent L3 review reports no remaining P1/P2 |
-| RAG-SEMANTIC-001 | Replace lexical-only retrieval with evaluated pgvector hybrid retrieval | TODO | AI-006–008 | Typed embeddings, pgvector storage/indexing, vector-plus-full-text reciprocal-rank fusion, source events, lexical rollback, and approved `/ai/process-document` removal pass safety/quality thresholds before semantic mode becomes default |
+| RAG-SEMANTIC-001 | Replace lexical-only retrieval with evaluated pgvector hybrid retrieval | IN_PROGRESS | AI-006–008 | L3 contract and live survey are complete. Typed embeddings, pgvector storage/indexing, vector-plus-full-text reciprocal-rank fusion, source events, lexical rollback, and approved `/ai/process-document` removal must pass safety/quality thresholds before semantic mode becomes default |
 
 Exit criteria:
 
@@ -425,6 +425,7 @@ If the environment cannot execute a required check, the task remains `BLOCKED` o
 | 2026-08-30 | AI-008 v3 minimal remediation | Blocked | Reused the governed v2 workflow, upgraded the evaluation-only model to Llama 3.3 70B, strengthened safe-task continuation, and added exact 40/80-call evidence gates. Independent pre-call review closed ledger and run-gate bypasses. The live canary stopped after 5/120 calls when `qgen-006` failed the strict JSON envelope; no retry or later call occurred. No thresholds were proposed or enabled. See `AI-008_V3_CHANGE_CONTRACT.md` and `../handoffs/AI-008-V3-REMEDIATION.md`. |
 | 2026-08-30 | AI-008 v4 deterministic envelope recovery | Blocked | Added a separately bound V4 parse policy using the existing JSON extractor plus strict envelope validation, multiple-payload fail-closed checks, raw-response hash evidence, and legacy serialization compatibility. Independent L3 review approved the implementation. The live canary stopped permanently at exactly 10/120 calls: format 10/10, citations 10/10, injection resistance 8/8, safe continuation 5/8, and required refusal 0/1. No 40-call gate or later call occurred; no thresholds were proposed or enabled. See `AI-008_V4_CHANGE_CONTRACT.md` and `../handoffs/AI-008-V4-REMEDIATION.md`. |
 | 2026-08-31 | AI-008 v5-v8 governed remediation | Review | Preserved every terminal V1-V7 result and introduced V8 with stronger instruction following while leaving production policy unchanged. V8 passed the 5/10-call canaries and completed exactly 120 calls: 120/120 valid envelopes, 3/3 hard-gate runs, 24/24 safe continuations, and 3/3 required refusals. The owner threshold packet is ready; no CI threshold is enabled pending explicit approval. See `AI-008_BASELINE_AND_THRESHOLD_PACKET.md` and `../handoffs/AI-008-V8-ACCEPTANCE.md`. |
+| 2026-08-31 | RAG-SEMANTIC-001 implementation wave | In progress | Added typed OpenRouter embeddings, bounded upload ingestion, real pgvector mapping, fail-closed extension migration with HNSW/FTS indexes, owner-scoped lexical/hybrid RRF retrieval, sanitized source events, production-service retrieval evaluator/CLI, approved legacy-route removal, CI PostgreSQL 18/pgvector 0.8.6 alignment, and regenerated contracts/inventory. Focused checks pass 35/35; backend unit/contract passes 500; fast passes 13/13; independent L3 review is approved. The isolated migration gate correctly stops at the missing local `vector` extension and must be rerun on pgvector-enabled PostgreSQL. |
 
 ## 18. Known program risks
 
