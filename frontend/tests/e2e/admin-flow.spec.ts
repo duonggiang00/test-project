@@ -511,12 +511,12 @@ test('admin flow: create and delete topic, exam, and question (MOCKED)', {
   ]);
 
   // Assign an existing question from the Topic-scoped Question Bank.
-  await page.getByRole('tab', { name: 'Ngân Hàng Câu Hỏi' }).click();
+  await page.getByRole('tab', { name: 'Question Bank' }).click();
   const bankQuestion = page.getByTestId('question-bank-item-bank-question-id');
   await expect(bankQuestion).toContainText('Which tool runs browser tests?');
   await bankQuestion.getByRole('checkbox', { name: 'Select question: Which tool runs browser tests?' }).check();
-  await page.getByRole('button', { name: 'Thêm vào Bài thi (1)' }).click();
-  await page.getByRole('tab', { name: /Câu Hỏi Đề Thi/ }).click();
+  await page.getByRole('button', { name: 'Add to Exam (1)' }).click();
+  await page.getByRole('tab', { name: /Exam Questions/ }).click();
   await expect(page.getByText('What is Playwright?')).toBeVisible();
   await expect(page.getByText('Which tool runs browser tests?')).toBeVisible();
 

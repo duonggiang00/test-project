@@ -24,8 +24,8 @@ export default function ForgotPasswordPage() {
       await forgotPassword(email);
       setIsSuccess(true);
       toast.add({
-        title: "Thành công",
-        description: "Đã gửi yêu cầu khôi phục mật khẩu.",
+        title: "Request sent",
+        description: "Password recovery instructions have been requested.",
         type: "success"
       });
     } catch (error) {
@@ -46,9 +46,9 @@ export default function ForgotPasswordPage() {
     <div className="flex h-screen w-full items-center justify-center bg-white text-black px-4 font-mono">
       <Card className="w-full max-w-md border-4 border-black rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] bg-white text-black">
         <CardHeader className="space-y-2 text-center border-b-4 border-black pb-6">
-          <CardTitle className="text-2xl font-mono tracking-widest uppercase font-bold text-black">Quên Mật Khẩu</CardTitle>
+          <CardTitle className="text-2xl font-mono tracking-widest uppercase font-bold text-black">Forgot Password</CardTitle>
           <CardDescription className="font-mono text-black uppercase">
-            Nhập email của bạn để nhận link khôi phục
+            Enter your email to receive a recovery link
           </CardDescription>
         </CardHeader>
         {!isSuccess ? (
@@ -75,11 +75,11 @@ export default function ForgotPasswordPage() {
                 type="submit" 
                 disabled={isLoading} 
               >
-                {isLoading ? "Đang xử lý..." : "Gửi Yêu Cầu"}
+                {isLoading ? "Processing..." : "Send Request"}
               </Button>
               <div className="text-center w-full mt-2">
                 <Link href="/login" className="text-sm font-bold font-mono uppercase text-black hover:underline underline-offset-4">
-                  Quay lại đăng nhập
+                  Back to sign in
                 </Link>
               </div>
             </CardFooter>
@@ -87,13 +87,13 @@ export default function ForgotPasswordPage() {
         ) : (
           <CardContent className="pt-6 space-y-6">
             <p className="text-center font-bold text-black uppercase">
-              Vui lòng kiểm tra email của bạn để nhận link đổi mật khẩu. (Môi trường Dev: Xem Terminal Backend)
+              Check your email for a password reset link. In development, inspect the backend terminal.
             </p>
             <Button 
               className="w-full border-4 border-black rounded-none shadow-[4px_4px_0_0_rgba(0,0,0,1)] font-mono tracking-widest uppercase font-bold bg-black text-white hover:bg-white hover:text-black transition-colors"
               onClick={() => router.push("/login")}
             >
-              Quay lại đăng nhập
+              Back to sign in
             </Button>
           </CardContent>
         )}

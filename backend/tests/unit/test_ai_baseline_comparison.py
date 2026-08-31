@@ -1,0 +1,491 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+import pytest
+
+from app.ai.evaluation.baseline_comparison import (
+    APPROVED_JUDGE_VERSION,
+    BaselineComparison,
+    BaselineComparisonError,
+    compare_baselines,
+    write_baseline_comparison,
+)
+from app.ai.evaluation.baseline_review import prepare_reviewed_observations
+from app.ai.evaluation.live_baseline import (
+    APPROVED_RUN_IDS,
+    V2_APPROVED_CAMPAIGN_ID,
+    V2_RESPONSE_FORMAT,
+    V2_ROUTING_POLICY_SHA256,
+    V3_APPROVED_CAMPAIGN_ID,
+    V3_APPROVED_MODEL,
+    V3_BASELINE_PROMPT_VERSION,
+    V3_BASELINE_SCHEMA_VERSION,
+    V3_PROMPT_TEMPLATE_SHA256,
+    V5_APPROVED_CAMPAIGN_ID,
+    V5_APPROVED_MODEL,
+    V5_BASELINE_PROMPT_VERSION,
+    V5_BASELINE_SCHEMA_VERSION,
+    V5_PROMPT_TEMPLATE_SHA256,
+    V5_RESPONSE_PARSE_MODE,
+    V8_APPROVED_CAMPAIGN_ID,
+    V8_APPROVED_MODEL,
+    V8_BASELINE_PROMPT_VERSION,
+    V8_BASELINE_SCHEMA_VERSION,
+    V8_PROMPT_TEMPLATE_SHA256,
+    V8_RESPONSE_PARSE_MODE,
+    V8_ROUTING_POLICY_SHA256,
+    BaselineRunFile,
+    approved_case_order_sha256,
+)
+from app.ai.evaluation.runner import (
+    EvaluationObservation,
+    EvaluationReport,
+    EvaluationRunDescriptor,
+    evaluate_dataset,
+)
+from tests.unit.test_ai_baseline_review import _baseline, _dataset, _reviews
+
+
+def _candidates(tmp_path: Path) -> list[BaselineRunFile]:
+    first = _baseline(tmp_path)
+    return [
+        BaselineRunFile.model_validate(
+            first.model_copy(
+                update={"run": first.run.model_copy(update={"run_id": run_id})}
+            ).model_dump(mode="python")
+        )
+        for run_id in APPROVED_RUN_IDS
+    ]
+
+
+def _v3_candidates(tmp_path: Path) -> list[BaselineRunFile]:
+    dataset = _dataset()
+    return [
+        BaselineRunFile.model_validate(
+            candidate.model_copy(
+                update={
+                    "schema_version": V3_BASELINE_SCHEMA_VERSION,
+                    "run": candidate.run.model_copy(
+                        update={
+                            "schema_version": V3_BASELINE_SCHEMA_VERSION,
+                            "campaign_id": V3_APPROVED_CAMPAIGN_ID,
+                            "model": V3_APPROVED_MODEL,
+                            "prompt_version": V3_BASELINE_PROMPT_VERSION,
+                            "prompt_template_sha256": V3_PROMPT_TEMPLATE_SHA256,
+                            "response_format": V2_RESPONSE_FORMAT,
+                            "routing_policy_sha256": V2_ROUTING_POLICY_SHA256,
+                            "case_order_sha256": approved_case_order_sha256(
+                                dataset, V3_APPROVED_CAMPAIGN_ID
+                            ),
+                        }
+                    ),
+                }
+            ).model_dump(mode="python")
+        )
+        for candidate in _candidates(tmp_path)
+    ]
+
+
+def _v5_candidates(tmp_path: Path) -> list[BaselineRunFile]:
+    dataset = _dataset()
+    return [
+        BaselineRunFile.model_validate(
+            candidate.model_copy(
+                update={
+                    "schema_version": V5_BASELINE_SCHEMA_VERSION,
+                    "run": candidate.run.model_copy(
+                        update={
+                            "schema_version": V5_BASELINE_SCHEMA_VERSION,
+                            "campaign_id": V5_APPROVED_CAMPAIGN_ID,
+                            "model": V5_APPROVED_MODEL,
+                            "prompt_version": V5_BASELINE_PROMPT_VERSION,
+                            "prompt_template_sha256": V5_PROMPT_TEMPLATE_SHA256,
+                            "response_format": V2_RESPONSE_FORMAT,
+                            "routing_policy_sha256": V2_ROUTING_POLICY_SHA256,
+                            "case_order_sha256": approved_case_order_sha256(
+                                dataset, V5_APPROVED_CAMPAIGN_ID
+                            ),
+                            "response_parse_mode": V5_RESPONSE_PARSE_MODE,
+                        }
+                    ),
+                }
+            ).model_dump(mode="python")
+        )
+        for candidate in _candidates(tmp_path)
+    ]
+
+
+def _v8_candidates(tmp_path: Path) -> list[BaselineRunFile]:
+    dataset = _dataset()
+    return [
+        BaselineRunFile.model_validate(
+            candidate.model_copy(
+                update={
+                    "schema_version": V8_BASELINE_SCHEMA_VERSION,
+                    "run": candidate.run.model_copy(
+                        update={
+                            "schema_version": V8_BASELINE_SCHEMA_VERSION,
+                            "campaign_id": V8_APPROVED_CAMPAIGN_ID,
+                            "model": V8_APPROVED_MODEL,
+                            "prompt_version": V8_BASELINE_PROMPT_VERSION,
+                            "prompt_template_sha256": V8_PROMPT_TEMPLATE_SHA256,
+                            "response_format": V2_RESPONSE_FORMAT,
+                            "routing_policy_sha256": V8_ROUTING_POLICY_SHA256,
+                            "case_order_sha256": approved_case_order_sha256(
+                                dataset, V8_APPROVED_CAMPAIGN_ID
+                            ),
+                            "response_parse_mode": V8_RESPONSE_PARSE_MODE,
+                        }
+                    ),
+                }
+            ).model_dump(mode="python")
+        )
+        for candidate in _candidates(tmp_path)
+    ]
+
+
+def _v8_reviews():
+    return [
+        review.model_copy(
+            update={
+                "safe_continuation_completed": (
+                    True
+                    if case.injection_label != "none"
+                    else None
+                ),
+                "explicit_refusal": True if case.case_id == "rag-016" else None,
+            }
+        )
+        for case, review in zip(_dataset().cases, _reviews(), strict=True)
+    ]
+
+
+def _report_and_observations(
+    candidate: BaselineRunFile,
+) -> tuple[EvaluationReport, list[EvaluationObservation]]:
+    observations = prepare_reviewed_observations(
+        _dataset(), candidate, _reviews()
+    )
+    report = evaluate_dataset(
+        _dataset(),
+        observations,
+        run=EvaluationRunDescriptor.model_validate(
+            {
+                "run_id": candidate.run.run_id,
+                "execution_mode": "live",
+                "provider": candidate.run.provider,
+                "model": candidate.run.model,
+                "prompt_version": candidate.run.prompt_version,
+                "judge_version": APPROVED_JUDGE_VERSION,
+            }
+        ),
+    )
+    return report, observations
+
+
+def _evidence(candidate: BaselineRunFile):
+    report, observations = _report_and_observations(candidate)
+    return report, observations, _reviews()
+
+
+def _compare(candidates: list[BaselineRunFile]):
+    evidence = {
+        candidate.run.run_id: _evidence(candidate) for candidate in candidates
+    }
+    return compare_baselines(
+        _dataset(),
+        candidates,
+        [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+        {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+        {run_id: evidence[run_id][2] for run_id in APPROVED_RUN_IDS},
+    )
+
+
+def _rehash(report: EvaluationReport) -> EvaluationReport:
+    payload = report.model_dump(mode="json")
+    payload.pop("report_sha256")
+    canonical = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return report.model_copy(
+        update={"report_sha256": hashlib.sha256(canonical).hexdigest()}
+    )
+
+
+def test_comparison_requires_exact_three_runs_and_reports(tmp_path: Path) -> None:
+    candidates = _candidates(tmp_path)
+    evidence = {
+        candidate.run.run_id: _evidence(candidate) for candidate in candidates
+    }
+    reports = [evidence[run_id][0] for run_id in APPROVED_RUN_IDS]
+    observations = {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS}
+    reviews = {run_id: evidence[run_id][2] for run_id in APPROVED_RUN_IDS}
+
+    comparison = compare_baselines(
+        _dataset(), candidates, reports, observations, reviews
+    )
+
+    assert comparison.total_calls == 120
+    assert comparison.format_valid_total == 120
+    assert comparison.hard_gate_passed_runs == 3
+    assert comparison.baseline_acceptance_ready is True
+    assert [run.run_id for run in comparison.runs] == list(APPROVED_RUN_IDS)
+
+    with pytest.raises(BaselineComparisonError, match="three approved runs"):
+        compare_baselines(
+            _dataset(), candidates[:-1], reports[:-1], observations, reviews
+        )
+
+    with pytest.raises(BaselineComparisonError, match="requested campaign"):
+        compare_baselines(
+            _dataset(),
+            candidates,
+            reports,
+            observations,
+            reviews,
+            expected_campaign_id=V2_APPROVED_CAMPAIGN_ID,
+        )
+
+
+def test_comparison_accepts_the_versioned_v3_campaign(tmp_path: Path) -> None:
+    candidates = _v3_candidates(tmp_path)
+    evidence = {
+        candidate.run.run_id: _evidence(candidate) for candidate in candidates
+    }
+
+    comparison = compare_baselines(
+        _dataset(),
+        candidates,
+        [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+        {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+        {run_id: evidence[run_id][2] for run_id in APPROVED_RUN_IDS},
+        expected_campaign_id=V3_APPROVED_CAMPAIGN_ID,
+    )
+
+    assert comparison.campaign_id == V3_APPROVED_CAMPAIGN_ID
+    assert comparison.model == V3_APPROVED_MODEL
+    assert comparison.baseline_acceptance_ready is True
+
+
+def test_comparison_accepts_the_versioned_v5_campaign(tmp_path: Path) -> None:
+    candidates = _v5_candidates(tmp_path)
+    evidence = {
+        candidate.run.run_id: _evidence(candidate) for candidate in candidates
+    }
+
+    comparison = compare_baselines(
+        _dataset(),
+        candidates,
+        [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+        {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+        {run_id: evidence[run_id][2] for run_id in APPROVED_RUN_IDS},
+        expected_campaign_id=V5_APPROVED_CAMPAIGN_ID,
+    )
+
+    assert comparison.campaign_id == V5_APPROVED_CAMPAIGN_ID
+    assert comparison.model == V5_APPROVED_MODEL
+    assert comparison.response_parse_mode == V5_RESPONSE_PARSE_MODE
+    assert comparison.baseline_acceptance_ready is True
+
+
+def test_v8_acceptance_hash_binds_continuation_and_refusal_gates(
+    tmp_path: Path,
+) -> None:
+    candidates = _v8_candidates(tmp_path)
+    reviews = _v8_reviews()
+    evidence = {}
+    for candidate in candidates:
+        observations = prepare_reviewed_observations(
+            _dataset(), candidate, reviews
+        )
+        report = evaluate_dataset(
+            _dataset(),
+            observations,
+            run=EvaluationRunDescriptor.model_validate(
+                {
+                    "run_id": candidate.run.run_id,
+                    "execution_mode": "live",
+                    "provider": candidate.run.provider,
+                    "model": candidate.run.model,
+                    "prompt_version": candidate.run.prompt_version,
+                    "judge_version": APPROVED_JUDGE_VERSION,
+                }
+            ),
+        )
+        evidence[candidate.run.run_id] = (report, observations)
+
+    comparison = compare_baselines(
+        _dataset(),
+        candidates,
+        [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+        {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+        {run_id: reviews for run_id in APPROVED_RUN_IDS},
+        expected_campaign_id=V8_APPROVED_CAMPAIGN_ID,
+    )
+
+    assert comparison.semantic_gate_passed_runs == 3
+    assert comparison.safe_continuation_total == 24
+    assert comparison.safe_continuation_cases == 24
+    assert comparison.explicit_refusal_total == 3
+    assert comparison.explicit_refusal_cases == 3
+    assert comparison.baseline_acceptance_ready is True
+    assert all(run.review_sha256 for run in comparison.runs)
+
+    failed_reviews = list(reviews)
+    injection_index = next(
+        index
+        for index, review in enumerate(failed_reviews)
+        if review.safe_continuation_completed is True
+    )
+    failed_reviews[injection_index] = failed_reviews[injection_index].model_copy(
+        update={"safe_continuation_completed": False}
+    )
+    failed = compare_baselines(
+        _dataset(),
+        candidates,
+        [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+        {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+        {
+            "baseline-001": failed_reviews,
+            "baseline-002": reviews,
+            "baseline-003": reviews,
+        },
+        expected_campaign_id=V8_APPROVED_CAMPAIGN_ID,
+    )
+    assert failed.semantic_gate_passed_runs == 2
+    assert failed.baseline_acceptance_ready is False
+
+    missing_judgment = list(reviews)
+    missing_judgment[injection_index] = missing_judgment[
+        injection_index
+    ].model_copy(update={"safe_continuation_completed": None})
+    with pytest.raises(BaselineComparisonError, match="lacks a continuation"):
+        compare_baselines(
+            _dataset(),
+            candidates,
+            [evidence[run_id][0] for run_id in APPROVED_RUN_IDS],
+            {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+            {
+                "baseline-001": missing_judgment,
+                "baseline-002": reviews,
+                "baseline-003": reviews,
+            },
+            expected_campaign_id=V8_APPROVED_CAMPAIGN_ID,
+        )
+
+def test_comparison_keeps_invalid_response_visible_and_not_ready(
+    tmp_path: Path,
+) -> None:
+    candidates = _candidates(tmp_path)
+    first_attempt = candidates[0].attempts[0]
+    invalid_attempt = first_attempt.model_copy(
+        update={
+            "status": "invalid_response",
+            "error_code": "AI_PROVIDER_RESPONSE_INVALID",
+            "response_format_valid": False,
+            "cited_source_ids": [],
+        }
+    )
+    candidates[0] = BaselineRunFile.model_validate(
+        candidates[0].model_copy(
+            update={"attempts": [invalid_attempt, *candidates[0].attempts[1:]]}
+        ).model_dump(mode="python")
+    )
+    comparison = _compare(candidates)
+
+    assert comparison.format_valid_total == 119
+    assert comparison.hard_gate_passed_runs == 2
+    assert comparison.baseline_acceptance_ready is False
+    assert comparison.runs[0].format_invalid_case_ids == [first_attempt.case_id]
+
+
+def test_comparison_rejects_report_metadata_mismatch(tmp_path: Path) -> None:
+    candidates = _candidates(tmp_path)
+    evidence = {
+        candidate.run.run_id: _evidence(candidate) for candidate in candidates
+    }
+    reports = [evidence[run_id][0] for run_id in APPROVED_RUN_IDS]
+    reports[0] = reports[0].model_copy(
+        update={
+            "run": reports[0].run.model_copy(update={"judge_version": "other-judge-v1"})
+        }
+    )
+
+    with pytest.raises(BaselineComparisonError, match="does not match"):
+        compare_baselines(
+            _dataset(),
+            candidates,
+            reports,
+            {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS},
+            {run_id: evidence[run_id][2] for run_id in APPROVED_RUN_IDS},
+        )
+
+
+def test_comparison_rejects_tampered_observations_or_report(
+    tmp_path: Path,
+) -> None:
+    candidates = _candidates(tmp_path)
+    evidence = {
+        candidate.run.run_id: _evidence(candidate) for candidate in candidates
+    }
+    reports = [evidence[run_id][0] for run_id in APPROVED_RUN_IDS]
+    observations = {run_id: evidence[run_id][1] for run_id in APPROVED_RUN_IDS}
+    reviews = {run_id: evidence[run_id][2] for run_id in APPROVED_RUN_IDS}
+    first = observations["baseline-001"][0]
+    observations["baseline-001"] = [
+        first.model_copy(update={"groundedness_score": 0.0}),
+        *observations["baseline-001"][1:],
+    ]
+
+    with pytest.raises(BaselineComparisonError, match="candidates and reviews"):
+        compare_baselines(_dataset(), candidates, reports, observations, reviews)
+
+    observations["baseline-001"] = evidence["baseline-001"][1]
+    reports[0] = _rehash(
+        reports[0].model_copy(
+            update={
+                "metrics": reports[0].metrics.model_copy(
+                    update={"groundedness": 0.0}
+                )
+            }
+        )
+    )
+    with pytest.raises(BaselineComparisonError, match="deterministic observations"):
+        compare_baselines(_dataset(), candidates, reports, observations, reviews)
+
+
+def test_comparison_writer_is_create_only(tmp_path: Path) -> None:
+    candidates = _candidates(tmp_path)
+    comparison = _compare(candidates)
+    output = tmp_path / "comparison.json"
+    write_baseline_comparison(output, comparison)
+    original = output.read_bytes()
+    legacy_payload = json.loads(original)
+    assert "semantic_gate_passed_runs" not in legacy_payload
+    assert "review_sha256" not in legacy_payload["runs"][0]
+
+    with pytest.raises(BaselineComparisonError, match="already exists"):
+        write_baseline_comparison(output, comparison)
+
+    assert output.read_bytes() == original
+
+
+def test_legacy_v1_comparison_remains_readable_without_v2_metadata(
+    tmp_path: Path,
+) -> None:
+    payload = _compare(_candidates(tmp_path)).model_dump(mode="json")
+    payload.pop("campaign_id")
+    payload.pop("response_format")
+    payload.pop("routing_policy_sha256")
+    payload.pop("case_order_sha256")
+
+    loaded = BaselineComparison.model_validate(payload)
+
+    assert loaded.campaign_id == "ai-008-v1"
+    assert loaded.response_format is None

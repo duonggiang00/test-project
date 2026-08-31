@@ -71,6 +71,6 @@ describe("Student profile summary", () => {
     render(<StudentProfilePage />);
 
     expect(await screen.findByText("65.0%")).toBeVisible();
-    expect(screen.getByText("Trên 2 bài thi đang công bố")).toBeVisible();
+    expect(screen.getByText("Across 2 published exams")).toBeVisible();
   });
 });

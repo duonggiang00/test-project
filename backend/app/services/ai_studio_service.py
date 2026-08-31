@@ -1,24 +1,26 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from typing import Any
 from uuid import UUID
 from app.models.material import StudyMaterial
-from app.models.document_chunk import DocumentChunk
 from app.core.exceptions import AppException
 import json
 
 from app.ai import default_provider
 from app.ai.model_policy import ModelUseCase, resolve_model_config
 from app.ai.prompts import chat_system_v1, prompt_version_label
-from app.ai.provider import AIProvider, AIProviderError, GenerateRequest
+from app.ai.provider import AIProvider, AIProviderError, EmbeddingProvider, GenerateRequest
+from app.core.config import settings
+from app.core.permissions import Permission
 from app.core.security_guardrails import (
     detect_prompt_injection,
     sanitize_user_message,
     validate_messages,
     sanitize_error,
 )
-from app.core.permissions import Permission
 from app.models.user import User
 from app.services.authorization_service import AuthorizationService
+from app.services.rag_retrieval_service import RagRetrievalService
 
 class AiStudioService:
     @staticmethod
@@ -40,48 +42,13 @@ class AiStudioService:
         return material
 
     @staticmethod
-    def process_document(
-        db: Session,
-        material_id: UUID,
-        current_user: User,
-    ):
-        material = AiStudioService.authorize_material(
-            db,
-            material_id,
-            current_user,
-        )
-
-        title = material.title or "document"
-        chunks_text = [f"{title} - chunk 1", f"{title} - chunk 2"]
-
-        mock_embedding = [0.1] * 1536
-
-        for content in chunks_text:
-            chunk = DocumentChunk(
-                material_id=material.id,
-                content=content,
-                embedding=mock_embedding
-            )
-            db.add(chunk)
-
-        AuthorizationService.commit_with_admin_override(
-            db,
-            actor=current_user,
-            permission=Permission.READ_OWNED_CONTENT,
-            entity_type="study_material",
-            entity_id=material.id,
-            owner_id=material.uploader_id,
-            operation="process",
-        )
-        return len(chunks_text)
-
-    @staticmethod
     async def chat_generator(
         db: Session,
         material: StudyMaterial,
         messages: list,
         current_user: User,
         provider: AIProvider = default_provider,
+        embedding_provider: EmbeddingProvider | None = None,
     ):
         try:
             safe_messages = validate_messages(messages)
@@ -102,21 +69,14 @@ class AiStudioService:
 
             safe_query = sanitize_user_message(last_user_msg)
 
-            chunks = db.scalars(
-                select(DocumentChunk)
-                .where(
-                    DocumentChunk.material_id == material.id,
-                    DocumentChunk.content.ilike(f"%{safe_query[:100]}%"),
-                )
-                .limit(3)
-            ).all()
-            if not chunks:
-                chunks = db.scalars(
-                    select(DocumentChunk)
-                    .where(DocumentChunk.material_id == material.id)
-                    .order_by(DocumentChunk.id.desc())
-                    .limit(3)
-                ).all()
+            retrieved = RagRetrievalService.retrieve(
+                db,
+                material_id=material.id,
+                query=safe_query[:100],
+                mode=settings.RAG_RETRIEVAL_MODE,
+                embedding_provider=embedding_provider,
+            )
+            chunks = [item.chunk for item in retrieved]
 
             # AI-003: record the provider call itself, not just a
             # cross-owner override. `commit_with_admin_override` emits an
@@ -126,10 +86,11 @@ class AiStudioService:
             # spec 9.3 does not scope to generation only. `chat` is already
             # a declared use case in the audit policy.
             model_config = resolve_model_config(ModelUseCase.CHAT)
-            chat_metadata = {
+            chat_metadata: dict[str, Any] = {
                 "prompt_version": prompt_version_label(chat_system_v1),
                 "provider": model_config.provider,
                 "model": model_config.model,
+                "retrieval_mode": settings.RAG_RETRIEVAL_MODE,
             }
             context_source_ids = [str(c.id) for c in chunks if c.id is not None]
             if context_source_ids:
@@ -146,6 +107,9 @@ class AiStudioService:
                 operation="generate",
                 metadata=chat_metadata,
             )
+
+            if context_source_ids:
+                yield f"data: {json.dumps({'sources': [{'id': source_id} for source_id in context_source_ids]})}\n\n"
 
             context_text = "\n".join([c.content for c in chunks])
 

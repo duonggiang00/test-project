@@ -8,5 +8,6 @@ the default, tests inject a fake implementing `app.ai.provider.AIProvider`.
 from app.ai.openrouter_adapter import OpenRouterAdapter
 
 default_provider = OpenRouterAdapter()
+default_embedding_provider = default_provider
 
-__all__ = ["default_provider", "OpenRouterAdapter"]
+__all__ = ["default_embedding_provider", "default_provider", "OpenRouterAdapter"]

@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -42,10 +42,16 @@ class Settings(BaseSettings):
     AI_MODEL_QUESTION_GENERATION: str = ""
     AI_MODEL_FLASHCARD_GENERATION: str = ""
     AI_MODEL_TOPIC_BRIEF_GENERATION: str = ""
-    # Material chat/retrieval is retained for later work but is not part of
-    # the active MVP surface. Both RAG endpoints fail closed unless an
-    # operator explicitly enables this server-side flag.
-    RAG_ENABLED: bool = False
+    # Material chat/retrieval is part of the active MVP surface. Operators can
+    # still set this server-side flag to false as an emergency kill switch.
+    RAG_ENABLED: bool = True
+    # Hybrid retrieval is the evaluated default. Operators retain lexical mode
+    # as the immediate no-migration rollback path.
+    RAG_RETRIEVAL_MODE: Literal["lexical", "hybrid"] = "hybrid"
+    AI_EMBEDDING_MODEL: str = "openai/text-embedding-3-small"
+    # The persisted pgvector column is fixed at 1536 dimensions. A different
+    # dimension requires an explicit migration rather than a runtime override.
+    AI_EMBEDDING_DIMENSIONS: int = 1536
 
     # Per-model token pricing for the §2.4 `estimated_cost` audit field
     # (AI-003), as a JSON object:
@@ -57,6 +63,13 @@ class Settings(BaseSettings):
     # record the real token counts and `"estimated_cost": null` -- see
     # `app/ai/cost_policy.py`.
     AI_TOKEN_PRICING: str = ""
+
+    @field_validator("AI_EMBEDDING_DIMENSIONS")
+    @classmethod
+    def validate_embedding_dimensions(cls, value: int) -> int:
+        if value != 1536:
+            raise ValueError("AI_EMBEDDING_DIMENSIONS must be exactly 1536")
+        return value
 
     @model_validator(mode="after")
     def validate_database_configuration(self) -> Self:

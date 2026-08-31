@@ -1,5 +1,7 @@
 # Change Contract: AI-RAG-HIDE-001 — Temporarily disable RAG
 
+Superseded on 2026-08-25 by the owner-approved `AI-RAG-ENABLE-001` decision. This document is retained as historical implementation evidence.
+
 Risk level: L3 — governed sensitive retrieval behavior  
 Owner: Codex  
 Approval required: Yes  

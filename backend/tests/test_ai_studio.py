@@ -4,40 +4,9 @@ import uuid
 from sqlalchemy import select
 import pytest
 
-from app.core.config import settings
 
 client = TestClient(app)
 
-
-@pytest.fixture(autouse=True)
-def enable_rag_for_legacy_regressions(monkeypatch):
-    monkeypatch.setattr(settings, "RAG_ENABLED", True)
-
-def test_process_document(client, db, test_teacher):
-    # First create a mock material
-    from app.models.material import StudyMaterial
-    material_id = uuid.uuid4()
-    mock_material = StudyMaterial(
-        id=material_id,
-        uploader_id=test_teacher["id"] if "id" in test_teacher else None,
-        title="Test Material Title",
-        file_type="pdf",
-        file_path="/mock/path.pdf"
-    )
-    # the test_teacher dict doesn't expose id, let's just query it or use None
-    from app.models.user import User
-    teacher = db.scalar(select(User).where(User.email == test_teacher["email"]))
-    mock_material.uploader_id = teacher.id
-    db.add(mock_material)
-    db.commit()
-
-    # Now call the endpoint
-    response = client.post("/ai/process-document", json={"material_id": str(material_id)}, headers=test_teacher["headers"])
-    
-    assert response.status_code == 200
-    data = response.json()
-    assert data["message"] == "Processed successfully"
-    assert data["chunks_created"] == 2
 
 def test_chat_prompt_injection(client, db, test_teacher):
     # Test that prompt injection gets blocked

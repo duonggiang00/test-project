@@ -156,8 +156,6 @@ def test_background_admin_override_keeps_originating_request_id(
     db.add_all([topic, material])
     db.commit()
     request_id = str(uuid.uuid4())
-    monkeypatch.setattr("app.services.ai_service.time.sleep", lambda _seconds: None)
-
     mock_generate_topic_kit(
         str(material.id),
         str(topic.id),

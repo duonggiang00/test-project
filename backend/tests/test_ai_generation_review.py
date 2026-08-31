@@ -632,8 +632,6 @@ def test_uploading_a_material_creates_a_draft_not_questions(
     client, db, test_teacher, monkeypatch
 ):
     """The upload background task used to publish two questions outright."""
-    monkeypatch.setattr("app.services.ai_service.time.sleep", lambda _s: None)
-
     response = client.post(
         "/materials/upload",
         files={"file": ("upload-gate.txt", b"Mock Document Content", "text/plain")},
@@ -961,8 +959,6 @@ def test_generating_a_topic_kit_creates_drafts_not_live_content(
     escape that `CANONICAL_PROJECT_SPEC.md` 9.2 and ADR-0006 both forbid,
     and that AI-002's own acceptance criterion rules out.
     """
-    monkeypatch.setattr("app.services.ai_service.time.sleep", lambda _s: None)
-
     material = _material_with_chunk(db, test_teacher["id"])
     topic = create_topic(client, test_teacher, f"Topic kit {uuid.uuid4()}")
     topic_id = uuid.UUID(topic["id"])

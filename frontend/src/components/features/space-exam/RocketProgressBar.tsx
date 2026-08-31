@@ -19,7 +19,7 @@ export function RocketProgressBar({ current, total }: RocketProgressBarProps) {
         <AppIcon name="rocket" className="text-black absolute -right-6 size-10 transform rotate-45 z-20" data-icon="rocket" />
       </div>
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-label-bold text-label-bold text-black mix-blend-difference whitespace-nowrap">
-        Câu {current} / {total}
+        Question {current} / {total}
       </div>
     </div>
   );

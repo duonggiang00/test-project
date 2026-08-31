@@ -13,9 +13,9 @@ interface BrutalistMatchingUIProps {
   rightOptions?: string[];
   currentMatches: MatchPair[];
   onChange: (newMatches: MatchPair[]) => void;
-  /** Khi true: không cho click, hiển thị đúng/sai qua màu line */
+  /** When true, disable interaction and display correctness feedback. */
   readOnly?: boolean;
-  /** Danh sách cặp đáp án đúng — dùng khi readOnly=true để vẽ line gợi ý */
+  /** Correct pairs used to draw guidance lines in read-only mode. */
   correctMatches?: MatchPair[];
 }
 
@@ -52,7 +52,7 @@ export default function BrutalistMatchingUI({
     return [...options].sort((a, b) => a.localeCompare(b));
   }, [pairs, providedRightOptions]);
 
-  /** Tính toán line dựa trên danh sách matches */
+  /** Calculate connector lines from the current matches. */
   const computeLines = React.useCallback(
     (matches: MatchPair[]): LineData[] => {
       if (!containerRef.current) return [];
@@ -84,7 +84,7 @@ export default function BrutalistMatchingUI({
     setStudentLines(computeLines(currentMatches));
 
     if (readOnly && correctMatches.length > 0) {
-      // Chỉ vẽ correct-line khi student nối SAI hoặc chưa nối
+      // Draw a correct-answer line only when the student's pair is wrong or missing.
       const wrongPairs = correctMatches.filter((correct) => {
         const studentAnswer = currentMatches.find(
           (m) => m.left === correct.left
@@ -116,7 +116,7 @@ export default function BrutalistMatchingUI({
     return () => clearTimeout(timeout);
   }, [selectedItem, updateLines]);
 
-  // ── Interactive handlers (chỉ dùng khi không readOnly) ──────────────────
+  // Interactive handlers used only when readOnly is false.
   const handleItemClick = (side: "left" | "right", text: string) => {
     if (readOnly) return;
 
@@ -151,22 +151,21 @@ export default function BrutalistMatchingUI({
     setSelectedItem(null);
   };
 
-  /** Tìm đáp án đúng của left theo correctMatches */
+  /** Find the correct right-side answer for a left-side value. */
   const getCorrectRight = (left: string): string | undefined =>
     correctMatches.find((m) => m.left === left)?.right;
 
-  /** Với ô bên phải: đúng = ✓, sai = ✗, chưa nối = trống */
+  /** Right-side status: correct, incorrect, or unmatched. */
   const getRightIcon = (rightText: string): "correct" | "wrong" | null => {
     if (!readOnly) return null;
-    // Tìm xem left nào map đến rightText này theo student
+    // Find the student's left-side value mapped to this right-side value.
     const studentMatch = currentMatches.find((m) => m.right === rightText);
     if (!studentMatch) return null;
     const correct = getCorrectRight(studentMatch.left);
     return correct === rightText ? "correct" : "wrong";
   };
 
-  // ── Stroke style cho từng student-line ───────────────────────────────────
-  // Tất cả line của student đều đen nét liền — đúng/sai chỉ phân biệt qua icon ✓/✗
+  // Student connector stroke style. Correctness is communicated by icons.
   const getStudentLineStyle = () => ({
     stroke: "black",
     strokeDasharray: "none",
@@ -180,7 +179,7 @@ export default function BrutalistMatchingUI({
         className="absolute inset-0 hidden h-full w-full pointer-events-none z-10 md:block"
         style={{ overflow: "visible" }}
       >
-        {/* Lines đáp án đúng (khi student sai) — vẽ trước để student line đè lên */}
+        {/* Draw correct-answer guidance first so student lines remain on top. */}
         {correctLines.map((l, idx) => (
           <line
             key={`correct-${idx}`}
@@ -195,7 +194,7 @@ export default function BrutalistMatchingUI({
           />
         ))}
 
-        {/* Lines của student */}
+        {/* Student answer lines */}
         {studentLines.map((l, idx) => {
           const match = currentMatches[idx];
           const style = match
@@ -225,7 +224,7 @@ export default function BrutalistMatchingUI({
           role="group"
         >
           <p className="border-b-4 border-black pb-2 font-mono text-sm font-black uppercase tracking-widest">
-            Vế trái
+            Left options
           </p>
           {leftOptions.map((text, i) => {
             const isSelected =
@@ -273,7 +272,7 @@ export default function BrutalistMatchingUI({
           role="group"
         >
           <p className="border-b-4 border-black pb-2 font-mono text-sm font-black uppercase tracking-widest">
-            Vế phải
+            Right options
           </p>
           {rightOptions.map((text, i) => {
             const isSelected =
@@ -311,7 +310,7 @@ export default function BrutalistMatchingUI({
                 className={className}
               >
                 {text}
-                {/* Icon đúng/sai ở góc phải */}
+                {/* Correctness icon */}
                 {icon === "correct" && (
                   <span className="absolute top-1/2 right-3 -translate-y-1/2 text-white font-black text-xl leading-none">
                     ✓
@@ -334,10 +333,10 @@ export default function BrutalistMatchingUI({
         data-testid="mobile-matching-summary"
       >
         <p className="border-b-2 border-black pb-2 text-sm font-black uppercase tracking-widest">
-          Các cặp đã nối
+          Matched pairs
         </p>
         {currentMatches.length === 0 ? (
-          <p className="pt-3 text-sm font-bold">Chưa có cặp nào.</p>
+          <p className="pt-3 text-sm font-bold">No pairs selected.</p>
         ) : (
           <ul className="space-y-2 pt-3">
             {currentMatches.map((match, index) => (
@@ -358,7 +357,7 @@ export default function BrutalistMatchingUI({
             data-testid="mobile-correct-matches"
           >
             <p className="border-b-2 border-black pb-2 text-sm font-black uppercase tracking-widest">
-              Đáp án đúng
+              Correct answer
             </p>
             <ul className="space-y-2 pt-3">
               {correctMatches.map((match, index) => (
@@ -376,34 +375,34 @@ export default function BrutalistMatchingUI({
         )}
       </div>
 
-      {/* Help text — chỉ hiện khi đang làm bài */}
+      {/* Help text shown only during an active attempt. */}
       {!readOnly && (
         <div className="mt-6 text-center text-sm text-black">
-          <p>Bấm chọn một ô ở bên này và bấm tiếp một ô ở bên kia để nối.</p>
+          <p>Select one option on each side to create a pair.</p>
           <p>
-            Bấm vào ô đang chọn để hủy chọn, hoặc nối lại một ô mới để tự động
-            thay thế đường nối cũ.
+            Select the active option again to cancel, or create a new pair to
+            replace its previous connection.
           </p>
         </div>
       )}
 
-      {/* Legend — chỉ hiện khi readOnly */}
+      {/* Legend shown only in read-only mode. */}
       {readOnly && (
         <div className="mt-6 flex flex-wrap gap-6 text-xs font-mono font-bold uppercase border-t-2 border-black pt-4">
           <span className="flex items-center gap-2">
             <svg width="32" height="8">
               <line x1="0" y1="4" x2="32" y2="4" stroke="black" strokeWidth="3" />
             </svg>
-            Câu trả lời của bạn
+            Your answer
           </span>
           <span className="flex items-center gap-2">
             <svg width="32" height="8">
               <line x1="0" y1="4" x2="32" y2="4" stroke="black" strokeWidth="2" strokeDasharray="4 2" />
             </svg>
-            Đáp án đúng (gợi ý)
+            Correct answer (guide)
           </span>
-          <span className="flex items-center gap-2 font-black">✓ Đúng</span>
-          <span className="flex items-center gap-2 font-black">✗ Sai</span>
+          <span className="flex items-center gap-2 font-black">✓ Correct</span>
+          <span className="flex items-center gap-2 font-black">✗ Incorrect</span>
         </div>
       )}
     </div>

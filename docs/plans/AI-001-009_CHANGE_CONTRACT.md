@@ -105,11 +105,13 @@ API/event impact:
 
 - Versioned JSONL cases contain case ID, use case, safe input/reference context,
   expected answer or rubric, required citations/source IDs, injection label,
-  sensitivity classification, and admin approval identity/time/version.
-- The validator rejects missing approval metadata, duplicate IDs, unknown source
-  references, raw secrets, and unsupported schema versions.
-- Agent-authored synthetic cases may test the runner but never count toward the
-  required 30–50 admin-approved regression cases.
+  and sensitivity classification.
+- The validator rejects duplicate IDs, unknown source references, raw secrets,
+  unsupported schema versions, and approval manifests whose dataset fingerprint
+  does not exactly match the canonical content fingerprint.
+- An agent may draft the complete dataset, but it counts as approved only after
+  the owner/admin reviews and explicitly approves its exact fingerprint. Git/PR
+  history records approver identity; the manifest locks the reviewed content.
 - The proposed first dataset has 40 reviewed cases: question generation 8,
   flashcards 6, briefs 6, RAG/chat 10, and advisory grading 10, with injection
   cases distributed across applicable groups. The admin may replace this mix.
@@ -138,6 +140,46 @@ API/event impact:
 6. AI-006 dataset schema/validator; pause for 30–50 admin-approved cases.
 7. AI-007 baseline report, then owner-approved AI-008 thresholds.
 8. Independent AI/security review and completion audit.
+
+## AI-006 simplified approval checkpoint — 2026-08-28
+
+- The owner replaced the development-only Ed25519 workflow with a simpler
+  dataset-level approval manifest bound to the canonical SHA-256 fingerprint.
+  This removes key generation, private-key custody, public-key pinning, and
+  per-case signatures while retaining deterministic tamper detection.
+- Implemented the strict JSONL schema, safe validator, complete-distribution
+  enforcement, draft structure mode, and manifest-match validation without
+  provider or database access.
+- The approved current distribution is 16 RAG/chat, 12 question-generation,
+  6 flashcard-generation, and 6 topic-brief-generation cases. This is the
+  owner's 2026-08-25 replacement for the earlier proposed mix in this contract.
+- The owner approved the complete Vietnamese-first 40-case dataset on
+  2026-08-28 at canonical SHA-256
+  `4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51`.
+  The matching manifest validates with `approval_record_matched=true`, so AI-006
+  is complete without any key ceremony.
+- AI-007, AI-008, and semantic RAG remain downstream and must not activate
+  invented quality thresholds or semantic-default behavior at this checkpoint.
+
+## AI-007 deterministic evaluator checkpoint — 2026-08-29
+
+- Implemented a strict versioned observation contract and provider-neutral
+  evaluator for the approved 40-case dataset.
+- Correctness and groundedness come from the declared judge/reviewer process;
+  the evaluator validates and aggregates those scores without claiming lexical
+  similarity is semantic judgment.
+- Citation validity requires an approved source that was actually retrieved;
+  complete case coverage, citation validity/coverage, and injection resistance
+  are hard gates independent of later quality thresholds.
+- Sanitized deterministic reports retain answer hashes and metrics but exclude
+  candidate answers, prompts, and reference context. Missing latency, token, or
+  cost telemetry remains explicit null data with separate coverage counts.
+- Focused tests pass 57/57; canonical backend passes 385 unit, 24 contract, and
+  171 PostgreSQL integration tests; canonical fast passes 13/13; inventory and
+  diff checks pass. Independent L3 review approved with no P1/P2/P3 findings.
+- AI-008 remains inactive. Three comparable full provider baselines and explicit
+  owner approval are still required before enabling regression thresholds or CI
+  policy.
 
 ## Verification contract
 

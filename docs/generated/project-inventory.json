@@ -1,24 +1,24 @@
 {
   "schema_version": 1,
-  "generator_version": "1.0.1",
+  "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "48f3d48dd6ee1457c1286a60b9d420e2626c1bb3",
-    "source_commit_timestamp": "2026-08-25T17:30:05+07:00",
-    "source_tree_sha256": "98d55c519353803a507a2b7f4e0721f91e4a080c4ad7c9d509981648e20e0205",
-    "relevant_file_count": 427,
+    "source_commit": "fc6ba75677ca1ca7487c9f3bdb57c40249ee7d22",
+    "source_commit_timestamp": "2026-08-31T17:31:54+07:00",
+    "source_tree_sha256": "19f9f014e56ff007a2efee1f628b42d1919f6420caab75da91f72b8f194dff39",
+    "relevant_file_count": 483,
     "alembic_heads": [
-      "a74c9d2e6f10"
+      "b8c7d6e5f4a3"
     ]
   },
   "summary": {
     "sqlalchemy_models": 19,
     "pydantic_schemas": 79,
-    "fastapi_routes": 75,
+    "fastapi_routes": 74,
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 322,
-    "frontend_test_calls": 132
+    "backend_test_functions": 484,
+    "frontend_test_calls": 160
   },
   "backend": {
     "models": [
@@ -1808,28 +1808,33 @@
     ],
     "schemas": [
       {
-        "class": "ProcessDocumentRequest",
+        "class": "ChatMessage",
         "fields": [
           {
-            "name": "material_id",
+            "name": "role",
             "required": true,
-            "type": "UUID"
+            "type": "Literal"
+          },
+          {
+            "name": "content",
+            "required": true,
+            "type": "str"
           }
         ],
         "module": "app.schemas.ai"
       },
       {
-        "class": "ProcessDocumentResponse",
+        "class": "ChatRequest",
         "fields": [
           {
-            "name": "message",
+            "name": "material_id",
             "required": true,
-            "type": "str"
+            "type": "UUID"
           },
           {
-            "name": "chunks_created",
+            "name": "messages",
             "required": true,
-            "type": "int"
+            "type": "list"
           }
         ],
         "module": "app.schemas.ai"
@@ -4287,22 +4292,6 @@
         "dependencies": [
           "app.api.deps.get_current_active_teacher",
           "app.api.deps.get_current_user",
-          "app.api.endpoints.ai_studio.require_rag_enabled",
-          "app.db.session.get_db",
-          "fastapi.security.oauth2.OAuth2PasswordBearer"
-        ],
-        "endpoint": "app.api.endpoints.ai_studio.process_document",
-        "methods": [
-          "POST"
-        ],
-        "name": "process_document",
-        "path": "/ai/process-document",
-        "response_model": "ProcessDocumentResponse"
-      },
-      {
-        "dependencies": [
-          "app.api.deps.get_current_active_teacher",
-          "app.api.deps.get_current_user",
           "app.db.session.get_db",
           "fastapi.security.oauth2.OAuth2PasswordBearer"
         ],
@@ -5671,16 +5660,40 @@
         "path": "tests/contract/test_rag_feature_flag.py",
         "tests": [
           {
-            "line": 8,
+            "line": 15,
             "markers": [],
-            "name": "test_rag_is_disabled_by_default"
+            "name": "test_rag_is_enabled_by_default"
           },
           {
-            "line": 28,
+            "line": 31,
             "markers": [
               "parametrize"
             ],
             "name": "test_disabled_rag_routes_fail_before_authentication"
+          },
+          {
+            "line": 57,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_enabled_rag_routes_require_authentication"
+          },
+          {
+            "line": 71,
+            "markers": [],
+            "name": "test_hybrid_unauthorized_material_stops_before_retrieval"
+          },
+          {
+            "line": 108,
+            "markers": [],
+            "name": "test_legacy_process_route_is_removed_from_the_api_surface"
+          },
+          {
+            "line": 139,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_chat_rejects_untrusted_roles_and_unknown_fields_before_service_access"
           }
         ],
         "tier": "integration"
@@ -5786,32 +5799,32 @@
             "name": "test_uploading_a_material_creates_a_draft_not_questions"
           },
           {
-            "line": 680,
+            "line": 678,
             "markers": [],
             "name": "test_each_transition_emits_exactly_one_correctly_shaped_event"
           },
           {
-            "line": 758,
+            "line": 756,
             "markers": [],
             "name": "test_a_refused_transition_emits_no_audit_event"
           },
           {
-            "line": 789,
+            "line": 787,
             "markers": [],
             "name": "test_a_rolled_back_publish_writes_neither_rows_nor_an_event"
           },
           {
-            "line": 833,
+            "line": 831,
             "markers": [],
             "name": "test_publish_rejects_fill_draft_with_mismatched_blank_contract"
           },
           {
-            "line": 885,
+            "line": 883,
             "markers": [],
             "name": "test_creating_a_grade_suggestion_changes_no_awarded_points"
           },
           {
-            "line": 953,
+            "line": 951,
             "markers": [],
             "name": "test_generating_a_topic_kit_creates_drafts_not_live_content"
           }
@@ -5877,12 +5890,7 @@
         "path": "tests/test_ai_studio.py",
         "tests": [
           {
-            "line": 16,
-            "markers": [],
-            "name": "test_process_document"
-          },
-          {
-            "line": 42,
+            "line": 11,
             "markers": [],
             "name": "test_chat_prompt_injection"
           }
@@ -6023,12 +6031,12 @@
             "name": "test_background_admin_override_serializes_against_demotion"
           },
           {
-            "line": 386,
+            "line": 385,
             "markers": [],
             "name": "test_concurrent_approvals_of_one_generation_job_leave_a_single_decision"
           },
           {
-            "line": 450,
+            "line": 449,
             "markers": [],
             "name": "test_concurrent_publishes_of_one_generation_job_write_one_set_of_rows"
           }
@@ -6039,44 +6047,54 @@
         "path": "tests/test_authorization_idor.py",
         "tests": [
           {
-            "line": 116,
+            "line": 117,
             "markers": [],
             "name": "test_management_lists_are_authenticated_and_owner_scoped"
           },
           {
-            "line": 175,
+            "line": 176,
             "markers": [],
             "name": "test_cross_owner_and_missing_details_are_indistinguishable"
           },
           {
-            "line": 239,
+            "line": 240,
             "markers": [],
             "name": "test_bulk_assignment_is_same_owner_all_or_nothing"
           },
           {
-            "line": 298,
+            "line": 299,
             "markers": [],
             "name": "test_legacy_null_owned_roots_are_admin_only"
           },
           {
-            "line": 391,
+            "line": 392,
             "markers": [],
             "name": "test_student_empty_deck_topic_does_not_reveal_existence"
           },
           {
-            "line": 418,
+            "line": 419,
             "markers": [],
             "name": "test_teacher_system_compatibility_does_not_grant_user_purge"
           },
           {
-            "line": 443,
+            "line": 444,
             "markers": [],
             "name": "test_teacher_and_admin_cannot_use_student_self_service_routes"
           },
           {
-            "line": 473,
+            "line": 474,
             "markers": [],
             "name": "test_ai_chat_context_is_limited_to_the_authorized_material"
+          },
+          {
+            "line": 617,
+            "markers": [],
+            "name": "test_ai_chat_rejects_student_and_inactive_actor_before_provider"
+          },
+          {
+            "line": 661,
+            "markers": [],
+            "name": "test_ai_chat_admin_cross_owner_access_persists_both_audit_events"
           }
         ],
         "tier": "integration"
@@ -6687,6 +6705,291 @@
         "tier": "integration"
       },
       {
+        "path": "tests/unit/test_ai_baseline_canary.py",
+        "tests": [
+          {
+            "line": 231,
+            "markers": [],
+            "name": "test_canary_pass_requires_all_automatic_and_independent_gates"
+          },
+          {
+            "line": 242,
+            "markers": [],
+            "name": "test_canary_accepts_the_versioned_v3_campaign"
+          },
+          {
+            "line": 250,
+            "markers": [],
+            "name": "test_canary_accepts_the_versioned_v4_campaign"
+          },
+          {
+            "line": 258,
+            "markers": [],
+            "name": "test_canary_accepts_the_versioned_v5_campaign"
+          },
+          {
+            "line": 266,
+            "markers": [],
+            "name": "test_v5_failure_replay_binds_exact_five_attempts_and_reviews"
+          },
+          {
+            "line": 308,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_canary_fails_when_any_injection_judgment_fails"
+          },
+          {
+            "line": 333,
+            "markers": [],
+            "name": "test_canary_fails_on_invalid_response_format"
+          },
+          {
+            "line": 344,
+            "markers": [],
+            "name": "test_canary_rejects_incomplete_coverage_and_safety_fields_on_normal_case"
+          },
+          {
+            "line": 362,
+            "markers": [],
+            "name": "test_canary_rejects_tampered_provider_metadata"
+          },
+          {
+            "line": 375,
+            "markers": [],
+            "name": "test_canary_report_is_create_only_and_binds_resume_attempts"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_baseline_comparison.py",
+        "tests": [
+          {
+            "line": 221,
+            "markers": [],
+            "name": "test_comparison_requires_exact_three_runs_and_reports"
+          },
+          {
+            "line": 256,
+            "markers": [],
+            "name": "test_comparison_accepts_the_versioned_v3_campaign"
+          },
+          {
+            "line": 276,
+            "markers": [],
+            "name": "test_comparison_accepts_the_versioned_v5_campaign"
+          },
+          {
+            "line": 297,
+            "markers": [],
+            "name": "test_v8_acceptance_hash_binds_continuation_and_refusal_gates"
+          },
+          {
+            "line": 382,
+            "markers": [],
+            "name": "test_comparison_keeps_invalid_response_visible_and_not_ready"
+          },
+          {
+            "line": 408,
+            "markers": [],
+            "name": "test_comparison_rejects_report_metadata_mismatch"
+          },
+          {
+            "line": 430,
+            "markers": [],
+            "name": "test_comparison_rejects_tampered_observations_or_report"
+          },
+          {
+            "line": 463,
+            "markers": [],
+            "name": "test_comparison_writer_is_create_only"
+          },
+          {
+            "line": 479,
+            "markers": [],
+            "name": "test_legacy_v1_comparison_remains_readable_without_v2_metadata"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_baseline_review.py",
+        "tests": [
+          {
+            "line": 88,
+            "markers": [],
+            "name": "test_review_scores_bind_to_all_candidates_and_pass_into_ai007"
+          },
+          {
+            "line": 117,
+            "markers": [],
+            "name": "test_review_binding_rejects_incomplete_candidate_or_score_coverage"
+          },
+          {
+            "line": 130,
+            "markers": [],
+            "name": "test_review_binding_rejects_non_campaign_provider_metadata"
+          },
+          {
+            "line": 140,
+            "markers": [],
+            "name": "test_review_score_loader_is_strict_and_value_safe"
+          },
+          {
+            "line": 153,
+            "markers": [],
+            "name": "test_reviewed_observation_writer_is_create_only"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_document_ingestion.py",
+        "tests": [
+          {
+            "line": 52,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_uploaded_document_chunks_are_embedded_in_one_batch"
+          },
+          {
+            "line": 94,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_oversized_document_batch_fails_before_provider_call"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_evaluation_runner.py",
+        "tests": [
+          {
+            "line": 80,
+            "markers": [],
+            "name": "test_complete_control_replay_measures_all_required_groups"
+          },
+          {
+            "line": 101,
+            "markers": [],
+            "name": "test_three_replays_and_jsonl_order_have_identical_fingerprints"
+          },
+          {
+            "line": 118,
+            "markers": [],
+            "name": "test_report_contains_hashes_but_not_raw_answers"
+          },
+          {
+            "line": 130,
+            "markers": [],
+            "name": "test_judged_incorrect_answer_reduces_correctness_without_hiding_metrics"
+          },
+          {
+            "line": 150,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_case_coverage_must_exactly_match_approved_dataset"
+          },
+          {
+            "line": 165,
+            "markers": [],
+            "name": "test_direct_evaluator_rejects_duplicate_and_secret_observations"
+          },
+          {
+            "line": 183,
+            "markers": [],
+            "name": "test_evaluator_rechecks_approval_and_case_fingerprint"
+          },
+          {
+            "line": 195,
+            "markers": [],
+            "name": "test_rubric_scores_must_exactly_match_approved_criteria"
+          },
+          {
+            "line": 209,
+            "markers": [],
+            "name": "test_correctness_judgments_must_match_the_case_contract"
+          },
+          {
+            "line": 239,
+            "markers": [],
+            "name": "test_invalid_citation_and_successful_injection_fail_hard_gates"
+          },
+          {
+            "line": 261,
+            "markers": [],
+            "name": "test_citation_is_invalid_when_source_was_not_retrieved"
+          },
+          {
+            "line": 273,
+            "markers": [],
+            "name": "test_missing_performance_telemetry_remains_explicitly_unmeasured"
+          },
+          {
+            "line": 289,
+            "markers": [],
+            "name": "test_one_sided_token_telemetry_does_not_convert_missing_values_to_zero"
+          },
+          {
+            "line": 302,
+            "markers": [],
+            "name": "test_observation_loader_rejects_duplicates_and_secret_output_safely"
+          },
+          {
+            "line": 329,
+            "markers": [],
+            "name": "test_secret_like_identifiers_do_not_leak_from_coverage_or_rubric_errors"
+          },
+          {
+            "line": 363,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_observation_contract_rejects_coercive_or_nonfinite_values"
+          },
+          {
+            "line": 375,
+            "markers": [],
+            "name": "test_injection_outcome_is_required"
+          },
+          {
+            "line": 385,
+            "markers": [],
+            "name": "test_secret_like_run_metadata_is_rejected_without_echo"
+          },
+          {
+            "line": 395,
+            "markers": [],
+            "name": "test_cli_writes_sanitized_report_and_returns_hard_gate_status"
+          },
+          {
+            "line": 435,
+            "markers": [],
+            "name": "test_cli_returns_failure_for_hard_gate_regression"
+          },
+          {
+            "line": 472,
+            "markers": [],
+            "name": "test_cli_refuses_to_overwrite_an_input_path"
+          },
+          {
+            "line": 505,
+            "markers": [],
+            "name": "test_report_writer_does_not_overwrite_existing_output"
+          },
+          {
+            "line": 516,
+            "markers": [],
+            "name": "test_report_writer_preserves_concurrent_output_and_cleans_temp_file"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_generation_transitions.py",
         "tests": [
           {
@@ -6734,6 +7037,118 @@
               "unit"
             ],
             "name": "test_terminal_states_have_no_outbound_transitions"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_golden_dataset.py",
+        "tests": [
+          {
+            "line": 65,
+            "markers": [],
+            "name": "test_structure_validation_has_deterministic_order_independent_fingerprint"
+          },
+          {
+            "line": 86,
+            "markers": [],
+            "name": "test_exact_manifest_fingerprint_is_accepted"
+          },
+          {
+            "line": 101,
+            "markers": [],
+            "name": "test_content_change_invalidates_manifest"
+          },
+          {
+            "line": 116,
+            "markers": [],
+            "name": "test_approval_manifest_is_required_by_default"
+          },
+          {
+            "line": 124,
+            "markers": [],
+            "name": "test_library_never_approves_a_partial_dataset"
+          },
+          {
+            "line": 164,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_invalid_manifest_is_rejected_safely"
+          },
+          {
+            "line": 174,
+            "markers": [],
+            "name": "test_manifest_invalid_json_and_extra_fields_are_rejected"
+          },
+          {
+            "line": 188,
+            "markers": [],
+            "name": "test_complete_distribution_is_enforced"
+          },
+          {
+            "line": 198,
+            "markers": [],
+            "name": "test_incomplete_distribution_reports_counts_without_payload"
+          },
+          {
+            "line": 209,
+            "markers": [],
+            "name": "test_duplicate_case_id_is_rejected"
+          },
+          {
+            "line": 243,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_invalid_case_contract_is_rejected"
+          },
+          {
+            "line": 255,
+            "markers": [],
+            "name": "test_rubric_can_replace_expected_answer"
+          },
+          {
+            "line": 275,
+            "markers": [],
+            "name": "test_secret_scanning_covers_identifier_fields"
+          },
+          {
+            "line": 297,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_secret_like_content_is_rejected_without_echo"
+          },
+          {
+            "line": 310,
+            "markers": [],
+            "name": "test_missing_and_invalid_files_have_safe_errors"
+          },
+          {
+            "line": 327,
+            "markers": [],
+            "name": "test_structure_only_cli_reports_fingerprint_without_approval"
+          },
+          {
+            "line": 341,
+            "markers": [],
+            "name": "test_cli_requires_manifest_for_final_validation"
+          },
+          {
+            "line": 352,
+            "markers": [],
+            "name": "test_cli_never_approves_partial_dataset"
+          },
+          {
+            "line": 378,
+            "markers": [],
+            "name": "test_cli_accepts_matching_manifest"
+          },
+          {
+            "line": 400,
+            "markers": [],
+            "name": "test_cli_rejects_mismatched_manifest_without_payload"
           }
         ],
         "tier": "unit"
@@ -6787,6 +7202,223 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_ai_live_baseline.py",
+        "tests": [
+          {
+            "line": 354,
+            "markers": [],
+            "name": "test_successful_attempt_requires_format_valid_flag"
+          },
+          {
+            "line": 419,
+            "markers": [],
+            "name": "test_candidate_prompt_is_deterministic_and_separates_untrusted_sources"
+          },
+          {
+            "line": 433,
+            "markers": [],
+            "name": "test_v2_prompt_is_deterministic_and_requires_refusal_plus_safe_continuation"
+          },
+          {
+            "line": 449,
+            "markers": [],
+            "name": "test_v3_prompt_requires_silent_indirect_rejection_and_safe_completion"
+          },
+          {
+            "line": 464,
+            "markers": [],
+            "name": "test_v5_prompt_requires_atomic_use_case_deliverables_and_bounded_refusal"
+          },
+          {
+            "line": 481,
+            "markers": [],
+            "name": "test_v6_prompt_makes_question_and_refusal_contract_explicit"
+          },
+          {
+            "line": 492,
+            "markers": [],
+            "name": "test_v6_collection_uses_new_campaign_binding_and_five_call_cap"
+          },
+          {
+            "line": 508,
+            "markers": [],
+            "name": "test_v7_preserves_v6_prompt_and_staged_campaign_binding"
+          },
+          {
+            "line": 532,
+            "markers": [],
+            "name": "test_v8_changes_only_evaluation_model_and_provider_binding"
+          },
+          {
+            "line": 562,
+            "markers": [],
+            "name": "test_v5_collection_reuses_v4_extraction_and_raw_evidence"
+          },
+          {
+            "line": 586,
+            "markers": [],
+            "name": "test_v5_failure_replay_order_precedes_remaining_canary_cases"
+          },
+          {
+            "line": 594,
+            "markers": [],
+            "name": "test_v5_rejects_ten_call_plan_before_provider_spend"
+          },
+          {
+            "line": 615,
+            "markers": [],
+            "name": "test_v5_requires_hash_bound_failure_replay_before_call_six"
+          },
+          {
+            "line": 657,
+            "markers": [],
+            "name": "test_v5_rejects_failed_failure_replay_report_before_call_six"
+          },
+          {
+            "line": 689,
+            "markers": [],
+            "name": "test_v5_rejects_future_run_reservation_after_valid_failure_replay"
+          },
+          {
+            "line": 722,
+            "markers": [],
+            "name": "test_v4_parser_extracts_only_one_json_payload_before_strict_validation"
+          },
+          {
+            "line": 746,
+            "markers": [],
+            "name": "test_v4_collection_uses_extraction_mode_and_preserves_raw_hash"
+          },
+          {
+            "line": 771,
+            "markers": [],
+            "name": "test_legacy_run_storage_omits_v4_parse_metadata"
+          },
+          {
+            "line": 790,
+            "markers": [],
+            "name": "test_v3_collection_reuses_the_ten_case_fail_closed_canary"
+          },
+          {
+            "line": 820,
+            "markers": [],
+            "name": "test_v3_rejects_wrong_model_before_reserving_or_calling"
+          },
+          {
+            "line": 837,
+            "markers": [],
+            "name": "test_v3_invalid_response_permanently_blocks_resume"
+          },
+          {
+            "line": 869,
+            "markers": [],
+            "name": "test_v3_requires_passing_prior_run_evidence_before_run_two"
+          },
+          {
+            "line": 986,
+            "markers": [],
+            "name": "test_v2_collection_is_hard_stopped_at_ten_calls_without_canary_report"
+          },
+          {
+            "line": 1037,
+            "markers": [],
+            "name": "test_v2_rejects_unattested_provider_policy_before_writing_or_calling"
+          },
+          {
+            "line": 1056,
+            "markers": [],
+            "name": "test_passing_canary_authorizes_first_run_resume_and_later_runs"
+          },
+          {
+            "line": 1169,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_v2_rejects_wrong_upstream_or_incomplete_response"
+          },
+          {
+            "line": 1193,
+            "markers": [],
+            "name": "test_candidate_response_requires_the_exact_strict_envelope"
+          },
+          {
+            "line": 1206,
+            "markers": [],
+            "name": "test_collection_caps_calls_and_resume_never_repeats_a_case"
+          },
+          {
+            "line": 1248,
+            "markers": [],
+            "name": "test_collection_refuses_metadata_changes_before_calling_provider"
+          },
+          {
+            "line": 1276,
+            "markers": [],
+            "name": "test_provider_failure_is_sanitized_persisted_and_not_retried"
+          },
+          {
+            "line": 1313,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_invalid_provider_response_is_terminal_and_not_counted_complete"
+          },
+          {
+            "line": 1349,
+            "markers": [],
+            "name": "test_campaign_rejects_a_different_self_consistent_approved_dataset"
+          },
+          {
+            "line": 1380,
+            "markers": [],
+            "name": "test_interrupted_attempt_and_concurrent_lock_fail_without_a_call"
+          },
+          {
+            "line": 1400,
+            "markers": [],
+            "name": "test_completed_baseline_is_an_idempotent_no_call"
+          },
+          {
+            "line": 1426,
+            "markers": [],
+            "name": "test_campaign_allows_only_the_three_approved_runs"
+          },
+          {
+            "line": 1469,
+            "markers": [],
+            "name": "test_cli_uses_canonical_paths_and_disables_sdk_retries"
+          },
+          {
+            "line": 1513,
+            "markers": [],
+            "name": "test_v2_cli_pins_routing_json_mode_and_ten_call_canary"
+          },
+          {
+            "line": 1561,
+            "markers": [],
+            "name": "test_v3_cli_uses_fixed_campaign_model_without_changing_default"
+          },
+          {
+            "line": 1601,
+            "markers": [],
+            "name": "test_v5_cli_uses_fixed_model_routing_parse_policy_and_call_cap"
+          },
+          {
+            "line": 1641,
+            "markers": [],
+            "name": "test_v8_cli_uses_exact_openai_route_and_zero_retries"
+          },
+          {
+            "line": 1696,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_cli_rejects_missing_credential_before_reserving_or_calling"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_model_policy.py",
         "tests": [
           {
@@ -6829,21 +7461,49 @@
         "path": "tests/unit/test_ai_provider_contract.py",
         "tests": [
           {
-            "line": 53,
+            "line": 64,
             "markers": [
               "unit"
             ],
             "name": "test_generate_returns_typed_text_provider_model_usage_and_latency"
           },
           {
-            "line": 77,
+            "line": 95,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generate_omits_optional_parameters_and_reports_the_response_model"
+          },
+          {
+            "line": 120,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generate_maps_json_mode_and_exact_routing_policy"
+          },
+          {
+            "line": 164,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generate_with_retries_disabled_makes_one_http_attempt_and_sanitizes_failure"
+          },
+          {
+            "line": 186,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_generate_sanitizes_a_response_without_choices"
+          },
+          {
+            "line": 200,
             "markers": [
               "unit"
             ],
             "name": "test_generate_parses_tool_calls_from_a_non_streaming_response"
           },
           {
-            "line": 125,
+            "line": 248,
             "markers": [
               "asyncio",
               "unit"
@@ -6851,28 +7511,64 @@
             "name": "test_stream_yields_text_and_tool_call_deltas_matching_the_wire_shape"
           },
           {
-            "line": 169,
+            "line": 292,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_with_no_raw_text_on_malformed_response"
           },
           {
-            "line": 191,
+            "line": 314,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_on_timeout"
           },
           {
-            "line": 214,
+            "line": 337,
             "markers": [
               "unit"
             ],
             "name": "test_generate_raises_provider_error_on_rate_limit"
           },
           {
-            "line": 236,
+            "line": 358,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embed_sends_exact_batch_policy_and_returns_typed_vectors"
+          },
+          {
+            "line": 416,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embed_accepts_openrouter_normalized_model_name_and_retains_policy_id"
+          },
+          {
+            "line": 450,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_embed_rejects_invalid_provider_vectors"
+          },
+          {
+            "line": 481,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embed_rejects_unrelated_response_model"
+          },
+          {
+            "line": 506,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embed_rejects_non_contiguous_provider_indexes"
+          },
+          {
+            "line": 543,
             "markers": [
               "asyncio",
               "unit"
@@ -6880,7 +7576,7 @@
             "name": "test_stream_raises_provider_error_on_timeout"
           },
           {
-            "line": 258,
+            "line": 565,
             "markers": [
               "asyncio",
               "unit"
@@ -6891,10 +7587,103 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_ai_regression_collection.py",
+        "tests": [
+          {
+            "line": 68,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_collection_enforces_exact_scope_and_sanitized_manifest"
+          },
+          {
+            "line": 98,
+            "markers": [],
+            "name": "test_provider_policy_mismatch_fails_before_a_call"
+          },
+          {
+            "line": 119,
+            "markers": [],
+            "name": "test_invalid_envelope_stops_without_retry_and_preserves_checkpoint"
+          },
+          {
+            "line": 140,
+            "markers": [],
+            "name": "test_independent_review_attestation_binds_candidate_and_passes"
+          },
+          {
+            "line": 206,
+            "markers": [],
+            "name": "test_attestation_rejects_wrong_source_commit_before_scoring"
+          },
+          {
+            "line": 247,
+            "markers": [],
+            "name": "test_workflow_protects_provider_secret_and_separates_semantic_review"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_regression_policy.py",
+        "tests": [
+          {
+            "line": 66,
+            "markers": [],
+            "name": "test_approved_v8_comparison_passes_fixed_policy"
+          },
+          {
+            "line": 82,
+            "markers": [],
+            "name": "test_pr_subset_is_fixed_stratified_and_contains_every_safety_case"
+          },
+          {
+            "line": 96,
+            "markers": [],
+            "name": "test_pr_subset_baseline_is_immutable_and_derives_token_limits"
+          },
+          {
+            "line": 116,
+            "markers": [],
+            "name": "test_owner_approved_comparison_is_byte_immutable"
+          },
+          {
+            "line": 140,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_each_numeric_threshold_fails_closed"
+          },
+          {
+            "line": 162,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_coverage_safety_and_identity_tampering_fail"
+          },
+          {
+            "line": 173,
+            "markers": [],
+            "name": "test_runtime_prompt_drift_fails_against_frozen_owner_policy"
+          },
+          {
+            "line": 188,
+            "markers": [],
+            "name": "test_missing_telemetry_and_semantic_review_fail"
+          },
+          {
+            "line": 213,
+            "markers": [],
+            "name": "test_loader_and_cli_keep_paths_and_payloads_out_of_errors"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_studio_chat_generator.py",
         "tests": [
           {
-            "line": 99,
+            "line": 105,
             "markers": [
               "asyncio",
               "unit"
@@ -6902,7 +7691,7 @@
             "name": "test_chat_generator_streams_text_events_matching_the_original_sse_envelope"
           },
           {
-            "line": 128,
+            "line": 135,
             "markers": [
               "asyncio",
               "unit"
@@ -6910,7 +7699,7 @@
             "name": "test_chat_generator_streams_tool_call_deltas_matching_the_original_shape"
           },
           {
-            "line": 158,
+            "line": 166,
             "markers": [
               "asyncio",
               "unit"
@@ -6918,7 +7707,7 @@
             "name": "test_chat_generator_can_emit_both_text_and_tool_calls_from_one_chunk"
           },
           {
-            "line": 192,
+            "line": 210,
             "markers": [
               "asyncio",
               "unit"
@@ -6926,7 +7715,7 @@
             "name": "test_chat_generator_surfaces_a_sanitized_provider_error_with_no_raw_text"
           },
           {
-            "line": 208,
+            "line": 227,
             "markers": [
               "asyncio",
               "unit"
@@ -6934,12 +7723,28 @@
             "name": "test_chat_generator_sends_the_resolved_model_and_the_three_tools"
           },
           {
-            "line": 233,
+            "line": 252,
+            "markers": [
+              "asyncio",
+              "unit"
+            ],
+            "name": "test_chat_generator_emits_only_retrieved_source_ids_before_text"
+          },
+          {
+            "line": 270,
             "markers": [
               "asyncio",
               "unit"
             ],
             "name": "test_chat_generator_still_blocks_prompt_injection_before_calling_the_provider"
+          },
+          {
+            "line": 301,
+            "markers": [
+              "asyncio",
+              "unit"
+            ],
+            "name": "test_chat_generator_drops_provider_priority_roles_for_direct_callers"
           }
         ],
         "tier": "unit"
@@ -7179,6 +7984,11 @@
             "line": 73,
             "markers": [],
             "name": "test_explicit_test_database_url_overrides_the_derived_target"
+          },
+          {
+            "line": 85,
+            "markers": [],
+            "name": "test_rag_retrieval_and_embedding_policy_is_strict"
           }
         ],
         "tier": "unit"
@@ -7769,6 +8579,162 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_rag_retrieval_evaluation.py",
+        "tests": [
+          {
+            "line": 31,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_retrieval_evaluation_is_deterministic_and_content_free"
+          },
+          {
+            "line": 56,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_retrieval_evaluation_rejects_duplicate_sources"
+          },
+          {
+            "line": 66,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_retrieval_service_evaluation_uses_production_service_and_counts_queries"
+          },
+          {
+            "line": 108,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_retrieval_service_evaluation_rejects_tampered_chunk_mapping"
+          },
+          {
+            "line": 141,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_cli_requires_exact_approved_rag_case_set_and_fingerprint"
+          },
+          {
+            "line": 204,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_lexical_baseline_does_not_claim_activation_when_quality_is_below_floor"
+          },
+          {
+            "line": 233,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_hybrid_candidate_requires_quality_and_query_budget"
+          },
+          {
+            "line": 262,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_passing_hybrid_candidate_is_activation_eligible"
+          },
+          {
+            "line": 288,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_fixture_plan_is_deterministic_bounded_and_content_free"
+          },
+          {
+            "line": 318,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embedding_campaign_budget_stops_before_an_extra_provider_call"
+          },
+          {
+            "line": 351,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_campaign_provider_is_zero_retry_and_no_fallback"
+          },
+          {
+            "line": 366,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_fixture_persistence_uses_one_document_batch"
+          },
+          {
+            "line": 418,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_campaign_cli_sanitizes_evaluation_failure"
+          },
+          {
+            "line": 438,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_campaign_refuses_non_test_runtime_before_creating_output"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_rag_retrieval_service.py",
+        "tests": [
+          {
+            "line": 41,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_lexical_retrieval_is_material_scoped_and_does_not_call_embeddings"
+          },
+          {
+            "line": 58,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_lexical_retrieval_rolls_back_to_latest_chunks_for_no_query"
+          },
+          {
+            "line": 71,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_hybrid_retrieval_fuses_ranks_and_calls_embedding_once"
+          },
+          {
+            "line": 92,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_invalid_retrieval_mode_fails_closed_before_database_access"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_run_coverage.py",
+        "tests": [
+          {
+            "line": 8,
+            "markers": [],
+            "name": "test_main_creates_reports_and_disables_pytest_cache"
+          },
+          {
+            "line": 49,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_main_propagates_phase_failures"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_test_database.py",
         "tests": [
           {
@@ -7829,6 +8795,11 @@
         "test_count": 3
       },
       {
+        "path": "frontend/src/lib/content-security-policy.test.ts",
+        "tier": "unit",
+        "test_count": 2
+      },
+      {
         "path": "frontend/src/lib/errors.test.ts",
         "tier": "unit",
         "test_count": 6
@@ -7861,7 +8832,7 @@
       {
         "path": "frontend/tests/component/ai-workspace-errors.test.tsx",
         "tier": "component",
-        "test_count": 5
+        "test_count": 6
       },
       {
         "path": "frontend/tests/component/auth-error-localization.test.tsx",
@@ -7879,6 +8850,11 @@
         "test_count": 2
       },
       {
+        "path": "frontend/tests/component/data-hooks-contract.test.ts",
+        "tier": "component",
+        "test_count": 6
+      },
+      {
         "path": "frontend/tests/component/exam-builder-flow.test.tsx",
         "tier": "component",
         "test_count": 5
@@ -7887,6 +8863,11 @@
         "path": "frontend/tests/component/exam-creation-flow.test.tsx",
         "tier": "component",
         "test_count": 4
+      },
+      {
+        "path": "frontend/tests/component/exam-result-view.test.tsx",
+        "tier": "component",
+        "test_count": 3
       },
       {
         "path": "frontend/tests/component/featured-exam-list.states.test.tsx",
@@ -7934,14 +8915,34 @@
         "test_count": 1
       },
       {
+        "path": "frontend/tests/component/students-management.test.tsx",
+        "tier": "component",
+        "test_count": 7
+      },
+      {
         "path": "frontend/tests/component/submission-grade-override.test.tsx",
         "tier": "component",
         "test_count": 11
       },
       {
+        "path": "frontend/tests/component/submissions-history.test.tsx",
+        "tier": "component",
+        "test_count": 2
+      },
+      {
         "path": "frontend/tests/component/topic-material-delete.test.tsx",
         "tier": "component",
         "test_count": 3
+      },
+      {
+        "path": "frontend/tests/component/topics-management.test.tsx",
+        "tier": "component",
+        "test_count": 3
+      },
+      {
+        "path": "frontend/tests/component/translated-ui-contracts.test.tsx",
+        "tier": "component",
+        "test_count": 4
       },
       {
         "path": "frontend/tests/e2e/admin-flow.spec.ts",
@@ -7975,7 +8976,7 @@
     "frontend": {
       "provider": "Jest v8 coverage",
       "command": "npm run test:unit:coverage",
-      "baseline_percent": 0.75,
+      "baseline_percent": 76.97,
       "baseline_status": "measured"
     },
     "changed_code_lines_target_percent": 80

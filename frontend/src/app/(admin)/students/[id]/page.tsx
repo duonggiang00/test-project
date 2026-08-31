@@ -15,10 +15,10 @@ export default function StudentProfilePage({
   const unwrappedParams = use(params);
   const router = useRouter();
   
-  // Lấy thông tin user
+  // Load the student profile.
   const { user, isLoading: isLoadingUser, isError: isUserError } = useUserDetail(unwrappedParams.id);
   
-  // Lấy danh sách lịch sử thi của user này
+  // Load this student's exam history.
   const { submissions, isLoading: isLoadingSubmissions } = useSubmissions({ student_id: unwrappedParams.id, size: 50 });
 
   if (isLoadingUser) {
@@ -33,7 +33,7 @@ export default function StudentProfilePage({
     return notFound();
   }
 
-  // Tính toán thống kê cơ bản
+  // Calculate summary statistics.
   const totalExams = submissions.length;
   const gradedExams = submissions.filter(s => s.status === 'graded' || s.status === 'submitted');
   const totalScore = gradedExams.reduce((acc, curr) => acc + (curr.total_score || 0), 0);
@@ -49,12 +49,12 @@ export default function StudentProfilePage({
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div>
-          <h1 className="text-4xl font-bold uppercase font-mono tracking-tight">Hồ Sơ Học Viên</h1>
+          <h1 className="text-4xl font-bold uppercase font-mono tracking-tight">Student Profile</h1>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cột trái: Thông tin cá nhân */}
+        {/* Left column: personal information */}
         <div className="lg:col-span-1 space-y-8">
           <div className="border-4 border-black p-6 bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
             <div className="flex justify-center mb-6">
@@ -62,7 +62,7 @@ export default function StudentProfilePage({
                 <UserIcon className="w-16 h-16 text-black" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold font-mono uppercase text-center mb-6 border-b-4 border-black pb-4">{user.full_name || "Chưa cập nhật"}</h2>
+            <h2 className="text-2xl font-bold font-mono uppercase text-center mb-6 border-b-4 border-black pb-4">{user.full_name || "Not provided"}</h2>
             
             <div className="space-y-4 font-mono font-bold uppercase text-sm">
               <div className="flex items-center gap-3">
@@ -75,27 +75,27 @@ export default function StudentProfilePage({
               </div>
               <div className="flex items-center gap-3">
                 <Calendar className="w-6 h-6 text-black shrink-0" />
-                <span>Tham gia: {user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : "-"}</span>
+                <span>Joined: {user.created_at ? new Date(user.created_at).toLocaleDateString('en-US') : "-"}</span>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="border-4 border-black p-4 text-center bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-              <p className="text-xs font-bold font-mono uppercase text-black mb-2 border-b-2 border-black pb-2">Tổng bài thi</p>
+              <p className="text-xs font-bold font-mono uppercase text-black mb-2 border-b-2 border-black pb-2">Total exams</p>
               <p className="text-4xl font-mono font-bold">{totalExams}</p>
             </div>
             <div className="border-4 border-black p-4 text-center bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-              <p className="text-xs font-bold font-mono uppercase text-black mb-2 border-b-2 border-black pb-2">Điểm trung bình</p>
+              <p className="text-xs font-bold font-mono uppercase text-black mb-2 border-b-2 border-black pb-2">Average score</p>
               <p className="text-4xl font-mono font-bold">{averageScore}</p>
             </div>
           </div>
         </div>
 
-        {/* Cột phải: Lịch sử thi */}
+        {/* Right column: exam history */}
         <div className="lg:col-span-2">
           <div className="flex justify-between items-center mb-6 border-b-4 border-black pb-4">
-            <h2 className="text-3xl font-mono font-bold uppercase">Lịch sử Làm bài</h2>
+            <h2 className="text-3xl font-mono font-bold uppercase">Exam History</h2>
           </div>
 
           <div className="border-4 border-black bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] overflow-hidden">
@@ -103,11 +103,11 @@ export default function StudentProfilePage({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b-4 border-black bg-white uppercase text-xs tracking-wider">
-                    <th className="p-4 font-mono font-bold border-r-4 border-black">Tên Đề Thi</th>
-                    <th className="p-4 font-mono font-bold border-r-4 border-black">Điểm</th>
-                    <th className="p-4 font-mono font-bold border-r-4 border-black">Trạng thái</th>
-                    <th className="p-4 font-mono font-bold border-r-4 border-black">Ngày nộp</th>
-                    <th className="p-4 font-mono font-bold text-center">Chi tiết</th>
+                    <th className="p-4 font-mono font-bold border-r-4 border-black">Exam</th>
+                    <th className="p-4 font-mono font-bold border-r-4 border-black">Score</th>
+                    <th className="p-4 font-mono font-bold border-r-4 border-black">Status</th>
+                    <th className="p-4 font-mono font-bold border-r-4 border-black">Submitted</th>
+                    <th className="p-4 font-mono font-bold text-center">Details</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,13 +115,13 @@ export default function StudentProfilePage({
                     <tr>
                       <td colSpan={5} className="p-8 text-center font-mono font-bold uppercase">
                         <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-black" />
-                        Đang tải...
+                        Loading...
                       </td>
                     </tr>
                   ) : submissions.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-black font-mono font-bold uppercase text-lg">
-                        Học viên chưa làm bài thi nào.
+                        This student has not completed any exams.
                       </td>
                     </tr>
                   ) : (
@@ -137,13 +137,13 @@ export default function StudentProfilePage({
                           </span>
                         </td>
                         <td className="p-4 border-r-4 border-black font-mono text-sm font-bold">
-                          {submission.submitted_at ? new Date(submission.submitted_at).toLocaleString('vi-VN') : "-"}
+                          {submission.submitted_at ? new Date(submission.submitted_at).toLocaleString('en-US') : "-"}
                         </td>
                         <td className="p-4 text-center">
                           <button 
                             onClick={() => router.push(`/history/${submission.id}`)}
                             className="inline-flex items-center justify-center p-2 border-2 border-black bg-white hover:bg-black hover:text-white transition-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
-                            title="Xem chi tiết chấm bài"
+                            title="View grading details"
                           >
                             <Eye className="w-5 h-5" />
                           </button>

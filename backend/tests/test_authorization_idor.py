@@ -4,6 +4,7 @@ import uuid
 
 from sqlalchemy import func, select
 
+from app.models.audit_event import AuditEvent
 from app.models.document_chunk import DocumentChunk
 from app.models.exam import Question
 from app.models.material import StudyMaterial
@@ -497,20 +498,20 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
     db.add_all([owned_material, foreign_material])
     db.flush()
     owned_canary = f"OWNED_CONTEXT_{uuid.uuid4()}"
+    sensitive_canary = f"sk-{uuid.uuid4().hex}{uuid.uuid4().hex}"
     foreign_canary = f"FOREIGN_CONTEXT_{uuid.uuid4()}"
+    owned_chunk = DocumentChunk(
+        material_id=owned_material.id,
+        content=f"{owned_canary} {sensitive_canary}",
+        embedding=[0.1] * 1536,
+    )
+    foreign_chunk = DocumentChunk(
+        material_id=foreign_material.id,
+        content=foreign_canary,
+        embedding=[0.2] * 1536,
+    )
     db.add_all(
-        [
-            DocumentChunk(
-                material_id=owned_material.id,
-                content=owned_canary,
-                embedding=[0.1] * 1536,
-            ),
-            DocumentChunk(
-                material_id=foreign_material.id,
-                content=foreign_canary,
-                embedding=[0.2] * 1536,
-            ),
-        ]
+        [owned_chunk, foreign_chunk]
     )
     db.commit()
     captured = {}
@@ -531,13 +532,14 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
         "stream",
         fake_stream,
     )
+    owner_request_id = str(uuid.uuid4())
     response = client.post(
         "/ai/chat",
         json={
             "material_id": str(owned_material.id),
             "messages": [{"role": "user", "content": "Summarize lesson"}],
         },
-        headers=test_teacher["headers"],
+        headers={**test_teacher["headers"], "X-Request-ID": owner_request_id},
     )
 
     assert response.status_code == 200
@@ -545,6 +547,28 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
     assert owned_canary in system_context
     assert foreign_canary not in system_context
     assert len(provider_calls) == 1
+    db.expire_all()
+    owner_chat_events = db.scalars(
+        select(AuditEvent).where(
+            AuditEvent.request_id == owner_request_id,
+            AuditEvent.action == "ai.chat.requested",
+        )
+    ).all()
+    assert len(owner_chat_events) == 1
+    owner_chat_event = owner_chat_events[0]
+    assert owner_chat_event.actor_id == test_teacher["id"]
+    assert owner_chat_event.actor_role == "teacher"
+    assert owner_chat_event.owner_id == test_teacher["id"]
+    assert owner_chat_event.event_metadata == {
+        "prompt_version": "chat_system-v1",
+        "provider": "openrouter",
+        "model": "meta-llama/llama-3.1-8b-instruct",
+        "retrieval_mode": "hybrid",
+        "context_source_ids": [str(owned_chunk.id)],
+    }
+    serialized_event = json.dumps(owner_chat_event.event_metadata)
+    assert owned_canary not in serialized_event
+    assert sensitive_canary not in serialized_event
 
     request_id = str(uuid.uuid4())
     idor_headers = {
@@ -581,35 +605,6 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
     assert missing_material_id.json()["error_code"] == "VALIDATION_ERROR"
     assert len(provider_calls) == 1
 
-    foreign_chunk_count = db.scalar(
-        select(func.count(DocumentChunk.id)).where(
-            DocumentChunk.material_id == foreign_material.id
-        )
-    )
-    process_request_id = str(uuid.uuid4())
-    process_headers = {
-        **test_teacher["headers"],
-        "X-Request-ID": process_request_id,
-    }
-    cross_owner_process = client.post(
-        "/ai/process-document",
-        json={"material_id": str(foreign_material.id)},
-        headers=process_headers,
-    )
-    missing_process = client.post(
-        "/ai/process-document",
-        json={"material_id": str(uuid.uuid4())},
-        headers=process_headers,
-    )
-    assert cross_owner_process.status_code == missing_process.status_code == 404
-    assert cross_owner_process.json() == missing_process.json()
-    assert cross_owner_process.json()["error_code"] == "MATERIAL_NOT_FOUND"
-    assert db.scalar(
-        select(func.count(DocumentChunk.id)).where(
-            DocumentChunk.material_id == foreign_material.id
-        )
-    ) == foreign_chunk_count
-
     assert_cross_owner_matches_missing(
         client,
         path_prefix="/materials",
@@ -617,3 +612,113 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
         headers=test_teacher["headers"],
         error_code="MATERIAL_NOT_FOUND",
     )
+
+
+def test_ai_chat_rejects_student_and_inactive_actor_before_provider(
+    client,
+    db,
+    test_student,
+    monkeypatch,
+):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "RAG_ENABLED", True)
+    provider_calls = []
+
+    async def fake_stream(request):
+        provider_calls.append(request)
+        return
+        yield  # pragma: no cover - makes this an async generator
+
+    monkeypatch.setattr(ai_studio_module.default_provider, "stream", fake_stream)
+    payload = {
+        "material_id": str(uuid.uuid4()),
+        "messages": [{"role": "user", "content": "Summarize"}],
+    }
+
+    student_response = client.post(
+        "/ai/chat",
+        json=payload,
+        headers=test_student["headers"],
+    )
+    assert student_response.status_code == 403
+    assert student_response.json()["error_code"] == "NOT_ENOUGH_PERMISSIONS"
+
+    inactive_teacher = create_teacher(client, db)
+    inactive_user = db.get(User, inactive_teacher["id"])
+    inactive_user.is_active = False
+    db.commit()
+    inactive_response = client.post(
+        "/ai/chat",
+        json=payload,
+        headers=inactive_teacher["headers"],
+    )
+    assert inactive_response.status_code == 401
+    assert inactive_response.json()["error_code"] == "UNAUTHORIZED"
+    assert provider_calls == []
+
+
+def test_ai_chat_admin_cross_owner_access_persists_both_audit_events(
+    client,
+    db,
+    test_teacher,
+    test_admin,
+    monkeypatch,
+):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "RAG_ENABLED", True)
+    material = StudyMaterial(
+        uploader_id=test_teacher["id"],
+        title="admin-reviewed.txt",
+        file_type="txt",
+        file_path="uploads/admin-reviewed.txt",
+        ai_status="completed",
+    )
+    db.add(material)
+    db.flush()
+    chunk = DocumentChunk(
+        material_id=material.id,
+        content="ADMIN_REVIEWED_CONTEXT",
+        embedding=[0.3] * 1536,
+    )
+    db.add(chunk)
+    db.commit()
+    provider_calls = []
+
+    async def fake_stream(request):
+        provider_calls.append(request)
+        return
+        yield  # pragma: no cover - makes this an async generator
+
+    monkeypatch.setattr(ai_studio_module.default_provider, "stream", fake_stream)
+    request_id = str(uuid.uuid4())
+    response = client.post(
+        "/ai/chat",
+        json={
+            "material_id": str(material.id),
+            "messages": [{"role": "user", "content": "Summarize"}],
+        },
+        headers={**test_admin["headers"], "X-Request-ID": request_id},
+    )
+
+    assert response.status_code == 200
+    assert len(provider_calls) == 1
+    db.expire_all()
+    events = db.scalars(
+        select(AuditEvent)
+        .where(AuditEvent.request_id == request_id)
+        .order_by(AuditEvent.action)
+    ).all()
+    assert [event.action for event in events] == [
+        "admin.override",
+        "ai.chat.requested",
+    ]
+    assert all(event.actor_id == test_admin["id"] for event in events)
+    assert all(event.actor_role == "admin" for event in events)
+    assert all(event.owner_id == test_teacher["id"] for event in events)
+    assert events[0].event_metadata == {
+        "permission": "read_owned_content",
+        "operation": "generate",
+    }
+    assert events[1].event_metadata["context_source_ids"] == [str(chunk.id)]

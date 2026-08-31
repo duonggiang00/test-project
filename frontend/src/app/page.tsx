@@ -12,7 +12,7 @@ export default function LandingPage() {
         </Link>
         <nav className="hidden md:flex gap-6 items-center">
           {/* <Link href="#features" className="text-base font-bold font-mono tracking-widest uppercase hover:underline underline-offset-4">
-            Tính Năng
+            Features
           </Link> */}
           <div className="flex gap-4">
             <Link 
@@ -20,14 +20,14 @@ export default function LandingPage() {
               className="flex items-center gap-2 text-sm font-bold font-mono uppercase tracking-widest border-4 border-black bg-white px-6 py-2 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
             >
               <LogIn className="w-4 h-4" />
-              Đăng Nhập
+              Sign In
             </Link>
             <Link 
               href="/register" 
               className="flex items-center gap-2 text-sm font-bold font-mono uppercase tracking-widest border-4 border-black bg-black text-white px-6 py-2 shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:bg-white hover:text-black transition-all"
             >
               <UserPlus className="w-4 h-4" />
-              Đăng Ký
+              Register
             </Link>
           </div>
         </nav>
@@ -36,16 +36,16 @@ export default function LandingPage() {
       {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center justify-center w-full px-6 text-center mt-24 mb-24">
         <div className="inline-flex items-center gap-2 px-6 py-3 border-4 border-black text-base font-bold mb-12 uppercase tracking-widest bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
-          <span>Nền tảng Giáo dục Online</span>
+          <span>Online Learning Platform</span>
         </div>
         
         <h2 className="text-5xl md:text-7xl font-bold tracking-widest leading-tight mb-8 uppercase font-mono">
-          Học Tập Thông Minh. <br />
-          <span className="bg-black text-white px-4 leading-[1.5]">Kết Quả Vượt Trội.</span>
+          Learn Smarter. <br />
+          <span className="bg-black text-white px-4 leading-[1.5]">Achieve More.</span>
         </h2>
         
         <p className="text-lg md:text-xl font-mono text-black max-w-3xl mb-16 border-l-8 border-black pl-6 text-left">
-          Hệ thống đánh giá và thi cử toàn diện kết hợp cùng Trí tuệ Nhân tạo. Giúp giáo viên tiết kiệm 80% thời gian ra đề và mang lại trải nghiệm làm bài đầy hứng khởi cho học sinh.
+          A complete AI-powered assessment and examination platform. Help teachers save 80% of exam creation time and give students an engaging test experience.
         </p>
 
         {/* Call to Action */}
@@ -54,7 +54,7 @@ export default function LandingPage() {
             href="/register"
             className="flex items-center justify-center gap-3 px-10 py-5 bg-black text-white font-bold font-mono uppercase tracking-widest border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] hover:bg-white hover:text-black transition-all text-xl"
           >
-            Bắt Đầu Ngay <ArrowRight className="w-6 h-6" />
+            Get Started <ArrowRight className="w-6 h-6" />
           </Link>
         </div>
       </main>

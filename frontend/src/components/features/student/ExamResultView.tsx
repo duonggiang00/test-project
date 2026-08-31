@@ -94,7 +94,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
       <div className="flex h-screen items-center justify-center bg-white text-black font-mono">
         <div className="flex items-center gap-4 border-4 border-black p-6 bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
           <Loader2 className="w-8 h-8 animate-spin text-black" />
-          <span className="text-xl font-bold uppercase tracking-widest">Đang tải kết quả...</span>
+          <span className="text-xl font-bold uppercase tracking-widest">Loading results...</span>
         </div>
       </div>
     );
@@ -104,13 +104,13 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-white text-black font-mono space-y-6 p-4">
         <p className="text-xl font-bold uppercase tracking-widest border-4 border-black p-6 bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] text-center">
-          Không tìm thấy kết quả bài thi
+          Exam result not found
         </p>
         <button
           onClick={() => router.push("/student/home")}
           className="border-4 border-black bg-black text-white px-8 py-3 uppercase font-bold hover:bg-white hover:text-black transition-all shadow-[8px_8px_0_0_rgba(0,0,0,1)]"
         >
-          Quay lại trang chủ
+          Back to home
         </button>
       </div>
     );
@@ -126,8 +126,8 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
   };
 
   const chartData = [
-    { name: "Đúng", count: result.correct_count },
-    { name: "Sai", count: result.incorrect_count }
+    { name: "Correct", count: result.correct_count },
+    { name: "Incorrect", count: result.incorrect_count }
   ];
 
   return (
@@ -141,41 +141,41 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
               onClick={() => router.push("/student/home")}
               className="flex items-center gap-2 border-2 border-black px-4 py-2 hover:bg-black hover:text-white transition-all font-bold uppercase shadow-[4px_4px_0_0_rgba(0,0,0,1)]"
             >
-              <ArrowLeft size={16} /> Quay lại trang chủ
+              <ArrowLeft size={16} /> Back to home
             </button>
 
             <button
               onClick={() => router.push("/student/home")}
               className="flex items-center gap-2 border-2 border-black px-4 py-2 hover:bg-black hover:text-white transition-all font-bold uppercase shadow-[4px_4px_0_0_rgba(0,0,0,1)]"
             >
-              Danh sách bài thi
+              Exam list
             </button>
           </div>
 
           <div className="border-b-4 border-black pb-4">
             <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-widest">
-              KẾT QUẢ: {result.title}
+              RESULT: {result.title}
             </h1>
           </div>
 
           {/* Stats Breakdown Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="border-2 border-black p-4 flex flex-col items-center justify-center bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-              <span className="text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Điểm số</span>
+              <span className="text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Score</span>
               <span data-testid="total-score" className="text-xl md:text-2xl font-bold">
                 {score} / {maxScore}
               </span>
             </div>
             <div className="border-2 border-black p-4 flex flex-col items-center justify-center bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-              <span className="text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Thời gian</span>
+              <span className="text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Duration</span>
               <span className="text-xl md:text-2xl font-bold">{formatTime(result.time_taken_seconds || 0)}</span>
             </div>
             <div className="border-2 border-black p-4 flex flex-col items-center justify-center bg-black text-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-              <span className="text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Số câu đúng</span>
+              <span className="text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Correct answers</span>
               <span className="text-xl md:text-2xl font-bold">{result.correct_count}</span>
             </div>
             <div className="border-2 border-black p-4 flex flex-col items-center justify-center bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-              <span className="text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Số câu sai</span>
+              <span className="text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Incorrect answers</span>
               <span className="text-xl md:text-2xl font-bold">{result.incorrect_count}</span>
             </div>
           </div>
@@ -184,7 +184,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
         {/* Summary Chart */}
         <div className="border-4 border-black bg-white p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] space-y-4">
           <h2 className="text-xl font-bold uppercase tracking-widest text-black border-b-4 border-black pb-2">
-            Biểu đồ tổng quan
+            Result Overview
           </h2>
           <div className="h-64 w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -231,7 +231,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
         {/* Detailed Question Review List */}
         <div className="space-y-6">
           <h2 className="text-2xl font-bold uppercase tracking-widest border-b-4 border-black pb-2">
-            Chi tiết đáp án
+            Answer Details
           </h2>
 
           {(result.answers || []).map((ans, idx) => {
@@ -247,7 +247,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                 <div className="flex flex-wrap justify-between items-start gap-4 pb-4 border-b-4 border-black">
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-bold border-2 border-black px-3 py-1 bg-black text-white">
-                      CÂU {idx + 1}
+                      QUESTION {idx + 1}
                     </span>
                     <span className="font-bold uppercase tracking-widest text-sm border-2 border-black px-3 py-1 bg-white">
                       {qType.replace(/_/g, " ")}
@@ -256,19 +256,19 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
 
                   <div className="flex items-center gap-4">
                     <span className="font-bold border-2 border-black px-3 py-1 bg-white text-black text-sm">
-                      {ans.points_awarded} / {ans.points} ĐIỂM
+                      {ans.points_awarded} / {ans.points} POINTS
                     </span>
                     {isCorrect ? (
                       <span className="flex items-center gap-1 font-bold border-2 border-black px-3 py-1 bg-black text-white text-sm uppercase">
-                        <CheckCircle size={16} /> Đúng
+                        <CheckCircle size={16} /> Correct
                       </span>
                     ) : isUnanswered ? (
                       <span className="flex items-center gap-1 font-bold border-2 border-dashed border-black px-3 py-1 bg-white text-black text-sm uppercase">
-                        <XCircle size={16} /> Chưa trả lời
+                        <XCircle size={16} /> Not answered
                       </span>
                     ) : (
                       <span className="flex items-center gap-1 font-bold border-2 border-black px-3 py-1 bg-white text-black text-sm uppercase">
-                        <XCircle size={16} /> Sai
+                        <XCircle size={16} /> Incorrect
                       </span>
                     )}
                   </div>
@@ -308,14 +308,14 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                                 <span className={`text-xs uppercase font-bold border-2 px-2 py-0.5 ${
                                   isSelected ? "border-white text-white" : "border-black text-black"
                                 }`}>
-                                  Lựa chọn của bạn
+                                  Your answer
                                 </span>
                               )}
                               {isOptCorrect && (
                                 <span className={`text-xs uppercase font-bold border-2 px-2 py-0.5 ${
                                   isSelected ? "border-white text-white bg-black" : "border-black text-black bg-white"
                                 }`}>
-                                  Đáp án đúng
+                                  Correct answer
                                 </span>
                               )}
                             </div>
@@ -338,17 +338,17 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                           return (
                             <div key={i} className="flex flex-col gap-2 border-2 border-black p-4 bg-white">
                               <span className="font-bold uppercase tracking-widest text-xs border-b-2 border-black pb-1">
-                                Ô trống #{blankIdx + 1}
+                                Blank #{blankIdx + 1}
                               </span>
                               <div className="flex flex-wrap gap-2 items-center text-sm">
-                                <span className="font-bold uppercase">Lựa chọn của bạn:</span>
+                                <span className="font-bold uppercase">Your answer:</span>
                                 <span className="border-2 border-black px-3 py-1 font-bold bg-white">
-                                  {studentAns || <span className="italic text-black">Chưa trả lời</span>}
+                                  {studentAns || <span className="italic text-black">Not answered</span>}
                                 </span>
                               </div>
                               {acceptable.length > 0 && (
                                 <div className="flex flex-wrap gap-2 items-center text-sm">
-                                  <span className="font-bold uppercase">Đáp án đúng:</span>
+                                  <span className="font-bold uppercase">Correct answer:</span>
                                   <span className="border-2 border-dashed border-black px-3 py-1 font-bold bg-white">
                                     {acceptable.join(" / ")}
                                   </span>
@@ -364,7 +364,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                       {(() => {
                         const pairs = (ans.metadata_json?.pairs as MatchPair[] | undefined) || [];
 
-                        // Parse student matches từ answer_data thành MatchPair[]
+                        // Parse student matches from answer_data into MatchPair[].
                         const studentMatches: MatchPair[] = pairs
                           .map((pair) => {
                             const right = getMatchingAnswer(ans.answer_data, pair.left);
@@ -385,7 +385,7 @@ export function ExamResultView({ examId }: ExamResultViewProps) {
                     </div>
                   ) : (
                     <div className="p-4 border-2 border-black bg-white italic">
-                      Định dạng câu hỏi không xác định.
+                      Unknown question format.
                     </div>
                   )}
                 </div>

@@ -140,6 +140,7 @@ export default function HistoryPage() {
             </span>
             <div className="flex gap-4">
               <button
+                aria-label="Previous page"
                 className="p-2 border-2 border-black bg-white text-black hover:bg-black hover:text-white disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-black disabled:cursor-not-allowed shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                 disabled={pagination.page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -147,6 +148,7 @@ export default function HistoryPage() {
                 <ChevronLeft className="w-6 h-6" />
               </button>
               <button
+                aria-label="Next page"
                 className="p-2 border-2 border-black bg-white text-black hover:bg-black hover:text-white disabled:opacity-50 disabled:hover:bg-white disabled:hover:text-black disabled:cursor-not-allowed shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                 disabled={pagination.page >= pagination.pages}
                 onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}

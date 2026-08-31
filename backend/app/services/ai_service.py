@@ -1,20 +1,25 @@
-import time
 import logging
 from pathlib import Path
 from uuid import UUID
+
 from sqlalchemy import select
+
+from app.ai import default_embedding_provider
+from app.ai.provider import EmbeddingProvider, EmbeddingRequest
+from app.core.config import settings
+from app.core.permissions import Permission, evaluate_owned_resource
 from app.db.session import SessionLocal
+from app.models.document_chunk import DocumentChunk
 from app.models.material import StudyMaterial
 from app.models.topic import Topic
-from app.models.document_chunk import DocumentChunk
 from app.models.user import User
-from app.core.permissions import Permission, evaluate_owned_resource
 from app.services.ai_generation_service import AIGenerationService
 from app.services.authorization_service import AuthorizationService
 from app.services.material_processing import extract_and_chunk_material
-import os
 
 logger = logging.getLogger(__name__)
+
+MAX_EMBEDDING_BATCH_SIZE = 64
 
 
 
@@ -73,14 +78,13 @@ def _park_draft_for_review(
     return job
 
 
-def mock_process_document_and_generate_questions(
+def process_document_and_generate_questions(
     material_id: str,
     expected_owner_id: str,
     request_id: str,
+    embedding_provider: EmbeddingProvider | None = None,
 ):
-    # Simulate processing time
-    time.sleep(5)
-    
+    """Extract, embed, and persist an uploaded material before drafting content."""
     with SessionLocal() as db:
         material = db.scalar(
             select(StudyMaterial).where(
@@ -94,13 +98,33 @@ def mock_process_document_and_generate_questions(
         # 1. Process Document and Create Chunks
         try:
             content, chunks = extract_and_chunk_material(Path(material.file_path))
-            for para in chunks:
-                chunk = DocumentChunk(
-                    material_id=material.id,
-                    content=para,
-                    embedding=[0.1] * 1536,
+            provider = embedding_provider or default_embedding_provider
+            if len(chunks) > MAX_EMBEDDING_BATCH_SIZE:
+                raise ValueError("embedding batch exceeds configured limit")
+            if chunks:
+                embedding_result = provider.embed(
+                    EmbeddingRequest(
+                        inputs=tuple(chunks),
+                        model=settings.AI_EMBEDDING_MODEL,
+                        dimensions=settings.AI_EMBEDDING_DIMENSIONS,
+                        input_type="search_document",
+                    )
                 )
-                db.add(chunk)
+                document_chunks = [
+                    DocumentChunk(
+                        material_id=material.id,
+                        content=para,
+                        embedding=embedding,
+                    )
+                    for para, embedding in zip(
+                        chunks,
+                        embedding_result.embeddings,
+                        strict=True,
+                    )
+                ]
+            else:
+                document_chunks = []
+            db.add_all(document_chunks)
             material.parsed_text = content
             db.commit()
         except Exception:
@@ -151,27 +175,13 @@ def mock_process_document_and_generate_questions(
             ]
         }
 
-        job = AIGenerationService.create_job(
+        _park_draft_for_review(
             db,
-            owner_id=material.uploader_id,
-            material_id=material.id,
-            use_case="question_generation",
-        )
-        # Each transition is its own atomic transaction with exactly one
-        # audit event, matching the request-path generation flow.
-        AIGenerationService.commit_transition(
-            db, job, "processing", actor=actor, request_id=request_id
-        )
-        AIGenerationService.commit_transition(
-            db,
-            job,
-            "generated",
             actor=actor,
+            material=material,
+            use_case="question_generation",
             draft_payload=draft_payload,
             request_id=request_id,
-        )
-        AIGenerationService.commit_transition(
-            db, job, "awaiting_review", actor=actor, request_id=request_id
         )
 
         material.ai_status = "completed"
@@ -187,8 +197,6 @@ def mock_generate_topic_kit(
     """
     Mock function to simulate AI generating a Topic Brief and Flashcards from a Study Material.
     """
-    time.sleep(3) # Simulate AI processing time
-    
     with SessionLocal() as db:
         owner_id = UUID(expected_owner_id)
         material = db.scalar(

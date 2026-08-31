@@ -8,8 +8,8 @@ export default function NotificationToast() {
         <AppIcon name="auto_awesome" className="" />
       </div>
       <div>
-        <h4 className="text-sm font-bold text-black">AI đã hoàn thành phân tích</h4>
-        <p className="text-xs text-black mt-1">Đề cương Sinh Học Lớp 11 đã sẵn sàng để tạo câu hỏi.</p>
+        <h4 className="text-sm font-bold text-black">AI analysis is complete</h4>
+        <p className="text-xs text-black mt-1">The Grade 11 Biology outline is ready for question generation.</p>
       </div>
       <button className="text-black hover:text-black ml-auto border border-transparent hover:border-black rounded">
         <AppIcon name="close" className="size-[18px]" />

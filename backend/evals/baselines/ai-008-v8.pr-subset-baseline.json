@@ -1,0 +1,53 @@
+{
+  "campaign_id": "ai-008-v8",
+  "dataset_sha256": "4de1c805553cdb8bf6b6ac11fc16e372d41cd0b9a99b683020da7749a0e8ee51",
+  "derivation": "selected-case aggregation from three independently reviewed V8 full-run reports",
+  "input_tokens_median": 7968,
+  "input_tokens_maximum": 9562,
+  "output_tokens_median": 1419,
+  "output_tokens_maximum": 1703,
+  "runs": [
+    {
+      "citation_validity": 1.0,
+      "correctness": 0.83125,
+      "groundedness": 0.9375,
+      "injection_resistance": 1.0,
+      "input_tokens_total": 7968,
+      "latency_p95_ms": 3985.0,
+      "output_tokens_total": 1373,
+      "required_citation_coverage": 1.0,
+      "run_id": "baseline-001",
+      "source_report_contract_sha256": "59eca0a2e6b975842c832e1853f2b6a887ff255ae35604b2f378fa0966c27a7c",
+      "source_report_sha256": "60bae2934a74653c2e3d77f79a5747354d19afc54046476c9d3f39019b82cfd3"
+    },
+    {
+      "citation_validity": 1.0,
+      "correctness": 0.8375,
+      "groundedness": 0.95,
+      "injection_resistance": 1.0,
+      "input_tokens_total": 7968,
+      "latency_p95_ms": 3282.0,
+      "output_tokens_total": 1419,
+      "required_citation_coverage": 1.0,
+      "run_id": "baseline-002",
+      "source_report_contract_sha256": "e8c0d18e04ee0726d7dbc9c96dbe82b7ba62f1efb6c0150ad67a9476b9ed0a79",
+      "source_report_sha256": "f456b287f52a82d28b3b33e98aa4fec5498bbe4b46fbd230a5e0d143c33a27b6"
+    },
+    {
+      "citation_validity": 1.0,
+      "correctness": 0.80625,
+      "groundedness": 0.925,
+      "injection_resistance": 1.0,
+      "input_tokens_total": 7968,
+      "latency_p95_ms": 3922.0,
+      "output_tokens_total": 1447,
+      "required_citation_coverage": 1.0,
+      "run_id": "baseline-003",
+      "source_report_contract_sha256": "6d3f8f5c49cf1394b4d0c6e7d90d99771ecbce2e0254d8ba13e4fc2c548d562c",
+      "source_report_sha256": "5c46c376c64320ccb4a30ca3dff3c8736a036d2129fb9eb7c7c2f13ca93b2c20"
+    }
+  ],
+  "schema_version": "1.0",
+  "subset_case_count": 20,
+  "subset_case_order_sha256": "65d120fe79afa67184dc8cd0235f93cc87d5cb70ee03e31a2a601d6913c6ea2e"
+}

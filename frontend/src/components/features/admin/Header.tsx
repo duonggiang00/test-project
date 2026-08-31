@@ -27,7 +27,7 @@ export function Header() {
         </div>
         <Button variant="ghost" size="sm" onClick={handleLogout} className="text-black hover:text-black">
           <LogOut className="mr-2 h-4 w-4" />
-          Đăng xuất
+          Sign out
         </Button>
       </div>
     </header>

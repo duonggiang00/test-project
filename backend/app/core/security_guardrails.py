@@ -6,7 +6,7 @@ import io
 import re
 import zipfile
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 # ── Prompt Injection Detection ────────────────────────────────────────────────
 
@@ -63,21 +63,23 @@ MAX_MESSAGES = 20
 MAX_CONTENT_LENGTH = 4000
 
 
-def validate_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def validate_messages(messages: list[dict[str, Any]]) -> list[dict[str, str]]:
     """
     Validate and sanitize the message history:
     - Limit to last MAX_MESSAGES messages
-    - Strip any system-role messages injected by the client
+    - Retain only the client roles allowed by the public request schema
     - Limit content length per message
     """
-    # Strip any system messages the client tries to inject
-    filtered = [m for m in messages if m.get("role") != "system"]
+    # Defense in depth for service-level callers that bypass Pydantic request
+    # validation. Provider-priority roles such as system, developer, and tool
+    # must never be forwarded from client-controlled history.
+    filtered = [m for m in messages if m.get("role") in {"user", "assistant"}]
     
     # Limit message count (keep latest)
     filtered = filtered[-MAX_MESSAGES:]
     
     # Sanitize each message content
-    sanitized = []
+    sanitized: list[dict[str, str]] = []
     for msg in filtered:
         if not isinstance(msg.get("content"), str):
             continue

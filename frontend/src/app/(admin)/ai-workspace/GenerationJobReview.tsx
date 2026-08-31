@@ -33,9 +33,9 @@ const ACTION_ERROR_FALLBACKS: Record<AIGenerationReviewAction, string> = {
 };
 
 const ACTION_SUCCESS_MESSAGES: Record<AIGenerationReviewAction, string> = {
-  approve: "Đã duyệt bản nháp. Bạn có thể xuất bản vào hệ thống.",
-  reject: "Đã từ chối bản nháp. Nội dung sẽ không được xuất bản.",
-  publish: "Đã xuất bản nội dung đã duyệt vào hệ thống.",
+  approve: "Draft approved. It can now be published.",
+  reject: "Draft rejected. The content will not be published.",
+  publish: "Approved content published to the system.",
 };
 
 const ACTION_LOG_CONTEXTS: Record<AIGenerationReviewAction, string> = {
@@ -108,7 +108,7 @@ export default function GenerationJobReview({
       // actually accepted is announced as a success.
       if (accepted) {
         toast.add({
-          title: "Thành công",
+          title: "Action completed",
           description: ACTION_SUCCESS_MESSAGES[action],
           type: "success",
         });
@@ -121,10 +121,10 @@ export default function GenerationJobReview({
     return (
       <div className={PANEL_CLASS} data-testid="generation-job-review">
         <p className="font-mono text-xs font-bold uppercase">
-          [INFO] Bản xem trước
+          [INFO] Preview
         </p>
         <p className="font-mono text-xs mt-1">
-          Nội dung này chưa gắn với phiên duyệt nào nên chưa thể xuất bản.
+          This content is not attached to a review session and cannot be published.
         </p>
       </div>
     );
@@ -138,7 +138,7 @@ export default function GenerationJobReview({
           className="font-mono text-xs font-bold uppercase flex items-center gap-2"
         >
           <Loader2 className="animate-spin w-4 h-4" aria-hidden="true" />
-          [...] ĐANG TẢI TRẠNG THÁI DUYỆT
+          [...] LOADING REVIEW STATUS
         </p>
       </div>
     );
@@ -151,10 +151,10 @@ export default function GenerationJobReview({
         data-testid="generation-job-review"
       >
         <p role="status" className="font-mono text-xs font-bold uppercase">
-          [!] KHÔNG TẢI ĐƯỢC TRẠNG THÁI DUYỆT
+          [!] REVIEW STATUS UNAVAILABLE
         </p>
         <p className="font-mono text-xs mt-1">
-          Không thể đọc phiên duyệt của nội dung này. Hãy thử lại sau.
+          The review session could not be loaded. Try again later.
         </p>
       </div>
     );
@@ -165,7 +165,7 @@ export default function GenerationJobReview({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-mono text-[10px] font-bold uppercase underline">
-            Trạng thái duyệt
+            Review status
           </p>
           <p
             role="status"
@@ -202,11 +202,11 @@ export default function GenerationJobReview({
       </div>
       <p className="font-mono text-xs mt-2 border-t-2 border-black pt-2">
         {REVIEW_STATUS_HINTS[job.status] ??
-          "Không có hành động nào khả dụng cho trạng thái này."}
+          "No action is available for this status."}
       </p>
       {job.failure_code && (
         <p className="font-mono text-xs mt-1 font-bold uppercase">
-          [!] Mã lỗi: {job.failure_code}
+          [!] Error code: {job.failure_code}
         </p>
       )}
     </div>

@@ -10,6 +10,9 @@ from app.db.session import get_db
 from app.core.config import settings
 from app.core.rate_limit import limiter
 from scripts.test_database import validate_test_database_target
+from app.ai.provider import EmbeddingResult
+from app.services import ai_service
+from app.services import rag_retrieval_service
 
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -28,6 +31,27 @@ def pytest_collection_modifyitems(items):
 @pytest.fixture(autouse=True)
 def reset_rate_limiter():
     limiter.reset()
+
+
+@pytest.fixture(autouse=True)
+def stub_document_embeddings(monkeypatch):
+    """Keep integration tests at the provider boundary without network calls."""
+
+    class FakeEmbeddingProvider:
+        def embed(self, request):
+            return EmbeddingResult(
+                embeddings=[[0.0] * request.dimensions for _ in request.inputs],
+                provider="test",
+                model=request.model,
+                input_tokens=0,
+                latency_ms=0.0,
+            )
+
+    provider = FakeEmbeddingProvider()
+    monkeypatch.setattr(ai_service, "default_embedding_provider", provider)
+    monkeypatch.setattr(
+        rag_retrieval_service, "default_embedding_provider", provider
+    )
     yield
     limiter.reset()
 

@@ -331,7 +331,6 @@ def test_background_admin_override_serializes_against_demotion(
                 )
         return original_commit(session, **kwargs)
 
-    monkeypatch.setattr("app.services.ai_service.time.sleep", lambda _seconds: None)
     monkeypatch.setattr(
         AuthorizationService,
         "commit_with_audit",

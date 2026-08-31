@@ -244,9 +244,23 @@ test('material upload and AI generation are publishable only after review (MOCKE
   });
   await expect(page.getByText(MATERIAL.title)).toBeVisible();
 
+  // Upload notifications are transient. Verify and dismiss them immediately
+  // after upload instead of waiting through the slower generation flow.
+  const uploadToast = page.getByText('Upload queued', { exact: true });
+  await expect(uploadToast).toBeVisible();
+  for (const toastName of ['Upload queued', 'Uploading...']) {
+    const toastDialog = page.getByRole('dialog', { name: toastName });
+    await toastDialog.getByLabel('Close toast').click();
+    await expect(toastDialog).not.toBeVisible();
+  }
+  await expect(uploadToast).not.toBeVisible();
+  await expect(page.locator('[data-slot="toast"]')).toHaveCount(0);
+
   // --- GENERATE ---
   await page.getByText(MATERIAL.title).click();
-  await page.getByRole('button', { name: /Sinh C.u H.i/i }).click();
+  await expect(page.getByPlaceholder('Enter a material question...')).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Send material question' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Generate Questions' }).click();
 
   // --- AWAITING REVIEW: approve/reject offered, publish withheld ---
   const reviewPanel = page.getByTestId('generation-job-review');
@@ -255,30 +269,43 @@ test('material upload and AI generation are publishable only after review (MOCKE
     'data-status',
     'awaiting_review',
   );
-  await expect(reviewPanel.getByRole('button', { name: 'Duyệt' })).toBeVisible();
-  await expect(reviewPanel.getByRole('button', { name: 'Từ chối' })).toBeVisible();
-  await expect(reviewPanel.getByRole('button', { name: 'Xuất bản' })).toHaveCount(0);
+  await expect(reviewPanel.getByRole('button', { name: 'Approve' })).toBeVisible();
+  await expect(reviewPanel.getByRole('button', { name: 'Reject' })).toBeVisible();
+  await expect(reviewPanel.getByRole('button', { name: 'Publish' })).toHaveCount(0);
   expect(publishCalls).toBe(0);
 
+  const safetyWarning = page.getByText('[WARNING] AI output may be incorrect.');
+  await expect(safetyWarning).toBeVisible();
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  });
+  await page.mouse.move(0, 0);
+  await expect(page).toHaveScreenshot('ai-review-awaiting-review.png', {
+    animations: 'disabled',
+    fullPage: true,
+  });
+
   // --- APPROVE ---
-  await reviewPanel.getByRole('button', { name: 'Duyệt' }).click();
+  await reviewPanel.getByRole('button', { name: 'Approve' }).click();
   await expect(page.getByTestId('generation-job-status')).toHaveAttribute(
     'data-status',
     'approved',
   );
-  await expect(reviewPanel.getByRole('button', { name: 'Xuất bản' })).toBeVisible();
-  await expect(reviewPanel.getByRole('button', { name: 'Duyệt' })).toHaveCount(0);
-  await expect(reviewPanel.getByRole('button', { name: 'Từ chối' })).toHaveCount(0);
+  await expect(reviewPanel.getByRole('button', { name: 'Publish' })).toBeVisible();
+  await expect(reviewPanel.getByRole('button', { name: 'Approve' })).toHaveCount(0);
+  await expect(reviewPanel.getByRole('button', { name: 'Reject' })).toHaveCount(0);
   expect(approveCalls).toBe(1);
   expect(publishCalls).toBe(0);
 
   // --- PUBLISH ---
-  await reviewPanel.getByRole('button', { name: 'Xuất bản' }).click();
+  await reviewPanel.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByTestId('generation-job-status')).toHaveAttribute(
     'data-status',
     'published',
   );
-  await expect(reviewPanel.getByRole('button', { name: 'Xuất bản' })).toHaveCount(0);
+  await expect(reviewPanel.getByRole('button', { name: 'Publish' })).toHaveCount(0);
   expect(publishCalls).toBe(1);
 
   // Publish carries placement only; the content comes from the job's reviewed

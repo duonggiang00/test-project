@@ -18,7 +18,7 @@ export interface FeaturedExamCardProps {
 
 export default function FeaturedExamCard({
   id,
-  subject = "Tổng hợp",
+  subject = "General",
   title,
   description,
   durationMinutes,
@@ -52,11 +52,11 @@ export default function FeaturedExamCard({
           </span>
           {isSubmitted ? (
             <span className="bg-black text-white font-mono font-bold text-xs px-2 py-0.5 uppercase border-2 border-black">
-              Hoàn thành
+              Completed
             </span>
           ) : isInProgress ? (
             <span className="bg-white text-black font-mono font-bold text-xs px-2 py-0.5 uppercase border-2 border-black">
-              Đang thi
+              In progress
             </span>
           ) : null}
         </div>
@@ -80,18 +80,18 @@ export default function FeaturedExamCard({
       <div className="flex items-center justify-between pt-4 border-t-4 border-black mt-auto">
         <div className="flex gap-4 text-black font-mono font-bold text-xs uppercase">
           <span className="flex items-center gap-1">
-            <AppIcon name="schedule" className="size-4" /> {durationMinutes} Phút
+            <AppIcon name="schedule" className="size-4" /> {durationMinutes} Minutes
           </span>
           {questionCount > 0 && (
             <span className="flex items-center gap-1">
-              <AppIcon name="help_outline" className="size-4" /> {questionCount} Câu
+              <AppIcon name="help_outline" className="size-4" /> {questionCount} Questions
             </span>
           )}
         </div>
         {isSubmitted && totalScore !== null && totalScore !== undefined && (
           <div className="font-mono font-black text-lg text-black">
             {totalScore}{maxScore ? ` / ${maxScore}` : ""}{" "}
-            <span className="text-xs uppercase font-bold">Điểm</span>
+            <span className="text-xs uppercase font-bold">Score</span>
           </div>
         )}
       </div>
@@ -106,7 +106,7 @@ export default function FeaturedExamCard({
               : "bg-black text-white hover:bg-white hover:text-black"
           }`}
         >
-          {isSubmitted ? "Xem kết quả" : isInProgress ? "Tiếp tục thi" : "Bắt đầu"}
+          {isSubmitted ? "View result" : isInProgress ? "Continue exam" : "Start"}
         </button>
       </Link>
     </article>

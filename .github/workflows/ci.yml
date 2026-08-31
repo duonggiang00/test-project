@@ -72,6 +72,7 @@ jobs:
           path: |
             backend/reports/
             frontend/reports/
+            reports/agent-workflow/
             frontend/.next/diagnostics/
 
   integration:
@@ -83,7 +84,7 @@ jobs:
 
     services:
       postgres:
-        image: pgvector/pgvector:0.8.2-pg16
+        image: pgvector/pgvector:0.8.6-pg18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -144,6 +145,7 @@ jobs:
           path: |
             backend/reports/
             frontend/reports/
+            reports/agent-workflow/
 
   coverage-pr:
     name: Coverage regression
@@ -154,7 +156,7 @@ jobs:
 
     services:
       postgres:
-        image: pgvector/pgvector:0.8.2-pg16
+        image: pgvector/pgvector:0.8.6-pg18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -204,6 +206,9 @@ jobs:
           COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/verify.mjs coverage
 
+      - name: Run Alembic round trip
+        run: node scripts/verify.mjs migration
+
       - name: Upload coverage diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
@@ -214,6 +219,7 @@ jobs:
           path: |
             backend/reports/
             frontend/reports/
+            reports/agent-workflow/
 
   mocked-e2e:
     name: Mocked browser matrix
@@ -251,7 +257,9 @@ jobs:
           name: mocked-browser-diagnostics-${{ github.run_id }}
           if-no-files-found: ignore
           retention-days: 7
-          path: frontend/reports/playwright/
+          path: |
+            frontend/reports/playwright/
+            reports/agent-workflow/
 
   real-e2e:
     name: Real backend smoke E2E
@@ -262,7 +270,7 @@ jobs:
 
     services:
       postgres:
-        image: pgvector/pgvector:0.8.2-pg16
+        image: pgvector/pgvector:0.8.6-pg18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -322,3 +330,4 @@ jobs:
           path: |
             backend/reports/
             frontend/reports/playwright/
+            reports/agent-workflow/

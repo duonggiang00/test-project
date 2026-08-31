@@ -80,3 +80,38 @@ def test_explicit_test_database_url_overrides_the_derived_target():
     )
 
     assert configured.SQLALCHEMY_DATABASE_URL.endswith("/custom_test")
+
+
+def test_rag_retrieval_and_embedding_policy_is_strict():
+    configured = Settings(
+        _env_file=None,
+        DATABASE_URL="postgresql://app:password@localhost:5432/app",
+        SECRET_KEY="test-only-secret",
+    )
+
+    assert configured.RAG_RETRIEVAL_MODE == "hybrid"
+    assert configured.AI_EMBEDDING_MODEL == "openai/text-embedding-3-small"
+    assert configured.AI_EMBEDDING_DIMENSIONS == 1536
+
+    from_environment = Settings(
+        _env_file=None,
+        DATABASE_URL="postgresql://app:password@localhost:5432/app",
+        SECRET_KEY="test-only-secret",
+        AI_EMBEDDING_DIMENSIONS="1536",
+    )
+    assert from_environment.AI_EMBEDDING_DIMENSIONS == 1536
+
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            DATABASE_URL="postgresql://app:password@localhost:5432/app",
+            SECRET_KEY="test-only-secret",
+            RAG_RETRIEVAL_MODE="unknown",
+        )
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            DATABASE_URL="postgresql://app:password@localhost:5432/app",
+            SECRET_KEY="test-only-secret",
+            AI_EMBEDDING_DIMENSIONS=3072,
+        )

@@ -19,14 +19,15 @@ Write code, comments, docstrings, technical documentation, UI text, error transl
 
 ## 2. Required survey
 
-Before editing:
+Before editing, classify the task risk and load only the context needed for that scope:
 
-- Read the canonical specification and relevant accepted ADRs.
-- Read the nearest scoped `AGENTS.md`.
-- Inspect the actual models, schemas, routes, call sites, components, tests, and configuration involved.
-- Check existing dependencies and reusable implementations before adding either.
-- Establish the relevant baseline check when the environment supports it.
-- Identify pre-existing failures separately from failures caused by the task.
+1. Read this file and the nearest scoped `AGENTS.md`.
+2. Run `node scripts/task-context.mjs --task <id> --risk <L0-L4> --paths <paths...>` when available, then read the listed specification sections and ADRs.
+3. Read the complete canonical specification only for L3/L4 work, a cross-domain change, or a suspected `SPEC_DRIFT`.
+4. Inspect the live models, schemas, routes, call sites, components, tests, configuration, dependencies, and reusable implementations involved.
+5. Establish the closest baseline and separate pre-existing failures from task-caused failures.
+
+Do not load the optimization tracker by default. Read it only for a task in that program or when project capability, transition, or blocker state changes.
 
 Never guess a field, endpoint, route, permission, or test command. Verify it from live source or executable introspection. Generated inventory is trusted only when its generator version and relevant source-tree hash match the current checkout; its source commit records the generation base and may precede documentation-only commits.
 
@@ -44,11 +45,9 @@ Prior owner approval is required before implementing:
 
 Use subagents only for large or high-risk work. A task has one implementation owner. Security, migration, tenant-isolation, and AI-grading work requires independent review.
 
-## 4. Change contract
+## 4. Task brief and change contract
 
-For non-trivial work, create a concise change contract before editing. Record scope, current/expected behavior, affected contracts, security/ownership/migration/rollback impact, required verification, assumptions, and unresolved drift.
-
-Use `docs/agent-workflows/CHANGE_CONTRACT.md`. Update the contract when evidence invalidates an assumption.
+Use the six-field task brief and artifact policy in `docs/agent-workflows/TOKEN_EFFICIENT_CODING.md`. L2-L4 work requires a saved Change Contract before editing. L1 work requires one only for user-visible behavior, non-trivial rollback, or unresolved drift. Update the contract when evidence invalidates an assumption.
 
 ## 5. Implementation discipline
 
@@ -63,21 +62,13 @@ Use `docs/agent-workflows/CHANGE_CONTRACT.md`. Update the contract when evidence
 
 ## 6. Verification
 
-Choose verification by changed behavior and task risk:
-
-1. Run the closest targeted test.
-2. Run applicable lint, type, and architecture checks.
-3. Run contract/integration tests when crossing process, database, or API boundaries.
-4. Run build checks for affected deliverables.
-5. Run E2E or visual regression when changing a user flow, routing, auth, hydration, browser behavior, or UI layout.
-
-Do not require full E2E for documentation or isolated pure-logic changes. Do not substitute build/lint for behavioral tests.
+Use the centralized matrix in `docs/agent-workflows/TASK_RISK_CLASSIFICATION.md`: targeted behavior first, applicable static checks next, and the complete affected gate once after the implementation stabilizes. Do not substitute build/lint for behavioral tests or require full E2E for documentation and isolated pure logic.
 
 Read stdout and stderr, not only the exit code. If a required check cannot run, report the exact blocker and leave the task `BLOCKED` or `REVIEW`, not `DONE`.
 
 ## 7. Completion evidence
 
-Use `docs/agent-workflows/HANDOFF.md`. A completed implementation reports task/requirement IDs, files changed, commands and results, test counts, contract/migration/security impact, manual verification, UI evidence, known risks, unverified items, and rollback instructions.
+Use the artifact policy in `docs/agent-workflows/TOKEN_EFFICIENT_CODING.md`. Persist a detailed `docs/agent-workflows/HANDOFF.md` record for L2-L4 work, tracked-program tasks, or unresolved risk; use a compact final summary for ordinary L0/L1 work. Reference verification manifests instead of copying full logs.
 
 Update `docs/plans/AGENT_WORKFLOW_OPTIMIZATION_PLAN.md` when completing a task from that program. Update project state only when a capability, contract, accepted decision, active transition, or blocker changes. Do not manually maintain technical inventories that can be generated from code.
 
@@ -97,3 +88,4 @@ Update `docs/plans/AGENT_WORKFLOW_OPTIMIZATION_PLAN.md` when completing a task f
 - Error/audit contracts: `docs/spec/ERROR_AND_AUDIT_CONTRACTS.md`
 - Architecture decisions: `docs/adr/`
 - Optimization tracker: `docs/plans/AGENT_WORKFLOW_OPTIMIZATION_PLAN.md`
+- Token-efficient workflow: `docs/agent-workflows/TOKEN_EFFICIENT_CODING.md`

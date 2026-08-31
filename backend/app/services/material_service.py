@@ -175,9 +175,9 @@ class MaterialService:
             storage.delete(file_path)
             raise
 
-        from app.services.ai_service import mock_process_document_and_generate_questions
+        from app.services.ai_service import process_document_and_generate_questions
         background_tasks.add_task(
-            mock_process_document_and_generate_questions,
+            process_document_and_generate_questions,
             str(material.id),
             str(current_user.id),
             get_current_request_id() or new_correlation_id(),

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 
 @dataclass(frozen=True)
@@ -74,6 +74,7 @@ class GenerateResult:
     usage: TokenUsage
     latency_ms: float
     finish_reason: str | None = None
+    provider_variant: str | None = None
 
 
 @dataclass(frozen=True)
@@ -85,6 +86,36 @@ class GenerateRequest:
     tools: list[dict[str, Any]] | None = None
     temperature: float | None = None
     max_tokens: int | None = None
+    response_format: Literal["json_object"] | None = None
+
+
+@dataclass(frozen=True)
+class EmbeddingRequest:
+    """Typed batch input for document or query embeddings."""
+
+    inputs: tuple[str, ...]
+    model: str
+    dimensions: int
+    input_type: Literal["search_document", "search_query"]
+
+
+@dataclass(frozen=True)
+class EmbeddingResult:
+    """Validated embedding vectors and safe provider telemetry."""
+
+    embeddings: list[list[float]]
+    provider: str
+    model: str
+    input_tokens: int | None
+    latency_ms: float
+
+
+@dataclass(frozen=True)
+class ProviderExecutionBinding:
+    """Runtime-attested retry and routing policy for governed evaluations."""
+
+    max_retries: int
+    routing_policy_sha256: str | None = None
 
 
 class AIProviderError(Exception):
@@ -103,10 +134,23 @@ class AIProviderError(Exception):
 class AIProvider(Protocol):
     """Replaceable boundary for LLM generation and streaming."""
 
+    @property
+    def execution_binding(self) -> ProviderExecutionBinding:
+        """Describe effective adapter policy without exposing credentials."""
+        ...
+
     def generate(self, request: GenerateRequest) -> GenerateResult:
         """Run one non-streaming completion. Raises `AIProviderError`."""
         ...
 
     def stream(self, request: GenerateRequest) -> AsyncIterator[StreamChunk]:
         """Run one streaming completion. Raises `AIProviderError`."""
+        ...
+
+
+class EmbeddingProvider(Protocol):
+    """Replaceable boundary for batched document and query embeddings."""
+
+    def embed(self, request: EmbeddingRequest) -> EmbeddingResult:
+        """Return one finite, fixed-size vector per input."""
         ...

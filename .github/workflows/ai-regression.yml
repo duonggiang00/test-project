@@ -1,0 +1,123 @@
+name: AI regression
+
+on:
+  pull_request:
+    types: [labeled]
+    paths:
+      - "backend/app/ai/**"
+      - "backend/evals/golden/**"
+      - "backend/scripts/*ai*"
+      - "backend/tests/**/*ai*"
+      - ".github/workflows/ai-regression.yml"
+  schedule:
+    - cron: "17 2 * * 1"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Regression scope
+        required: true
+        default: full
+        type: choice
+        options:
+          - full
+          - pr
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-regression-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.11.16"
+  AI_PROVIDER: openrouter
+  SECRET_KEY: ci-only-placeholder-not-for-production
+  BACKEND_CORS_ORIGINS: http://localhost:3000
+
+jobs:
+  baseline-integrity:
+    name: Approved V8 baseline integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Verify approved V8 policy and evidence
+        run: node scripts/verify.mjs ai-baseline-integrity --compact --task ai-regression-baseline
+
+  collect:
+    name: Protected 20/40-case candidate collection
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       github.event.label.name == 'ai-regression-approved' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    needs: baseline-integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ai-regression
+    env:
+      REGRESSION_SCOPE: ${{ github.event_name == 'pull_request' && 'pr' || (github.event_name == 'schedule' && 'full' || inputs.scope) }}
+      REGRESSION_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the approved commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Collect and structurally gate the approved scope
+        working-directory: backend
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: >-
+          uv run --frozen python -m scripts.run_ai_regression_collection
+          evals/golden/v1.jsonl
+          --approval-manifest evals/golden/v1.approval.json
+          --scope $REGRESSION_SCOPE
+          --commit-sha $REGRESSION_SHA
+          --run-key ${{ github.run_id }}-${{ github.run_attempt }}-$REGRESSION_SCOPE
+
+      - name: Upload sanitized collection manifest
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-regression-manifest-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: backend/reports/ai-regression/${{ github.run_id }}-${{ github.run_attempt }}-${{ env.REGRESSION_SCOPE }}/manifest.json
+
+      - name: Upload restricted reviewer evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-regression-candidates-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 3
+          path: backend/reports/ai-regression/${{ github.run_id }}-${{ github.run_attempt }}-${{ env.REGRESSION_SCOPE }}/candidates.json

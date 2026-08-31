@@ -11,7 +11,7 @@ import { dirname, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const GENERATOR_VERSION = "1.0.1";
+const GENERATOR_VERSION = "1.1.0";
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const backendRoot = resolve(workspaceRoot, "backend");
 const frontendRoot = resolve(workspaceRoot, "frontend");
@@ -83,8 +83,9 @@ function backendInventory() {
     backendRoot,
     {
       DATABASE_URL: process.env.DATABASE_URL ?? introspectionDatabaseUrl,
-      UV_CACHE_DIR: resolve(backendRoot, ".uv-cache"),
-      UV_PYTHON_INSTALL_DIR: resolve(backendRoot, ".uv-python"),
+      SECRET_KEY: process.env.SECRET_KEY ?? "inventory-introspection-only-secret",
+      UV_CACHE_DIR: process.env.UV_CACHE_DIR ?? resolve(backendRoot, ".uv-cache"),
+      UV_PYTHON_INSTALL_DIR: process.env.UV_PYTHON_INSTALL_DIR ?? resolve(backendRoot, ".uv-python"),
     },
   );
   return JSON.parse(stdout);
@@ -393,28 +394,48 @@ function contextEntries(inventory, term) {
   return result;
 }
 
-const mode = process.argv[2];
-if (!["generate", "check", "context"].includes(mode)) {
-  console.error("Usage: node scripts/project-inventory.mjs <generate|check|context> [term]");
-  process.exit(2);
+function main(argv = process.argv.slice(2)) {
+  const mode = argv[0];
+  if (!["generate", "check", "context"].includes(mode)) {
+    console.error("Usage: node scripts/project-inventory.mjs <generate|check|context> [term]");
+    return 2;
+  }
+
+  try {
+    const current = buildInventory();
+    if (mode === "generate") {
+      mkdirSync(dirname(outputPath), { recursive: true });
+      writeFileSync(outputPath, `${JSON.stringify(current, null, 2)}\n`, "utf8");
+      console.log(
+        `INVENTORY_GENERATED path=${toPosix(relative(workspaceRoot, outputPath))} source_tree_sha256=${current.provenance.source_tree_sha256}`,
+      );
+    } else if (mode === "check") {
+      checkInventory(current);
+    } else {
+      const stored = checkInventory(current, true);
+      const term = argv.slice(1).join(" ").trim().toLowerCase();
+      console.log(JSON.stringify({ term: term || null, matches: contextEntries(stored, term) }, null, 2));
+    }
+    return 0;
+  } catch (error) {
+    console.error(`INVENTORY_ERROR ${error.message}`);
+    return 1;
+  }
 }
 
-try {
-  const current = buildInventory();
-  if (mode === "generate") {
-    mkdirSync(dirname(outputPath), { recursive: true });
-    writeFileSync(outputPath, `${JSON.stringify(current, null, 2)}\n`, "utf8");
-    console.log(
-      `INVENTORY_GENERATED path=${toPosix(relative(workspaceRoot, outputPath))} source_tree_sha256=${current.provenance.source_tree_sha256}`,
-    );
-  } else if (mode === "check") {
-    checkInventory(current);
-  } else {
-    const stored = checkInventory(current, true);
-    const term = process.argv.slice(3).join(" ").trim().toLowerCase();
-    console.log(JSON.stringify({ term: term || null, matches: contextEntries(stored, term) }, null, 2));
-  }
-} catch (error) {
-  console.error(`INVENTORY_ERROR ${error.message}`);
-  process.exit(1);
+const invokedPath = process.argv[1] ? resolve(process.argv[1]) : null;
+if (invokedPath === fileURLToPath(import.meta.url)) {
+  process.exitCode = main();
 }
+
+export {
+  buildInventory,
+  checkInventory,
+  contextEntries,
+  main,
+  outputPath,
+  sourceFiles,
+  stableInventory,
+  toPosix,
+  workspaceRoot,
+};

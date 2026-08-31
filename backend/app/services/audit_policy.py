@@ -221,6 +221,7 @@ _AI_BASE_METADATA = frozenset({"use_case"})
 _AI_CALL_METADATA = frozenset(
     {"prompt_version", "provider", "model", "context_source_ids"}
 )
+_AI_RETRIEVAL_METADATA = frozenset({"retrieval_mode"})
 _AI_USAGE_METADATA = frozenset(
     {
         "input_tokens",
@@ -300,6 +301,10 @@ def _validate_ai_call_metadata(
             _reject_invalid_action_payload()
         if not all(_is_uuid(value) for value in source_ids):
             _reject_invalid_action_payload()
+
+    retrieval_mode = metadata.get("retrieval_mode")
+    if retrieval_mode is not None and retrieval_mode not in {"lexical", "hybrid"}:
+        _reject_invalid_action_payload()
 
 
 def _validate_ai_generation_transition(
@@ -897,7 +902,9 @@ AUDIT_ACTION_POLICIES = MappingProxyType(
             owner_requirement="required",
             required_success_change_fields=frozenset(),
             change_fields=frozenset(),
-            metadata_fields=_AI_BASE_METADATA | _AI_CALL_METADATA,
+            metadata_fields=(
+                _AI_BASE_METADATA | _AI_CALL_METADATA | _AI_RETRIEVAL_METADATA
+            ),
             validate_payload=_validate_ai_call_metadata,
         ),
         "user.create": AuditActionPolicy(

@@ -48,11 +48,4 @@ Apply this file to changes under `backend/` together with the workspace `AGENTS.
 
 ## Verification
 
-- Pure logic: focused unit tests.
-- Use case/endpoint: contract tests including negative authorization cases.
-- Query/migration/database behavior: PostgreSQL integration tests.
-- Migration: upgrade, downgrade, upgrade again.
-- Security-sensitive work: independent review and IDOR/cross-owner tests.
-
-Read `backend/tests/AGENTS.md` before changing backend tests.
-
+Use the centralized risk and behavior matrix in `docs/agent-workflows/TASK_RISK_CLASSIFICATION.md`. Read `backend/tests/AGENTS.md` before changing backend tests.

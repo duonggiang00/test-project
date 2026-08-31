@@ -108,12 +108,12 @@ describe("student exam submission errors", () => {
     fireEvent.click(screen.getByTestId("option-question-1-option-1"));
 
     confirm.mockResolvedValueOnce(false);
-    fireEvent.click(screen.getByRole("button", { name: /THOÁT BÀI THI/i }));
+    fireEvent.click(screen.getByRole("button", { name: /EXIT EXAM/i }));
     await waitFor(() => expect(confirm).toHaveBeenCalledTimes(1));
     expect(push).not.toHaveBeenCalled();
 
     confirm.mockResolvedValueOnce(true);
-    fireEvent.click(screen.getByRole("button", { name: /THOÁT BÀI THI/i }));
+    fireEvent.click(screen.getByRole("button", { name: /EXIT EXAM/i }));
     await waitFor(() => expect(push).toHaveBeenCalledWith("/student/home"));
   });
 
@@ -169,13 +169,13 @@ describe("student exam submission errors", () => {
       await params;
     });
 
-    fireEvent.change(screen.getByLabelText("Ô trống 1 của câu 1"), {
+    fireEvent.change(screen.getByLabelText("Blank 1 for question 1"), {
       target: { value: "legacy value" },
     });
-    fireEvent.change(screen.getByLabelText("Ô trống 1 của câu 2"), {
+    fireEvent.change(screen.getByLabelText("Blank 1 for question 2"), {
       target: { value: "first value" },
     });
-    fireEvent.change(screen.getByLabelText("Ô trống 2 của câu 2"), {
+    fireEvent.change(screen.getByLabelText("Blank 2 for question 2"), {
       target: { value: "second value" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Left option: One" }));

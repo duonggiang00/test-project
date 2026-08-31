@@ -246,7 +246,7 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
     submissionInFlightRef.current = true;
     
     if (timeLeft !== null && timeLeft > 0) {
-      if (!await confirm("Bạn có chắc chắn muốn nộp bài?")) {
+      if (!await confirm("Are you sure you want to submit this exam?")) {
         submissionInFlightRef.current = false;
         return;
       }
@@ -285,13 +285,13 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
   if (isError || !exam) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-white text-black">
-        <h1 className="text-3xl font-bold uppercase">Lỗi tải đề thi</h1>
-        <p className="mt-4 font-mono">Đề thi không tồn tại hoặc bạn đã nộp bài.</p>
+        <h1 className="text-3xl font-bold uppercase">Exam unavailable</h1>
+        <p className="mt-4 font-mono">The exam does not exist or has already been submitted.</p>
         <button 
           onClick={() => router.push('/student/home')}
           className="mt-8 px-6 py-2 border-4 border-black bg-black text-white font-bold uppercase hover:bg-white hover:text-black transition-colors"
         >
-          Về trang chủ
+          Back to home
         </button>
       </div>
     );
@@ -306,11 +306,11 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
             className="flex px-3 py-2 lg:px-4 lg:py-2 border-4 border-black bg-white hover:bg-black hover:text-white font-bold uppercase transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] items-center gap-2"
           >
             <LogOut className="w-5 h-5" />
-            <span className="hidden md:inline">THOÁT BÀI THI</span>
+            <span className="hidden md:inline">EXIT EXAM</span>
           </button>
           <div>
             <h1 className="text-xl lg:text-3xl font-bold uppercase tracking-widest">{exam.title}</h1>
-            <p className="text-sm font-mono mt-1 font-bold">Tổng điểm: {exam.questions?.reduce((sum, q) => sum + (Number(q.points) || 0), 0) || 0}</p>
+            <p className="text-sm font-mono mt-1 font-bold">Total points: {exam.questions?.reduce((sum, q) => sum + (Number(q.points) || 0), 0) || 0}</p>
           </div>
         </div>
         <div className={`flex items-center gap-2 lg:gap-3 border-4 border-black px-4 py-2 lg:px-6 lg:py-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white ${timeLeft !== null && timeLeft < 60 ? 'animate-pulse border-dashed' : ''}`}>
@@ -325,7 +325,7 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
         {exam.questions.map((q, idx) => (
           <div key={q.id} data-testid={`question-container-${idx}`} className="border-4 border-black p-6 lg:p-10 bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative">
             <div className="absolute -top-4 -left-4 bg-black text-white px-4 py-2 border-4 border-white font-bold font-mono text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              CÂU {idx + 1}
+              QUESTION {idx + 1}
             </div>
             
             <div className="mt-4 flex gap-3 mb-6 border-b-4 border-black pb-4">
@@ -333,7 +333,7 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
                 {q.question_type?.replace(/_/g, ' ')}
               </span>
               <span className="border-2 border-black px-3 py-1 text-sm font-mono font-bold uppercase bg-white">
-                {q.points} Điểm
+                {q.points} Points
               </span>
             </div>
 
@@ -351,7 +351,7 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
                       {segment.kind === "text" ? segment.value : (
                       <input
                         type="text"
-                        aria-label={`Ô trống ${segment.index + 1} của câu ${idx + 1}`}
+                        aria-label={`Blank ${segment.index + 1} for question ${idx + 1}`}
                         data-testid={`blank-${q.id}-${segment.index}`}
                         value={((answers[q.id]?.answer_data as Record<string, unknown>)?.blanks as Record<number, string>)?.[segment.index] || ""}
                         onChange={(e) => handleFillInBlankChange(q.id, segment.index, e.target.value)}
@@ -459,7 +459,7 @@ export default function StudentExamTakingPage({ params }: { params: Promise<{ id
               <CheckCircle className="w-10 h-10" />
             )}
             <span className="text-3xl font-bold uppercase tracking-widest font-mono">
-              {isSubmitting ? "Đang Nộp Bài..." : "Nộp Bài Ngay"}
+              {isSubmitting ? "Submitting..." : "Submit Exam"}
             </span>
           </button>
         </div>
