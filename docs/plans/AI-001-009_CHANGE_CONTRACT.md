@@ -139,6 +139,22 @@ API/event impact:
 7. AI-007 baseline report, then owner-approved AI-008 thresholds.
 8. Independent AI/security review and completion audit.
 
+## AI-006 implementation checkpoint — 2026-08-27
+
+- Implemented the v1 strict JSONL case schema, safe validator, canonical
+  fingerprint, complete-distribution enforcement, partial-review mode,
+  owner-controlled Ed25519 approval attestation, an externally pinned trust-root
+  fingerprint, and negative fixtures without provider or database access.
+- The approved current distribution is 16 RAG/chat, 12 question-generation,
+  6 flashcard-generation, and 6 topic-brief-generation cases. This is the
+  owner's 2026-08-25 replacement for the earlier proposed mix in this contract.
+- No reference case or trusted approver key was authored or marked approved by
+  an agent. AI-006 remains `BLOCKED` until a human owner/admin supplies a trust
+  key, pins its canonical fingerprint in protected configuration, and signs all
+  40 reviewed cases with the corresponding private key.
+- AI-007, AI-008, and semantic RAG remain downstream and must not activate
+  invented quality thresholds or semantic-default behavior at this checkpoint.
+
 ## Verification contract
 
 - Provider adapter contract tests for normal/tool/stream/malformed/timeout/rate-

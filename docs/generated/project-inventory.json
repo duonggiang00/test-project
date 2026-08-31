@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "3e19658d9fb773216a2e8f2a5265b82f5f70b4d8",
-    "source_commit_timestamp": "2026-08-26T23:51:58+07:00",
-    "source_tree_sha256": "c5bfdf7a65aa31261c5722a976dad133056b5cf945a1ea2d76a6a6c0bdbe09fd",
-    "relevant_file_count": 449,
+    "source_commit": "74db96251c32ed99dc796b44602ccc1cdeee7c8c",
+    "source_commit_timestamp": "2026-08-27T00:27:13+07:00",
+    "source_tree_sha256": "1f2958050c5fbc2c2899fda038878dfb67049c5829e2aa621e790d923fbe8d7b",
+    "relevant_file_count": 453,
     "alembic_heads": [
       "a74c9d2e6f10"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 330,
+    "backend_test_functions": 348,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -6795,6 +6795,140 @@
               "unit"
             ],
             "name": "test_terminal_states_have_no_outbound_transitions"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_golden_dataset.py",
+        "tests": [
+          {
+            "line": 98,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_partial_dataset_validates_signatures_and_deterministic_fingerprint"
+          },
+          {
+            "line": 130,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_complete_dataset_enforces_approved_distribution"
+          },
+          {
+            "line": 146,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_incomplete_dataset_is_not_accepted_as_complete"
+          },
+          {
+            "line": 160,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_trusted_approval_is_required_by_default"
+          },
+          {
+            "line": 169,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_forged_signature_is_rejected"
+          },
+          {
+            "line": 185,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_untrusted_approval_identity_is_rejected"
+          },
+          {
+            "line": 202,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_duplicate_case_id_is_rejected"
+          },
+          {
+            "line": 228,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_invalid_case_contract_is_rejected_without_echoing_payload"
+          },
+          {
+            "line": 259,
+            "markers": [
+              "parametrize",
+              "unit"
+            ],
+            "name": "test_common_secret_formats_are_rejected_without_echoing_value"
+          },
+          {
+            "line": 279,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_secret_scanning_covers_identifier_fields"
+          },
+          {
+            "line": 297,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_rubric_can_replace_expected_answer"
+          },
+          {
+            "line": 318,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_cli_reports_verified_counts_without_case_content"
+          },
+          {
+            "line": 346,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_cli_rejects_unpinned_caller_supplied_trust_store"
+          },
+          {
+            "line": 369,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_cli_requires_external_owner_trust_anchor"
+          },
+          {
+            "line": 391,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_structure_only_cli_never_claims_approval"
+          },
+          {
+            "line": 404,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_invalid_json_reports_line_without_payload"
+          },
+          {
+            "line": 419,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_invalid_utf8_cli_error_has_no_traceback_or_path"
+          },
+          {
+            "line": 432,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_missing_file_cli_error_does_not_echo_path"
           }
         ],
         "tier": "unit"
