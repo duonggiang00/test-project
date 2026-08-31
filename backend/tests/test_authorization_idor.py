@@ -563,7 +563,7 @@ def test_ai_chat_context_is_limited_to_the_authorized_material(
         "prompt_version": "chat_system-v1",
         "provider": "openrouter",
         "model": "meta-llama/llama-3.1-8b-instruct",
-        "retrieval_mode": "lexical",
+        "retrieval_mode": "hybrid",
         "context_source_ids": [str(owned_chunk.id)],
     }
     serialized_event = json.dumps(owner_chat_event.event_metadata)

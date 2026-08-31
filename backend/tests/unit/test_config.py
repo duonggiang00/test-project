@@ -89,7 +89,7 @@ def test_rag_retrieval_and_embedding_policy_is_strict():
         SECRET_KEY="test-only-secret",
     )
 
-    assert configured.RAG_RETRIEVAL_MODE == "lexical"
+    assert configured.RAG_RETRIEVAL_MODE == "hybrid"
     assert configured.AI_EMBEDDING_MODEL == "openai/text-embedding-3-small"
     assert configured.AI_EMBEDDING_DIMENSIONS == 1536
 

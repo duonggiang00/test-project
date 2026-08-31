@@ -45,9 +45,9 @@ class Settings(BaseSettings):
     # Material chat/retrieval is part of the active MVP surface. Operators can
     # still set this server-side flag to false as an emergency kill switch.
     RAG_ENABLED: bool = True
-    # Hybrid retrieval remains opt-in until AI-008 threshold approval and the
-    # RAG-SEMANTIC-001 retrieval evaluation both pass.
-    RAG_RETRIEVAL_MODE: Literal["lexical", "hybrid"] = "lexical"
+    # Hybrid retrieval is the evaluated default. Operators retain lexical mode
+    # as the immediate no-migration rollback path.
+    RAG_RETRIEVAL_MODE: Literal["lexical", "hybrid"] = "hybrid"
     AI_EMBEDDING_MODEL: str = "openai/text-embedding-3-small"
     # The persisted pgvector column is fixed at 1536 dimensions. A different
     # dimension requires an explicit migration rather than a runtime override.

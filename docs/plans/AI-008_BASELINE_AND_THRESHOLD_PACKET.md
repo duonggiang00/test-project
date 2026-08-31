@@ -1,15 +1,13 @@
 # AI-008 Baseline and Threshold Approval Packet
 
-Status: V8 BASELINE ACCEPTED — OWNER THRESHOLD APPROVAL REQUIRED
+Status: V8 BASELINE AND THRESHOLDS APPROVED
 
 Updated: 2026-08-31
 
-## Decision requested
+## Decision
 
-Approve the V8 baseline and the proposed regression policy below so a separate
-change can add the AI evaluation checks to GitHub Actions. This packet does not
-change CI, production prompts, production models, application behavior, or the
-database.
+The owner approved the V8 baseline, proposed thresholds, inactive cost gate,
+20/40 schedule, CI implementation, and hybrid retrieval default on 2026-08-31.
 
 ## Accepted baseline
 
@@ -68,10 +66,13 @@ regression allowance and 20% operational allowance to the V8 medians.
 | Full-run output tokens | <= 3,546 | 120% of V8 median |
 | Estimated cost | Inactive/null | No approved pricing source |
 
-Token limits for the 20-case subset must be derived from a dedicated subset
-baseline rather than dividing the 40-case totals. Any future model, prompt,
-dataset, judge, routing, or scoring-contract change requires a separately
-versioned baseline and cannot silently inherit these thresholds.
+The selected-case evidence from all three independently reviewed V8 runs gives
+20-case medians of 7,968 input and 1,419 output tokens. The approved 20%
+operational allowance sets the subset ceilings to 9,562 and 1,703 tokens. The
+tracked sanitized evidence is `backend/evals/baselines/ai-008-v8.pr-subset-baseline.json`.
+Any future model, prompt, dataset, judge, routing, or scoring-contract change
+requires a separately versioned baseline and cannot silently inherit these
+thresholds.
 
 ## Proposed CI scope
 
@@ -86,6 +87,10 @@ versioned baseline and cannot silently inherit these thresholds.
 - Preserve existing required-check names. The new live gate remains
   non-required until its workflow is proven and separately enabled by the
   owner.
+- Live collection enforces structural, citation, routing, latency, and token
+  gates. Reviewer-dependent semantics are published only after a separate
+  protected attestation binds an independent review to the candidate hash and
+  originating commit.
 
 ## Interpretation boundary
 
@@ -101,14 +106,13 @@ its first provider rate-limit response. None was retried or rewritten.
 
 ## Approval boundary
 
-AI-008 is ready for an owner decision, but threshold enforcement is not yet
-authorized. Approval must explicitly accept or revise:
+The owner accepted:
 
 1. the V8 baseline identity;
 2. the quality, safety, latency, and token thresholds;
 3. the trusted 20-case pull-request and weekly/manual 40-case schedule; and
 4. inactive cost gating.
 
-After approval, implementation requires a scoped L2/L3 change contract,
-focused workflow tests, a dry run with no provider secret exposure, canonical
-verification, and independent review.
+Implementation and verification are recorded in
+`AI-008_THRESHOLD_AND_RAG_ACTIVATION_CHANGE_CONTRACT.md` and the current
+AI-008 handoff.

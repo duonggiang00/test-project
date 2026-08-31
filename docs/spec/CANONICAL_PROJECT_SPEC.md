@@ -300,8 +300,9 @@ versions or semantic changes require a new owner/admin approval.
 - The compatibility-only mock `/ai/process-document` route is removed; real
   material uploads use the governed extraction, embedding, and chunk-persistence
   path.
-- Lexical retrieval remains the default through `RAG_RETRIEVAL_MODE=lexical`;
-  hybrid vector retrieval is an explicit, evaluated opt-in.
+- Evaluated hybrid vector retrieval is the default through
+  `RAG_RETRIEVAL_MODE=hybrid`; explicit `lexical` mode remains the immediate
+  no-migration rollback path.
 - Upload, content extraction, document chunk persistence, question generation,
   flashcard generation, topic-brief generation, and human review remain active.
 - Retrieval remains owner-scoped, audited, redacted according to the restricted

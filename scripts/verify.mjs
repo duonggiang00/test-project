@@ -69,6 +69,23 @@ const steps = {
     [resolve(workspaceRoot, "scripts/check-github-branch-policy.mjs")],
     workspaceRoot,
   ),
+  aiBaselineIntegrity: command(
+    "owner-approved AI baseline integrity",
+    "uv",
+    [
+      "run",
+      "--frozen",
+      "python",
+      "-m",
+      "scripts.check_ai_regression_policy",
+      "evals/golden/v1.jsonl",
+      "evals/baselines/ai-008-v8.comparison.json",
+      "--approval-manifest",
+      "evals/golden/v1.approval.json",
+    ],
+    backendRoot,
+    uvEnvironment,
+  ),
   backendUnit: command(
     "backend unit tests",
     "uv",
@@ -240,6 +257,7 @@ const modes = {
   fast: [
     steps.env,
     steps.githubBranchPolicy,
+    steps.aiBaselineIntegrity,
     steps.databaseDrift,
     steps.inventory,
     steps.architecture,
@@ -253,6 +271,7 @@ const modes = {
     steps.frontendBuild,
   ],
   backend: [
+    steps.aiBaselineIntegrity,
     steps.backendLint,
     steps.backendType,
     steps.backendUnit,
@@ -267,6 +286,7 @@ const modes = {
   integration: [steps.backendIntegration],
   contract: [steps.backendContract],
   migration: [steps.migration],
+  "ai-baseline-integrity": [steps.aiBaselineIntegrity],
   inventory: [steps.inventory],
   architecture: [steps.architecture],
   openapi: [steps.openapi],
@@ -278,6 +298,7 @@ const modes = {
   all: [
     steps.env,
     steps.githubBranchPolicy,
+    steps.aiBaselineIntegrity,
     steps.databaseDrift,
     steps.inventory,
     steps.architecture,
@@ -301,6 +322,7 @@ for (const [key, step] of Object.entries(steps)) step.key = key;
 const safeResumeSteps = new Set([
   "env",
   "githubBranchPolicy",
+  "aiBaselineIntegrity",
   "databaseDrift",
   "inventory",
   "architecture",

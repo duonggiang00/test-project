@@ -1,0 +1,165 @@
+name: AI regression attestation
+
+on:
+  workflow_dispatch:
+    inputs:
+      collection_run_id:
+        description: GitHub run ID containing the candidate artifact
+        required: true
+        type: string
+      review_ref:
+        description: Trusted 40-character commit SHA containing the review file
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  checks: write
+  contents: read
+
+env:
+  UV_VERSION: "0.11.16"
+  SECRET_KEY: ci-only-placeholder-not-for-production
+  BACKEND_CORS_ORIGINS: http://localhost:3000
+
+jobs:
+  attest:
+    name: Independent semantic attestation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ai-regression-review
+    steps:
+      - name: Check out trusted attestation tooling
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Validate immutable input identities
+        id: identities
+        env:
+          COLLECTION_RUN_ID: ${{ inputs.collection_run_id }}
+          REVIEW_REF: ${{ inputs.review_ref }}
+        run: |
+          [[ "$COLLECTION_RUN_ID" =~ ^[0-9]{1,20}$ ]]
+          [[ "$REVIEW_REF" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Validate protected collection provenance
+        id: provenance
+        env:
+          COLLECTION_RUN_ID: ${{ inputs.collection_run_id }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$COLLECTION_RUN_ID")"
+          [[ "$(jq -r '.repository.full_name' <<<"$run_json")" == "$GITHUB_REPOSITORY" ]]
+          [[ "$(jq -r '.path' <<<"$run_json")" == '.github/workflows/ai-regression.yml' ]]
+          [[ "$(jq -r '.conclusion' <<<"$run_json")" == 'success' ]]
+          event="$(jq -r '.event' <<<"$run_json")"
+          [[ "$event" == 'pull_request' || "$event" == 'schedule' || "$event" == 'workflow_dispatch' ]]
+          if [[ "$event" == 'pull_request' ]]; then
+            source_sha="$(jq -er '.pull_requests[0].head.sha' <<<"$run_json")"
+          else
+            source_sha="$(jq -er '.head_sha' <<<"$run_json")"
+          fi
+          [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]]
+
+          artifacts_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$COLLECTION_RUN_ID/artifacts?per_page=100")"
+          candidate_name="ai-regression-candidates-$COLLECTION_RUN_ID"
+          manifest_name="ai-regression-manifest-$COLLECTION_RUN_ID"
+          candidate_digest="$(jq -er --arg name "$candidate_name" '[.artifacts[] | select(.name == $name and .expired == false)] | if length == 1 then .[0].digest else error("candidate artifact identity") end' <<<"$artifacts_json")"
+          manifest_digest="$(jq -er --arg name "$manifest_name" '[.artifacts[] | select(.name == $name and .expired == false)] | if length == 1 then .[0].digest else error("manifest artifact identity") end' <<<"$artifacts_json")"
+          [[ "$candidate_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$manifest_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "candidate_digest=$candidate_digest" >> "$GITHUB_OUTPUT"
+          echo "manifest_digest=$manifest_digest" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the protected review evidence
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.review_ref }}
+          path: review-source
+
+      - name: Download the exact candidate artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ai-regression-candidates-${{ inputs.collection_run_id }}
+          path: evidence
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.collection_run_id }}
+
+      - name: Download the exact collection manifest
+        uses: actions/download-artifact@v8
+        with:
+          name: ai-regression-manifest-${{ inputs.collection_run_id }}
+          path: collection-manifest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.collection_run_id }}
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen
+
+      - name: Bind and evaluate independent review
+        id: semantic
+        working-directory: backend
+        env:
+          CANDIDATE_ARTIFACT_DIGEST: ${{ steps.provenance.outputs.candidate_digest }}
+          COLLECTION_RUN_ID: ${{ inputs.collection_run_id }}
+          MANIFEST_ARTIFACT_DIGEST: ${{ steps.provenance.outputs.manifest_digest }}
+          REVIEW_REF: ${{ inputs.review_ref }}
+          SOURCE_COMMIT_SHA: ${{ steps.provenance.outputs.source_sha }}
+        run: |
+          set +e
+          review_file="../review-source/backend/evals/ai-regression-reviews/$COLLECTION_RUN_ID.review.jsonl"
+          uv run --frozen python -m scripts.attest_ai_regression \
+            evals/golden/v1.jsonl \
+            ../evidence/candidates.json \
+            ../collection-manifest/manifest.json \
+            "$review_file" \
+            "reports/ai-regression/$COLLECTION_RUN_ID/attestation.json" \
+            --approval-manifest evals/golden/v1.approval.json \
+            --reviewer-actor "${{ github.actor }}" \
+            --review-ref "$REVIEW_REF" \
+            --expected-commit-sha "$SOURCE_COMMIT_SHA" \
+            --collection-run-id "$COLLECTION_RUN_ID" \
+            --candidate-artifact-digest "$CANDIDATE_ARTIFACT_DIGEST" \
+            --collection-manifest-artifact-digest "$MANIFEST_ARTIFACT_DIGEST"
+          result=$?
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload sanitized semantic attestation
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-regression-attestation-${{ inputs.collection_run_id }}
+          if-no-files-found: ignore
+          retention-days: 90
+          path: backend/reports/ai-regression/*/attestation.json
+
+      - name: Publish semantic result on the evaluated commit
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONCLUSION: ${{ steps.semantic.outputs.result == '0' && 'success' || 'failure' }}
+          SOURCE_COMMIT_SHA: ${{ steps.provenance.outputs.source_sha }}
+        run: >-
+          gh api --method POST "repos/$GITHUB_REPOSITORY/check-runs"
+          -f "name=AI semantic regression"
+          -f "head_sha=$SOURCE_COMMIT_SHA"
+          -f "status=completed"
+          -f conclusion="$CONCLUSION"
+          -f "output[title]=AI-008 V8 semantic attestation"
+          -f "output[summary]=Independent reviewer-bound result; cost gate inactive."
+
+      - name: Enforce semantic result
+        if: steps.semantic.outputs.result != '0'
+        run: exit 1

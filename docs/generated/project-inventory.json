@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "5971e38612232637372990aca2f492fe15532fa5",
-    "source_commit_timestamp": "2026-08-31T16:39:27+07:00",
-    "source_tree_sha256": "7bc77174939c8ecfe5c404a5ed98b66940e1bd8b7d5c5db587820cacc6b3c419",
-    "relevant_file_count": 476,
+    "source_commit": "fc6ba75677ca1ca7487c9f3bdb57c40249ee7d22",
+    "source_commit_timestamp": "2026-08-31T17:31:54+07:00",
+    "source_tree_sha256": "19f9f014e56ff007a2efee1f628b42d1919f6420caab75da91f72b8f194dff39",
+    "relevant_file_count": 483,
     "alembic_heads": [
       "b8c7d6e5f4a3"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 469,
+    "backend_test_functions": 484,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -7587,10 +7587,103 @@
         "tier": "unit"
       },
       {
+        "path": "tests/unit/test_ai_regression_collection.py",
+        "tests": [
+          {
+            "line": 68,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_collection_enforces_exact_scope_and_sanitized_manifest"
+          },
+          {
+            "line": 98,
+            "markers": [],
+            "name": "test_provider_policy_mismatch_fails_before_a_call"
+          },
+          {
+            "line": 119,
+            "markers": [],
+            "name": "test_invalid_envelope_stops_without_retry_and_preserves_checkpoint"
+          },
+          {
+            "line": 140,
+            "markers": [],
+            "name": "test_independent_review_attestation_binds_candidate_and_passes"
+          },
+          {
+            "line": 206,
+            "markers": [],
+            "name": "test_attestation_rejects_wrong_source_commit_before_scoring"
+          },
+          {
+            "line": 247,
+            "markers": [],
+            "name": "test_workflow_protects_provider_secret_and_separates_semantic_review"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
+        "path": "tests/unit/test_ai_regression_policy.py",
+        "tests": [
+          {
+            "line": 66,
+            "markers": [],
+            "name": "test_approved_v8_comparison_passes_fixed_policy"
+          },
+          {
+            "line": 82,
+            "markers": [],
+            "name": "test_pr_subset_is_fixed_stratified_and_contains_every_safety_case"
+          },
+          {
+            "line": 96,
+            "markers": [],
+            "name": "test_pr_subset_baseline_is_immutable_and_derives_token_limits"
+          },
+          {
+            "line": 116,
+            "markers": [],
+            "name": "test_owner_approved_comparison_is_byte_immutable"
+          },
+          {
+            "line": 140,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_each_numeric_threshold_fails_closed"
+          },
+          {
+            "line": 162,
+            "markers": [
+              "parametrize"
+            ],
+            "name": "test_coverage_safety_and_identity_tampering_fail"
+          },
+          {
+            "line": 173,
+            "markers": [],
+            "name": "test_runtime_prompt_drift_fails_against_frozen_owner_policy"
+          },
+          {
+            "line": 188,
+            "markers": [],
+            "name": "test_missing_telemetry_and_semantic_review_fail"
+          },
+          {
+            "line": 213,
+            "markers": [],
+            "name": "test_loader_and_cli_keep_paths_and_payloads_out_of_errors"
+          }
+        ],
+        "tier": "unit"
+      },
+      {
         "path": "tests/unit/test_ai_studio_chat_generator.py",
         "tests": [
           {
-            "line": 99,
+            "line": 105,
             "markers": [
               "asyncio",
               "unit"
@@ -7598,7 +7691,7 @@
             "name": "test_chat_generator_streams_text_events_matching_the_original_sse_envelope"
           },
           {
-            "line": 128,
+            "line": 135,
             "markers": [
               "asyncio",
               "unit"
@@ -7606,7 +7699,7 @@
             "name": "test_chat_generator_streams_tool_call_deltas_matching_the_original_shape"
           },
           {
-            "line": 158,
+            "line": 166,
             "markers": [
               "asyncio",
               "unit"
@@ -7614,7 +7707,7 @@
             "name": "test_chat_generator_can_emit_both_text_and_tool_calls_from_one_chunk"
           },
           {
-            "line": 192,
+            "line": 210,
             "markers": [
               "asyncio",
               "unit"
@@ -7622,7 +7715,7 @@
             "name": "test_chat_generator_surfaces_a_sanitized_provider_error_with_no_raw_text"
           },
           {
-            "line": 208,
+            "line": 227,
             "markers": [
               "asyncio",
               "unit"
@@ -7630,7 +7723,7 @@
             "name": "test_chat_generator_sends_the_resolved_model_and_the_three_tools"
           },
           {
-            "line": 233,
+            "line": 252,
             "markers": [
               "asyncio",
               "unit"
@@ -7638,7 +7731,7 @@
             "name": "test_chat_generator_emits_only_retrieved_source_ids_before_text"
           },
           {
-            "line": 253,
+            "line": 270,
             "markers": [
               "asyncio",
               "unit"
@@ -7646,7 +7739,7 @@
             "name": "test_chat_generator_still_blocks_prompt_injection_before_calling_the_provider"
           },
           {
-            "line": 279,
+            "line": 301,
             "markers": [
               "asyncio",
               "unit"

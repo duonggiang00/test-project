@@ -12,6 +12,7 @@ from app.core.rate_limit import limiter
 from scripts.test_database import validate_test_database_target
 from app.ai.provider import EmbeddingResult
 from app.services import ai_service
+from app.services import rag_retrieval_service
 
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -46,7 +47,11 @@ def stub_document_embeddings(monkeypatch):
                 latency_ms=0.0,
             )
 
-    monkeypatch.setattr(ai_service, "default_embedding_provider", FakeEmbeddingProvider())
+    provider = FakeEmbeddingProvider()
+    monkeypatch.setattr(ai_service, "default_embedding_provider", provider)
+    monkeypatch.setattr(
+        rag_retrieval_service, "default_embedding_provider", provider
+    )
     yield
     limiter.reset()
 

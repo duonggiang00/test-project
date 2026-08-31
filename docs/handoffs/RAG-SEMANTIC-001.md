@@ -58,8 +58,9 @@ content or credentials.
 
 ## Post-completion boundary
 
-Keep `RAG_RETRIEVAL_MODE=lexical` until AI-008 thresholds are separately
-owner-approved; do not enable AI-008 CI thresholds in this change.
+The owner approved AI-008 thresholds and hybrid activation on 2026-08-31.
+`RAG_RETRIEVAL_MODE=hybrid` is now the default; lexical mode remains the
+immediate no-migration rollback.
 
 ## Rollback
 
