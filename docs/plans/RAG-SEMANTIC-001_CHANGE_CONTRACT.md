@@ -126,3 +126,6 @@ immediate lexical rollback mode.
 - Final verification passes 13/13 fast steps, and independent L3 review reports
   no remaining P1/P2/P3 findings after the zero-retry and activation-eligibility
   remediations.
+- The credential-free CI path is covered explicitly: campaign CLI success tests
+  inject a test-only placeholder, missing-credential tests remain fail-closed,
+  and the complete fast gate passes with `OPENROUTER_API_KEY` empty.

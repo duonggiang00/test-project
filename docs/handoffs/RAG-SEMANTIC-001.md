@@ -30,6 +30,8 @@ Branch: `codex/rag-semantic-001-ci`
   response metadata while continuing to reject unrelated model identifiers.
 - Fixed CI parsing of the fixed 1536-dimension policy and preserved rejection
   of every other dimension.
+- Made live-campaign CLI unit tests hermetic by supplying their own placeholder
+  credential while preserving the fail-closed missing-credential cases.
 - Retrieval reports are bound to the approved AI-006 fingerprint, all 16 RAG
   cases, canonical-source-to-chunk mappings, and fixed quality floors.
 - CI PostgreSQL service images aligned to `pgvector/pgvector:0.8.6-pg18`.
@@ -45,7 +47,7 @@ Branch: `codex/rag-semantic-001-ci`
 | Mocked E2E manifest | 28/28 passed across Chromium, Firefox, WebKit, and mobile Chrome; `reports/agent-workflow/rag-semantic-001-e2e-mocked-final-3/e2e-mocked.json` |
 | Real E2E manifest | 3/3 passed against the isolated PostgreSQL backend; `reports/agent-workflow/rag-semantic-001-e2e-real-final-2/e2e-real.json` |
 | Retrieval campaign | Hybrid hit rate 1.0, MRR 0.90625, source coverage 1.0, p95 782 ms, max query count 2; lexical baseline hit rate/source coverage 0.6875; exactly 17 requests/80 inputs with zero retries and no fallback; summary SHA-256 `5008250c185cc985223b3ed32e3c76aa91114301a0ad0095412bf3b68a68d1fd` |
-| Final fast manifest | 13/13 steps passed: 488 backend unit, 23 contract, 182 frontend unit, and production build; `reports/agent-workflow/rag-semantic-001-final-2/fast.json` |
+| Final fast manifest | 13/13 steps passed with `OPENROUTER_API_KEY` explicitly empty: 488 backend unit, 23 contract, 182 frontend unit, and production build; `reports/agent-workflow/rag-semantic-001-final-3/fast.json` |
 | Independent L3 review | Approved after remediation; no remaining P1/P2/P3 findings |
 
 The ignored retrieval evidence is under

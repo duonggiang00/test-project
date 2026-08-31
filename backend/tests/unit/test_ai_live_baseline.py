@@ -1471,6 +1471,11 @@ def test_cli_uses_canonical_paths_and_disables_sdk_retries(
 ) -> None:
     provider = FakeProvider()
     received_retry_values = []
+    monkeypatch.setattr(
+        live_baseline_cli.settings,
+        "OPENROUTER_API_KEY",
+        "unit-test-provider-credential",
+    )
     monkeypatch.setattr(live_baseline, "APPROVED_CAMPAIGN_ROOT", tmp_path)
     monkeypatch.setattr(
         live_baseline, "APPROVED_BUDGET_PATH", tmp_path / "campaign.json"
@@ -1510,6 +1515,11 @@ def test_v2_cli_pins_routing_json_mode_and_ten_call_canary(
 ) -> None:
     provider = FakeProvider(provider_variant="DeepInfra")
     received = []
+    monkeypatch.setattr(
+        live_baseline_cli.settings,
+        "OPENROUTER_API_KEY",
+        "unit-test-provider-credential",
+    )
     monkeypatch.setattr(live_baseline, "V2_APPROVED_CAMPAIGN_ROOT", tmp_path)
 
     def build_provider(*, max_retries: int, routing_policy):
@@ -1553,6 +1563,11 @@ def test_v3_cli_uses_fixed_campaign_model_without_changing_default(
 ) -> None:
     provider = FakeProvider(provider_variant="DeepInfra")
     received = []
+    monkeypatch.setattr(
+        live_baseline_cli.settings,
+        "OPENROUTER_API_KEY",
+        "unit-test-provider-credential",
+    )
     monkeypatch.setattr(live_baseline, "V3_APPROVED_CAMPAIGN_ROOT", tmp_path)
 
     def build_provider(*, max_retries: int, routing_policy):
@@ -1588,6 +1603,11 @@ def test_v5_cli_uses_fixed_model_routing_parse_policy_and_call_cap(
 ) -> None:
     provider = FakeProvider(provider_variant="DeepInfra")
     received = []
+    monkeypatch.setattr(
+        live_baseline_cli.settings,
+        "OPENROUTER_API_KEY",
+        "unit-test-provider-credential",
+    )
     monkeypatch.setattr(live_baseline, "V5_APPROVED_CAMPAIGN_ROOT", tmp_path)
 
     def build_provider(*, max_retries: int, routing_policy):
@@ -1629,6 +1649,11 @@ def test_v8_cli_uses_exact_openai_route_and_zero_retries(
         ),
     )
     received = []
+    monkeypatch.setattr(
+        live_baseline_cli.settings,
+        "OPENROUTER_API_KEY",
+        "unit-test-provider-credential",
+    )
     monkeypatch.setattr(live_baseline, "V8_APPROVED_CAMPAIGN_ROOT", tmp_path)
 
     def build_provider(*, max_retries: int, routing_policy):

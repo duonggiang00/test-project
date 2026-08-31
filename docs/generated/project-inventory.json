@@ -2,9 +2,9 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "298eb416bd4a8a591054f0c27952f618bcc0f3e0",
-    "source_commit_timestamp": "2026-08-31T10:03:59+07:00",
-    "source_tree_sha256": "e70ed54f617b0669476f9053afd2e6922841247a37607881d0eb3828aabf09d3",
+    "source_commit": "d63cc68025d281f1fc22d62d0362cf85d9ae4a15",
+    "source_commit_timestamp": "2026-08-31T15:03:28+07:00",
+    "source_tree_sha256": "749a79666400f46dc446327888cd73b2dfbc14eb3334116d169a31ee6f892651",
     "relevant_file_count": 476,
     "alembic_heads": [
       "b8c7d6e5f4a3"
@@ -7389,27 +7389,27 @@
             "name": "test_cli_uses_canonical_paths_and_disables_sdk_retries"
           },
           {
-            "line": 1508,
+            "line": 1513,
             "markers": [],
             "name": "test_v2_cli_pins_routing_json_mode_and_ten_call_canary"
           },
           {
-            "line": 1551,
+            "line": 1561,
             "markers": [],
             "name": "test_v3_cli_uses_fixed_campaign_model_without_changing_default"
           },
           {
-            "line": 1586,
+            "line": 1601,
             "markers": [],
             "name": "test_v5_cli_uses_fixed_model_routing_parse_policy_and_call_cap"
           },
           {
-            "line": 1621,
+            "line": 1641,
             "markers": [],
             "name": "test_v8_cli_uses_exact_openai_route_and_zero_retries"
           },
           {
-            "line": 1671,
+            "line": 1696,
             "markers": [
               "parametrize"
             ],
