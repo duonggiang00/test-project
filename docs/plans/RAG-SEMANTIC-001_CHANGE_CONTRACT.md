@@ -35,6 +35,8 @@ immediate lexical rollback mode.
 - Remove the explicitly approved compatibility-only
   `POST /ai/process-document` route, schema, service path, and tests.
 - Align GitHub PostgreSQL services to PostgreSQL 18 with pgvector 0.8.6.
+- Run the isolated Alembic round trip in the pull-request PostgreSQL job so
+  pgvector upgrade/downgrade evidence is available before merge.
 - Add a deterministic lexical-versus-hybrid retrieval evaluator using the
   approved RAG cases plus same-material distractors.
 - Bind each canonical dataset source label to a material-scoped chunk UUID in

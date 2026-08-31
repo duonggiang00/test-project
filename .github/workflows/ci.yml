@@ -206,6 +206,9 @@ jobs:
           COVERAGE_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/verify.mjs coverage
 
+      - name: Run Alembic round trip
+        run: node scripts/verify.mjs migration
+
       - name: Upload coverage diagnostics
         if: failure()
         uses: actions/upload-artifact@v7
