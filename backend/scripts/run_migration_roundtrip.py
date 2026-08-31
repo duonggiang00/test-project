@@ -105,6 +105,7 @@ EXPECTED_RAG_INDEX_FRAGMENTS: dict[str, tuple[str, ...]] = {
         "content",
     ),
 }
+EXPECTED_RAG_PREVIOUS_INDEXES = {"ix_document_chunks_material_id"}
 AUDIT_MUTATION_FUNCTION = "prevent_audit_event_mutation"
 AUDIT_MUTATION_TRIGGER = "trg_audit_events_append_only"
 AUDIT_TRUNCATE_TRIGGER = "trg_audit_events_no_truncate"
@@ -1334,11 +1335,22 @@ def assert_rag_previous_schema(manager: TestDatabaseManager) -> None:
             indexes = rag_index_definitions(cursor)
     finally:
         connection.close()
-    if embedding_type != "vector(1536)" or indexes:
+    if (
+        embedding_type != "vector(1536)"
+        or set(indexes) != EXPECTED_RAG_PREVIOUS_INDEXES
+    ):
         raise RuntimeError(
             "Unexpected RAG schema before semantic migration: "
             f"embedding_type={embedding_type!r} indexes={sorted(indexes)}"
         )
+    validate_definition_fragments(
+        object_kind="RAG predecessor index",
+        name="ix_document_chunks_material_id",
+        definition=indexes["ix_document_chunks_material_id"],
+        expected_fragments=EXPECTED_RAG_INDEX_FRAGMENTS[
+            "ix_document_chunks_material_id"
+        ],
+    )
 
 
 def validate_definition_fragments(

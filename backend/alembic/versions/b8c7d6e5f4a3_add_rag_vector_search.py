@@ -31,12 +31,6 @@ def upgrade() -> None:
     )
     op.execute(
         sa.text(
-            "CREATE INDEX IF NOT EXISTS ix_document_chunks_material_id "
-            "ON document_chunks (material_id)"
-        )
-    )
-    op.execute(
-        sa.text(
             "CREATE INDEX IF NOT EXISTS ix_document_chunks_embedding_hnsw "
             "ON document_chunks USING hnsw (embedding vector_cosine_ops)"
         )
@@ -52,4 +46,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.execute(sa.text("DROP INDEX IF EXISTS ix_document_chunks_content_fts"))
     op.execute(sa.text("DROP INDEX IF EXISTS ix_document_chunks_embedding_hnsw"))
-    op.execute(sa.text("DROP INDEX IF EXISTS ix_document_chunks_material_id"))

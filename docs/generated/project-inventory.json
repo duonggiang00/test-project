@@ -2,9 +2,9 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "7f1b203f4a3464ea767e090009797c5ce9cc655b",
-    "source_commit_timestamp": "2026-08-31T08:14:17+07:00",
-    "source_tree_sha256": "82b0f206530d085693fec0fd7da657fcb4bfafe390833ae4b5e855a90698111d",
+    "source_commit": "ea5a461898d61fb0a1f8e00b0c08cf952d99b971",
+    "source_commit_timestamp": "2026-08-31T08:16:56+07:00",
+    "source_tree_sha256": "f35b51b68d4116211c30f25b9c08df613a581c2fdcbb322f59287eeb68143ef6",
     "relevant_file_count": 475,
     "alembic_heads": [
       "b8c7d6e5f4a3"
@@ -5799,32 +5799,32 @@
             "name": "test_uploading_a_material_creates_a_draft_not_questions"
           },
           {
-            "line": 680,
+            "line": 678,
             "markers": [],
             "name": "test_each_transition_emits_exactly_one_correctly_shaped_event"
           },
           {
-            "line": 758,
+            "line": 756,
             "markers": [],
             "name": "test_a_refused_transition_emits_no_audit_event"
           },
           {
-            "line": 789,
+            "line": 787,
             "markers": [],
             "name": "test_a_rolled_back_publish_writes_neither_rows_nor_an_event"
           },
           {
-            "line": 833,
+            "line": 831,
             "markers": [],
             "name": "test_publish_rejects_fill_draft_with_mismatched_blank_contract"
           },
           {
-            "line": 885,
+            "line": 883,
             "markers": [],
             "name": "test_creating_a_grade_suggestion_changes_no_awarded_points"
           },
           {
-            "line": 953,
+            "line": 951,
             "markers": [],
             "name": "test_generating_a_topic_kit_creates_drafts_not_live_content"
           }
@@ -6031,12 +6031,12 @@
             "name": "test_background_admin_override_serializes_against_demotion"
           },
           {
-            "line": 386,
+            "line": 385,
             "markers": [],
             "name": "test_concurrent_approvals_of_one_generation_job_leave_a_single_decision"
           },
           {
-            "line": 450,
+            "line": 449,
             "markers": [],
             "name": "test_concurrent_publishes_of_one_generation_job_write_one_set_of_rows"
           }
