@@ -93,6 +93,14 @@ def test_rag_retrieval_and_embedding_policy_is_strict():
     assert configured.AI_EMBEDDING_MODEL == "openai/text-embedding-3-small"
     assert configured.AI_EMBEDDING_DIMENSIONS == 1536
 
+    from_environment = Settings(
+        _env_file=None,
+        DATABASE_URL="postgresql://app:password@localhost:5432/app",
+        SECRET_KEY="test-only-secret",
+        AI_EMBEDDING_DIMENSIONS="1536",
+    )
+    assert from_environment.AI_EMBEDDING_DIMENSIONS == 1536
+
     with pytest.raises(ValidationError):
         Settings(
             _env_file=None,

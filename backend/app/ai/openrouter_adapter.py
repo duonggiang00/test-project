@@ -192,7 +192,7 @@ class OpenRouterAdapter:
         vectors = [list(item.embedding) for item in ordered]
         if (
             len(vectors) != len(request.inputs)
-            or response.model != request.model
+            or not _embedding_response_model_matches(request.model, response.model)
             or any(len(vector) != request.dimensions for vector in vectors)
             or any(
                 isinstance(value, bool)
@@ -208,7 +208,7 @@ class OpenRouterAdapter:
         return EmbeddingResult(
             embeddings=[[float(value) for value in vector] for vector in vectors],
             provider=PROVIDER_NAME,
-            model=response.model,
+            model=request.model,
             input_tokens=getattr(usage, "prompt_tokens", None),
             latency_ms=(time.monotonic() - started) * 1000,
         )
@@ -257,3 +257,11 @@ class OpenRouterAdapter:
             raise
         except Exception as exc:
             raise AIProviderError(sanitize_error(exc)) from exc
+
+
+def _embedding_response_model_matches(requested: str, reported: str) -> bool:
+    """Accept OpenRouter's provider-prefix normalization only."""
+    accepted = {requested}
+    if requested.count("/") == 1:
+        accepted.add(requested.split("/", 1)[1])
+    return reported in accepted

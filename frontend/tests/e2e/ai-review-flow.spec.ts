@@ -244,6 +244,18 @@ test('material upload and AI generation are publishable only after review (MOCKE
   });
   await expect(page.getByText(MATERIAL.title)).toBeVisible();
 
+  // Upload notifications are transient. Verify and dismiss them immediately
+  // after upload instead of waiting through the slower generation flow.
+  const uploadToast = page.getByText('Upload queued', { exact: true });
+  await expect(uploadToast).toBeVisible();
+  for (const toastName of ['Upload queued', 'Uploading...']) {
+    const toastDialog = page.getByRole('dialog', { name: toastName });
+    await toastDialog.getByLabel('Close toast').click();
+    await expect(toastDialog).not.toBeVisible();
+  }
+  await expect(uploadToast).not.toBeVisible();
+  await expect(page.locator('[data-slot="toast"]')).toHaveCount(0);
+
   // --- GENERATE ---
   await page.getByText(MATERIAL.title).click();
   await expect(page.getByPlaceholder('Enter a material question...')).toBeEnabled();
@@ -262,18 +274,14 @@ test('material upload and AI generation are publishable only after review (MOCKE
   await expect(reviewPanel.getByRole('button', { name: 'Publish' })).toHaveCount(0);
   expect(publishCalls).toBe(0);
 
-  // The upload confirmation is intentionally transient. Dismiss it before
-  // visual capture so it cannot obscure the persistent AI safety guardrail.
-  const uploadToast = page.getByText('Upload queued', { exact: true });
-  await expect(uploadToast).toBeVisible();
-  for (const toastName of ['Upload queued', 'Uploading...']) {
-    const toastDialog = page.getByRole('dialog', { name: toastName });
-    await toastDialog.getByLabel('Close toast').click();
-    await expect(toastDialog).not.toBeVisible();
-  }
-  await expect(uploadToast).not.toBeVisible();
-  await expect(page.locator('[data-slot="toast"]')).toHaveCount(0);
-  await expect(page.getByText('[WARNING] AI output may be incorrect.')).toBeVisible();
+  const safetyWarning = page.getByText('[WARNING] AI output may be incorrect.');
+  await expect(safetyWarning).toBeVisible();
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  });
+  await page.mouse.move(0, 0);
   await expect(page).toHaveScreenshot('ai-review-awaiting-review.png', {
     animations: 'disabled',
     fullPage: true,

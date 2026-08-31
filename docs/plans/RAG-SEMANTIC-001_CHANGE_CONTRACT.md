@@ -107,10 +107,22 @@ immediate lexical rollback mode.
 ## Current environment evidence
 
 - Local PostgreSQL: 18.6.
-- Local pgvector: unavailable and not installed.
-- Visual Studio C++ compiler: present; Windows SDK headers are missing and the
-  non-elevated installer cannot add them.
-- CI currently uses `pgvector/pgvector:0.8.2-pg16` and must be aligned to the
-  approved `0.8.6-pg18` image.
-- The configured development and test databases are absent, so no developer
-  data needs preservation before isolated migration verification.
+- Local pgvector: 0.8.6 is available to PostgreSQL 18 through a verified
+  Windows binary distribution and process-scoped PostgreSQL extension/library
+  paths; WSL, Docker, service restart, and `Program Files` modification are not
+  required.
+- The isolated upgrade/downgrade/upgrade migration round trip passes and
+  preserves the predecessor material index exactly.
+- The complete PostgreSQL integration suite passes 170/170 and drops its
+  managed `_test` database after execution.
+- CI uses the approved `pgvector/pgvector:0.8.6-pg18` image and runs the
+  migration round trip in the pull-request PostgreSQL job.
+- The guarded retrieval campaign passed on the approved dataset fingerprint:
+  hybrid hit rate and source coverage are 1.0, MRR is 0.90625, and every case
+  remains within the two-query budget. The run used exactly 17 requests and 80
+  inputs through an OpenAI-only OpenRouter route with zero retries, no fallback,
+  required parameter support, and data collection denied. Lexical remains the
+  default rollback mode pending the separate AI-008 threshold decision.
+- Final verification passes 13/13 fast steps, and independent L3 review reports
+  no remaining P1/P2/P3 findings after the zero-retry and activation-eligibility
+  remediations.

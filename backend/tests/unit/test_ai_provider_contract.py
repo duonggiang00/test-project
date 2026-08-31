@@ -413,6 +413,32 @@ def test_embed_sends_exact_batch_policy_and_returns_typed_vectors():
 
 
 @pytest.mark.unit
+def test_embed_accepts_openrouter_normalized_model_name_and_retains_policy_id():
+    def handler(request):
+        return httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "model": "text-embedding-3-small",
+                "data": [
+                    {"object": "embedding", "index": 0, "embedding": [0.1, 0.2]}
+                ],
+            },
+        )
+
+    result = _adapter(sync_handler=handler, max_retries=0).embed(
+        EmbeddingRequest(
+            inputs=("query",),
+            model="openai/text-embedding-3-small",
+            dimensions=2,
+            input_type="search_query",
+        )
+    )
+
+    assert result.model == "openai/text-embedding-3-small"
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     "vectors",
     (
@@ -438,6 +464,41 @@ def test_embed_rejects_invalid_provider_vectors(vectors):
                 allow_nan=True,
             ).encode(),
             headers={"content-type": "application/json"},
+        )
+
+    with pytest.raises(AIProviderError, match="AI_OUTPUT_INVALID"):
+        _adapter(sync_handler=handler, max_retries=0).embed(
+            EmbeddingRequest(
+                inputs=("query",),
+                model="embedding-model",
+                dimensions=2,
+                input_type="search_query",
+            )
+        )
+
+
+@pytest.mark.unit
+def test_embed_rejects_unrelated_response_model():
+    def handler(request):
+        return httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "model": "different-embedding-model",
+                "data": [
+                    {"object": "embedding", "index": 0, "embedding": [0.1, 0.2]}
+                ],
+            },
+        )
+
+    with pytest.raises(AIProviderError, match="AI_OUTPUT_INVALID"):
+        _adapter(sync_handler=handler, max_retries=0).embed(
+            EmbeddingRequest(
+                inputs=("query",),
+                model="openai/text-embedding-3-small",
+                dimensions=2,
+                input_type="search_query",
+            )
         )
 
 

@@ -16,10 +16,12 @@ from app.ai.evaluation.dataset import (
 )
 from app.ai.evaluation.rag_retrieval import (
     APPROVED_MIN_HIT_RATE,
+    APPROVED_MAX_QUERY_COUNT,
     APPROVED_MIN_SOURCE_COVERAGE,
     APPROVED_RETRIEVAL_POLICY_FINGERPRINT,
     RetrievalEvaluationError,
     RetrievalServiceCase,
+    assess_retrieval_gate,
     evaluate_retrieval_service,
     write_retrieval_report,
 )
@@ -109,12 +111,7 @@ def main() -> int:
             mode=mode,
             embedding_provider=default_embedding_provider if mode == "hybrid" else None,
         )
-    if (
-        metrics.hit_rate_at_k < APPROVED_MIN_HIT_RATE
-        or metrics.source_coverage < APPROVED_MIN_SOURCE_COVERAGE
-        or any(item.query_count > 2 for item in observations)
-    ):
-        raise RetrievalEvaluationError("retrieval quality or query budget gate failed")
+    gate = assess_retrieval_gate(metrics, observations)
     write_retrieval_report(
         args.report,
         metrics,
@@ -123,9 +120,12 @@ def main() -> int:
         thresholds={
             "min_hit_rate": APPROVED_MIN_HIT_RATE,
             "min_source_coverage": APPROVED_MIN_SOURCE_COVERAGE,
-            "max_query_count": 2,
+            "max_query_count": APPROVED_MAX_QUERY_COUNT,
         },
+        gate=gate,
     )
+    if not gate.evaluation_gate_passed:
+        raise RetrievalEvaluationError("retrieval quality or query budget gate failed")
     print(
         json.dumps(
             {

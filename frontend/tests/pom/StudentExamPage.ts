@@ -26,7 +26,7 @@ export class StudentExamPage {
     const examHeading = this.page.getByRole('heading', { name: title });
     const examRow = examHeading.locator('..').locator('..');
     await examRow.getByRole('button', {
-      name: /^(BẮT ĐẦU LÀM BÀI|TIẾP TỤC LÀM BÀI|BẮT ĐẦU|TIẾP TỤC THI)$/i,
+      name: /^(START EXAM|CONTINUE EXAM)$/i,
     }).click();
   }
 

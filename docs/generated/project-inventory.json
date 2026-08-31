@@ -2,10 +2,10 @@
   "schema_version": 1,
   "generator_version": "1.1.0",
   "provenance": {
-    "source_commit": "ea5a461898d61fb0a1f8e00b0c08cf952d99b971",
-    "source_commit_timestamp": "2026-08-31T08:16:56+07:00",
-    "source_tree_sha256": "f35b51b68d4116211c30f25b9c08df613a581c2fdcbb322f59287eeb68143ef6",
-    "relevant_file_count": 475,
+    "source_commit": "298eb416bd4a8a591054f0c27952f618bcc0f3e0",
+    "source_commit_timestamp": "2026-08-31T10:03:59+07:00",
+    "source_tree_sha256": "e70ed54f617b0669476f9053afd2e6922841247a37607881d0eb3828aabf09d3",
+    "relevant_file_count": 476,
     "alembic_heads": [
       "b8c7d6e5f4a3"
     ]
@@ -17,7 +17,7 @@
     "next_pages": 25,
     "frontend_hooks": 16,
     "frontend_services": 2,
-    "backend_test_functions": 458,
+    "backend_test_functions": 469,
     "frontend_test_calls": 160
   },
   "backend": {
@@ -7539,7 +7539,14 @@
             "name": "test_embed_sends_exact_batch_policy_and_returns_typed_vectors"
           },
           {
-            "line": 424,
+            "line": 416,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embed_accepts_openrouter_normalized_model_name_and_retains_policy_id"
+          },
+          {
+            "line": 450,
             "markers": [
               "parametrize",
               "unit"
@@ -7547,14 +7554,21 @@
             "name": "test_embed_rejects_invalid_provider_vectors"
           },
           {
-            "line": 445,
+            "line": 481,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embed_rejects_unrelated_response_model"
+          },
+          {
+            "line": 506,
             "markers": [
               "unit"
             ],
             "name": "test_embed_rejects_non_contiguous_provider_indexes"
           },
           {
-            "line": 482,
+            "line": 543,
             "markers": [
               "asyncio",
               "unit"
@@ -7562,7 +7576,7 @@
             "name": "test_stream_raises_provider_error_on_timeout"
           },
           {
-            "line": 504,
+            "line": 565,
             "markers": [
               "asyncio",
               "unit"
@@ -8475,39 +8489,102 @@
         "path": "tests/unit/test_rag_retrieval_evaluation.py",
         "tests": [
           {
-            "line": 26,
+            "line": 31,
             "markers": [
               "unit"
             ],
             "name": "test_retrieval_evaluation_is_deterministic_and_content_free"
           },
           {
-            "line": 51,
+            "line": 56,
             "markers": [
               "unit"
             ],
             "name": "test_retrieval_evaluation_rejects_duplicate_sources"
           },
           {
-            "line": 61,
+            "line": 66,
             "markers": [
               "unit"
             ],
             "name": "test_retrieval_service_evaluation_uses_production_service_and_counts_queries"
           },
           {
-            "line": 103,
+            "line": 108,
             "markers": [
               "unit"
             ],
             "name": "test_retrieval_service_evaluation_rejects_tampered_chunk_mapping"
           },
           {
-            "line": 136,
+            "line": 141,
             "markers": [
               "unit"
             ],
             "name": "test_cli_requires_exact_approved_rag_case_set_and_fingerprint"
+          },
+          {
+            "line": 204,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_lexical_baseline_does_not_claim_activation_when_quality_is_below_floor"
+          },
+          {
+            "line": 233,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_hybrid_candidate_requires_quality_and_query_budget"
+          },
+          {
+            "line": 262,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_passing_hybrid_candidate_is_activation_eligible"
+          },
+          {
+            "line": 288,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_fixture_plan_is_deterministic_bounded_and_content_free"
+          },
+          {
+            "line": 318,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_embedding_campaign_budget_stops_before_an_extra_provider_call"
+          },
+          {
+            "line": 351,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_campaign_provider_is_zero_retry_and_no_fallback"
+          },
+          {
+            "line": 366,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_fixture_persistence_uses_one_document_batch"
+          },
+          {
+            "line": 418,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_campaign_cli_sanitizes_evaluation_failure"
+          },
+          {
+            "line": 438,
+            "markers": [
+              "unit"
+            ],
+            "name": "test_campaign_refuses_non_test_runtime_before_creating_output"
           }
         ],
         "tier": "unit"

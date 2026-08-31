@@ -48,6 +48,20 @@ class RetrievalMetrics(BaseModel):
     mean_query_count: float | None = Field(default=None, ge=0)
 
 
+class RetrievalGateAssessment(BaseModel):
+    """Sanitized activation and execution-gate result for one retrieval mode."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+
+    schema_version: Literal["1.0"] = "1.0"
+    mode: Literal["lexical", "hybrid"]
+    activation_eligible: bool
+    quality_gate_enforced: bool
+    quality_thresholds_met: bool
+    query_budget_met: bool
+    evaluation_gate_passed: bool
+
+
 @dataclass(frozen=True)
 class RetrievalResult:
     source_ids: Sequence[str]
@@ -87,6 +101,7 @@ APPROVED_RETRIEVAL_POLICY_FINGERPRINT = (
 )
 APPROVED_MIN_HIT_RATE = 1.0
 APPROVED_MIN_SOURCE_COVERAGE = 1.0
+APPROVED_MAX_QUERY_COUNT = 2
 
 
 class _CountingSession:
@@ -253,6 +268,34 @@ def evaluate_retrieval_service(
     )
 
 
+def assess_retrieval_gate(
+    metrics: RetrievalMetrics,
+    observations: Sequence[RetrievalObservation],
+) -> RetrievalGateAssessment:
+    """Apply quality only to activation candidates and query budget to both modes."""
+    if any(item.mode != metrics.mode for item in observations):
+        raise RetrievalEvaluationError("retrieval observations have inconsistent modes")
+    quality_thresholds_met = (
+        metrics.hit_rate_at_k >= APPROVED_MIN_HIT_RATE
+        and metrics.source_coverage >= APPROVED_MIN_SOURCE_COVERAGE
+    )
+    query_budget_met = all(
+        item.query_count <= APPROVED_MAX_QUERY_COUNT for item in observations
+    )
+    quality_gate_enforced = metrics.mode == "hybrid"
+    evaluation_gate_passed = query_budget_met and (
+        quality_thresholds_met or not quality_gate_enforced
+    )
+    return RetrievalGateAssessment(
+        mode=metrics.mode,
+        activation_eligible=quality_gate_enforced and evaluation_gate_passed,
+        quality_gate_enforced=quality_gate_enforced,
+        quality_thresholds_met=quality_thresholds_met,
+        query_budget_met=query_budget_met,
+        evaluation_gate_passed=evaluation_gate_passed,
+    )
+
+
 def write_retrieval_report(
     path: Path,
     metrics: RetrievalMetrics,
@@ -260,6 +303,7 @@ def write_retrieval_report(
     *,
     dataset_fingerprint: str | None = None,
     thresholds: dict[str, float | int] | None = None,
+    gate: RetrievalGateAssessment | None = None,
 ) -> None:
     """Create a sanitized report once; never overwrite prior evidence."""
     payload = {
@@ -270,6 +314,8 @@ def write_retrieval_report(
         payload["dataset_fingerprint"] = dataset_fingerprint
     if thresholds is not None:
         payload["thresholds"] = thresholds
+    if gate is not None:
+        payload["gate"] = gate.model_dump(mode="json")
     path.parent.mkdir(parents=True, exist_ok=True)
     serialized = (json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode()
     try:
